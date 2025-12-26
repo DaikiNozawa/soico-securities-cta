@@ -264,15 +264,53 @@ class Soico_CTA_Block_Register {
     }
     
     /**
+     * デバッグログ出力
+     */
+    private function debug_log( $message, $context = array() ) {
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            $log_message = '[SOICO CTA Block] ' . $message;
+            if ( ! empty( $context ) ) {
+                $log_message .= ' | ' . wp_json_encode( $context, JSON_UNESCAPED_UNICODE );
+            }
+            error_log( $log_message );
+        }
+    }
+
+    /**
+     * デバッグコメント生成（HTMLに埋め込み）
+     */
+    private function debug_comment( $message ) {
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            return '<!-- [SOICO CTA Debug] ' . esc_html( $message ) . ' -->';
+        }
+        return '';
+    }
+
+    /**
      * 結論ボックス描画
      */
     public function render_conclusion_box( $attributes ) {
+        $this->debug_log( 'render_conclusion_box called', $attributes );
+
         $securities_data = Soico_CTA_Securities_Data::get_instance();
         $company_slug = $attributes['company'] ?? 'sbi';
         $security = $securities_data->get_security( $company_slug );
-        
-        if ( ! $security || empty( $security['affiliate_url'] ) ) {
-            return '';
+
+        $this->debug_log( 'Security data', array(
+            'company_slug' => $company_slug,
+            'security_found' => ! empty( $security ),
+            'has_affiliate_url' => ! empty( $security['affiliate_url'] ?? '' ),
+            'thirsty_link' => $security['thirsty_link'] ?? 'not set',
+            'direct_url' => $security['direct_url'] ?? 'not set',
+            'affiliate_url' => $security['affiliate_url'] ?? 'not set',
+        ) );
+
+        if ( ! $security ) {
+            return $this->debug_comment( 'Security not found: ' . $company_slug );
+        }
+
+        if ( empty( $security['affiliate_url'] ) ) {
+            return $this->debug_comment( 'No affiliate_url for: ' . $company_slug . ' (thirsty_link=' . ($security['thirsty_link'] ?? 'empty') . ', direct_url=' . ($security['direct_url'] ?? 'empty') . ')' );
         }
         
         $show_features = $attributes['showFeatures'] ?? true;
@@ -322,12 +360,24 @@ class Soico_CTA_Block_Register {
      * インラインCTA描画
      */
     public function render_inline_cta( $attributes ) {
+        $this->debug_log( 'render_inline_cta called', $attributes );
+
         $securities_data = Soico_CTA_Securities_Data::get_instance();
         $company_slug = $attributes['company'] ?? 'sbi';
         $security = $securities_data->get_security( $company_slug );
-        
-        if ( ! $security || empty( $security['affiliate_url'] ) ) {
-            return '';
+
+        $this->debug_log( 'inline_cta security data', array(
+            'company_slug' => $company_slug,
+            'security_found' => ! empty( $security ),
+            'affiliate_url' => $security['affiliate_url'] ?? 'not set',
+        ) );
+
+        if ( ! $security ) {
+            return $this->debug_comment( 'Security not found: ' . $company_slug );
+        }
+
+        if ( empty( $security['affiliate_url'] ) ) {
+            return $this->debug_comment( 'No affiliate_url for inline_cta: ' . $company_slug );
         }
         
         $style = $attributes['style'] ?? 'default';
@@ -360,12 +410,24 @@ class Soico_CTA_Block_Register {
      * 単体ボタン描画
      */
     public function render_single_button( $attributes ) {
+        $this->debug_log( 'render_single_button called', $attributes );
+
         $securities_data = Soico_CTA_Securities_Data::get_instance();
         $company_slug = $attributes['company'] ?? 'sbi';
         $security = $securities_data->get_security( $company_slug );
-        
-        if ( ! $security || empty( $security['affiliate_url'] ) ) {
-            return '';
+
+        $this->debug_log( 'single_button security data', array(
+            'company_slug' => $company_slug,
+            'security_found' => ! empty( $security ),
+            'affiliate_url' => $security['affiliate_url'] ?? 'not set',
+        ) );
+
+        if ( ! $security ) {
+            return $this->debug_comment( 'Security not found: ' . $company_slug );
+        }
+
+        if ( empty( $security['affiliate_url'] ) ) {
+            return $this->debug_comment( 'No affiliate_url for single_button: ' . $company_slug );
         }
         
         $button_text = $attributes['buttonText'] ?? $security['button_text'] ?? $security['name'] . 'の公式サイトを見る';
@@ -394,14 +456,22 @@ class Soico_CTA_Block_Register {
      * 比較表描画
      */
     public function render_comparison_table( $attributes ) {
+        $this->debug_log( 'render_comparison_table called', $attributes );
+
         $securities_data = Soico_CTA_Securities_Data::get_instance();
         $limit = $attributes['limit'] ?? 3;
         $show_commission = $attributes['showCommission'] ?? true;
-        
+
         $securities = $securities_data->get_enabled_securities( $limit );
-        
+
+        $this->debug_log( 'comparison_table data', array(
+            'limit' => $limit,
+            'securities_count' => count( $securities ),
+            'securities_slugs' => array_keys( $securities ),
+        ) );
+
         if ( empty( $securities ) ) {
-            return '';
+            return $this->debug_comment( 'No enabled securities found for comparison_table' );
         }
         
         $rank = 1;
@@ -472,12 +542,24 @@ class Soico_CTA_Block_Register {
      * 控えめバナー描画
      */
     public function render_subtle_banner( $attributes ) {
+        $this->debug_log( 'render_subtle_banner called', $attributes );
+
         $securities_data = Soico_CTA_Securities_Data::get_instance();
         $company_slug = $attributes['company'] ?? 'sbi';
         $security = $securities_data->get_security( $company_slug );
-        
-        if ( ! $security || empty( $security['affiliate_url'] ) ) {
-            return '';
+
+        $this->debug_log( 'subtle_banner security data', array(
+            'company_slug' => $company_slug,
+            'security_found' => ! empty( $security ),
+            'affiliate_url' => $security['affiliate_url'] ?? 'not set',
+        ) );
+
+        if ( ! $security ) {
+            return $this->debug_comment( 'Security not found: ' . $company_slug );
+        }
+
+        if ( empty( $security['affiliate_url'] ) ) {
+            return $this->debug_comment( 'No affiliate_url for subtle_banner: ' . $company_slug );
         }
         
         $message = $attributes['message'] ?? sprintf(

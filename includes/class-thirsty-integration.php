@@ -80,31 +80,98 @@ class Soico_CTA_Thirsty_Integration {
      * @return string|false
      */
     public function get_affiliate_url( $link_id ) {
-        if ( empty( $link_id ) || ! $this->is_thirsty_active() ) {
+        // デバッグログ
+        $this->debug_log( 'get_affiliate_url called', array( 'link_id' => $link_id ) );
+
+        if ( empty( $link_id ) ) {
+            $this->debug_log( 'link_id is empty' );
             return false;
         }
-        
+
+        if ( ! $this->is_thirsty_active() ) {
+            $this->debug_log( 'ThirstyAffiliate is not active' );
+            return false;
+        }
+
         $link_id = absint( $link_id );
-        
+
         // キャッシュから取得
         $cached_links = $this->get_cached_links();
         if ( isset( $cached_links[ $link_id ] ) ) {
+            $this->debug_log( 'URL found in cache', array( 'url' => $cached_links[ $link_id ]['url'] ) );
             return $cached_links[ $link_id ]['url'];
         }
-        
+
         // 直接取得
         $post = get_post( $link_id );
-        if ( ! $post || $post->post_type !== self::POST_TYPE ) {
+        if ( ! $post ) {
+            $this->debug_log( 'Post not found', array( 'link_id' => $link_id ) );
             return false;
         }
-        
+
+        if ( $post->post_type !== self::POST_TYPE ) {
+            $this->debug_log( 'Wrong post type', array( 'post_type' => $post->post_type, 'expected' => self::POST_TYPE ) );
+            return false;
+        }
+
+        // ThirstyAffiliatesのリンクベースを取得
+        $link_prefix = $this->get_link_prefix();
+
         // クローキングURL優先
-        $cloaked_url = home_url( '/recommends/' . $post->post_name . '/' );
-        
+        $cloaked_url = home_url( '/' . $link_prefix . '/' . $post->post_name . '/' );
+
         // クローキングURLが使えない場合は直接URL
         $destination = get_post_meta( $link_id, '_ta_destination_url', true );
-        
-        return $cloaked_url ? $cloaked_url : $destination;
+
+        $result_url = $cloaked_url ? $cloaked_url : $destination;
+        $this->debug_log( 'URL resolved', array(
+            'cloaked_url' => $cloaked_url,
+            'destination' => $destination,
+            'result' => $result_url,
+            'link_prefix' => $link_prefix
+        ) );
+
+        return $result_url;
+    }
+
+    /**
+     * ThirstyAffiliatesのリンクプレフィックスを取得
+     *
+     * @return string
+     */
+    private function get_link_prefix() {
+        // ThirstyAffiliates の設定からリンクプレフィックスを取得
+        $ta_settings = get_option( 'ta_settings', array() );
+
+        // 設定キーを確認（ThirstyAffiliatesのバージョンによって異なる可能性）
+        if ( ! empty( $ta_settings['ta_link_prefix'] ) ) {
+            return $ta_settings['ta_link_prefix'];
+        }
+
+        // 別の設定形式を確認
+        $link_prefix = get_option( 'ta_link_prefix', '' );
+        if ( ! empty( $link_prefix ) ) {
+            return $link_prefix;
+        }
+
+        // デフォルト値（ThirstyAffiliatesの一般的なデフォルト）
+        return 'recommends';
+    }
+
+    /**
+     * デバッグログ出力
+     *
+     * @param string $message
+     * @param array $context
+     */
+    private function debug_log( $message, $context = array() ) {
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            $log_message = '[SOICO CTA Thirsty] ' . $message;
+            if ( ! empty( $context ) ) {
+                $log_message .= ' | ' . wp_json_encode( $context );
+            }
+            error_log( $log_message );
+        }
     }
     
     /**
@@ -117,17 +184,18 @@ class Soico_CTA_Thirsty_Integration {
         if ( ! $this->is_thirsty_active() ) {
             return false;
         }
-        
+
         $link_id = absint( $link_id );
         $post = get_post( $link_id );
-        
+
         if ( ! $post || $post->post_type !== self::POST_TYPE ) {
             return false;
         }
-        
+
         $destination = get_post_meta( $link_id, '_ta_destination_url', true );
-        $cloaked_url = home_url( '/recommends/' . $post->post_name . '/' );
-        
+        $link_prefix = $this->get_link_prefix();
+        $cloaked_url = home_url( '/' . $link_prefix . '/' . $post->post_name . '/' );
+
         return array(
             'id'              => $link_id,
             'name'            => $post->post_title,

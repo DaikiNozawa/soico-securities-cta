@@ -54,28 +54,36 @@ class Soico_CTA_Securities_Data {
      * @return array
      */
     public function get_all_securities( $use_cache = true ) {
+        $this->debug_log( 'get_all_securities called', array( 'use_cache' => $use_cache ) );
+
         // キャッシュチェック
         if ( $use_cache ) {
             $cached = get_transient( self::CACHE_KEY );
             if ( false !== $cached ) {
+                $this->debug_log( 'Returning cached data', array( 'count' => count( $cached ) ) );
                 return $cached;
             }
         }
-        
+
         // データ取得
         $securities = get_option( 'soico_cta_securities_data', array() );
-        
+        $this->debug_log( 'Raw data from option', array(
+            'count' => count( $securities ),
+            'slugs' => array_keys( $securities ),
+        ) );
+
         // ThirstyAffiliateリンクを解決
         $securities = $this->resolve_thirsty_links( $securities );
-        
+
         // 優先順位でソート
         uasort( $securities, function( $a, $b ) {
             return ( $a['priority'] ?? 99 ) - ( $b['priority'] ?? 99 );
         } );
-        
+
         // キャッシュ保存
         set_transient( self::CACHE_KEY, $securities, self::CACHE_EXPIRATION );
-        
+        $this->debug_log( 'Data cached', array( 'count' => count( $securities ) ) );
+
         return $securities;
     }
     
@@ -123,6 +131,22 @@ class Soico_CTA_Securities_Data {
     }
     
     /**
+     * デバッグログ出力
+     *
+     * @param string $message
+     * @param array $context
+     */
+    private function debug_log( $message, $context = array() ) {
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            $log_message = '[SOICO CTA Data] ' . $message;
+            if ( ! empty( $context ) ) {
+                $log_message .= ' | ' . wp_json_encode( $context, JSON_UNESCAPED_UNICODE );
+            }
+            error_log( $log_message );
+        }
+    }
+
+    /**
      * ThirstyAffiliateリンクを解決
      *
      * @param array $securities
@@ -130,21 +154,47 @@ class Soico_CTA_Securities_Data {
      */
     private function resolve_thirsty_links( $securities ) {
         $thirsty = Soico_CTA_Thirsty_Integration::get_instance();
-        
+
+        $this->debug_log( 'resolve_thirsty_links called', array(
+            'securities_count' => count( $securities ),
+            'thirsty_active' => $thirsty->is_thirsty_active(),
+        ) );
+
         foreach ( $securities as $slug => &$data ) {
+            $this->debug_log( 'Processing security', array(
+                'slug' => $slug,
+                'thirsty_link' => $data['thirsty_link'] ?? 'not set',
+                'direct_url' => $data['direct_url'] ?? 'not set',
+                'enabled' => $data['enabled'] ?? false,
+            ) );
+
             if ( ! empty( $data['thirsty_link'] ) ) {
                 $url = $thirsty->get_affiliate_url( $data['thirsty_link'] );
+                $this->debug_log( 'ThirstyAffiliate URL result', array(
+                    'slug' => $slug,
+                    'thirsty_link_id' => $data['thirsty_link'],
+                    'resolved_url' => $url ? $url : 'false/null',
+                ) );
                 if ( $url ) {
                     $data['affiliate_url'] = $url;
                 }
             }
-            
+
             // フォールバック: 直接URLがある場合
             if ( empty( $data['affiliate_url'] ) && ! empty( $data['direct_url'] ) ) {
                 $data['affiliate_url'] = $data['direct_url'];
+                $this->debug_log( 'Using direct_url as fallback', array(
+                    'slug' => $slug,
+                    'direct_url' => $data['direct_url'],
+                ) );
             }
+
+            $this->debug_log( 'Final affiliate_url', array(
+                'slug' => $slug,
+                'affiliate_url' => $data['affiliate_url'] ?? 'not set',
+            ) );
         }
-        
+
         return $securities;
     }
     
@@ -175,10 +225,18 @@ class Soico_CTA_Securities_Data {
      */
     private function sanitize_securities_data( $data ) {
         $sanitized = array();
-        
+
         foreach ( $data as $slug => $item ) {
             $slug = sanitize_key( $slug );
-            
+
+            // featuresを適切に配列に変換
+            $features = $item['features'] ?? array();
+            if ( is_string( $features ) ) {
+                // 改行区切りの文字列を配列に変換
+                $features = array_filter( array_map( 'trim', explode( "\n", $features ) ) );
+            }
+            $features = array_map( 'sanitize_text_field', (array) $features );
+
             $sanitized[ $slug ] = array(
                 'name'         => sanitize_text_field( $item['name'] ?? '' ),
                 'slug'         => $slug,
@@ -186,7 +244,7 @@ class Soico_CTA_Securities_Data {
                 'enabled'      => ! empty( $item['enabled'] ),
                 'thirsty_link' => absint( $item['thirsty_link'] ?? 0 ),
                 'direct_url'   => esc_url_raw( $item['direct_url'] ?? '' ),
-                'features'     => array_map( 'sanitize_text_field', (array) ( $item['features'] ?? array() ) ),
+                'features'     => $features,
                 'commission'   => sanitize_text_field( $item['commission'] ?? '' ),
                 'badge'        => sanitize_text_field( $item['badge'] ?? '' ),
                 'badge_color'  => sanitize_hex_color( $item['badge_color'] ?? '' ),
@@ -194,7 +252,7 @@ class Soico_CTA_Securities_Data {
                 'button_color' => sanitize_hex_color( $item['button_color'] ?? '#FF6B35' ),
             );
         }
-        
+
         return $sanitized;
     }
     
@@ -252,6 +310,10 @@ class Soico_CTA_Securities_Data {
      */
     public function clear_cache() {
         delete_transient( self::CACHE_KEY );
+        // ThirstyAffiliateのキャッシュもクリア
+        $thirsty = Soico_CTA_Thirsty_Integration::get_instance();
+        $thirsty->clear_cache();
+        $this->debug_log( 'All caches cleared' );
     }
     
     /**
