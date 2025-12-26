@@ -53,6 +53,28 @@ class Soico_CTA_Block_Register {
     private function init_hooks() {
         add_action( 'init', array( $this, 'register_blocks' ) );
         add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_editor_assets' ) );
+
+        // フロントエンドでのブロック解析をデバッグ
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG && ! is_admin() ) {
+            add_filter( 'the_content', array( $this, 'debug_content_blocks' ), 5 );
+        }
+    }
+
+    /**
+     * コンテンツ内のブロックをデバッグ出力
+     */
+    public function debug_content_blocks( $content ) {
+        // SOICO CTAブロックを検索
+        if ( preg_match_all( '/<!-- wp:soico-cta\/([a-z-]+)/', $content, $matches ) ) {
+            $this->debug_log( 'Found SOICO CTA blocks in content', array(
+                'blocks' => $matches[1],
+                'count' => count( $matches[1] ),
+            ) );
+        } else {
+            $this->debug_log( 'No SOICO CTA blocks found in content' );
+        }
+
+        return $content;
     }
     
     /**
@@ -63,10 +85,31 @@ class Soico_CTA_Block_Register {
      * block.jsonはWordPressのブロックディレクトリ等の参照用に残すが、登録には使用しない。
      */
     public function register_blocks() {
+        $this->debug_log( 'register_blocks called' );
+
         foreach ( $this->blocks as $block ) {
             // PHP配列ベースで登録（JSと競合しないよう、render_callbackのみ設定）
             $this->register_block_php( $block );
         }
+
+        // 登録確認
+        $registry = WP_Block_Type_Registry::get_instance();
+        $registered = array();
+        foreach ( $this->blocks as $block ) {
+            $block_name = 'soico-cta/' . $block;
+            $block_type = $registry->get_registered( $block_name );
+            if ( $block_type ) {
+                $registered[] = $block_name;
+                $has_render = is_callable( $block_type->render_callback );
+                $this->debug_log( 'Block registered', array(
+                    'name' => $block_name,
+                    'has_render_callback' => $has_render,
+                ) );
+            } else {
+                $this->debug_log( 'Block NOT registered', array( 'name' => $block_name ) );
+            }
+        }
+        $this->debug_log( 'Block registration complete', array( 'registered_count' => count( $registered ) ) );
     }
     
     /**
@@ -290,6 +333,8 @@ class Soico_CTA_Block_Register {
      * 結論ボックス描画
      */
     public function render_conclusion_box( $attributes ) {
+        // 最初に必ずログを出力（問題特定用）
+        error_log( '[SOICO CTA Block] render_conclusion_box CALLED - attributes: ' . wp_json_encode( $attributes ) );
         $this->debug_log( 'render_conclusion_box called', $attributes );
 
         $securities_data = Soico_CTA_Securities_Data::get_instance();
