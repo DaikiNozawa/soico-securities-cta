@@ -581,7 +581,12 @@ class Soico_CTA_Block_Register {
             return $this->debug_comment( 'No affiliate_url for single_button: ' . $company_slug );
         }
         
-        $button_text = $attributes['buttonText'] ?? $security['button_text'] ?? $security['name'] . 'の公式サイトを見る';
+        // 空文字もフォールバック対象とする（?? は null のみ判定のため）
+        $button_text = ! empty( $attributes['buttonText'] )
+            ? $attributes['buttonText']
+            : ( ! empty( $security['button_text'] )
+                ? $security['button_text']
+                : $security['name'] . 'の公式サイトを見る' );
         $show_pr = $attributes['showPR'] ?? true;
         $tracking_attrs = $securities_data->get_tracking_attributes( $company_slug, 'single_button' );
         
@@ -713,10 +718,13 @@ class Soico_CTA_Block_Register {
             return $this->debug_comment( 'No affiliate_url for subtle_banner: ' . $company_slug );
         }
         
-        $message = $attributes['message'] ?? sprintf(
-            __( '💡 証券口座をお探しなら → %s（国内株手数料0円）', 'soico-securities-cta' ),
-            $security['name']
-        );
+        // 空文字もフォールバック対象とする（?? は null のみ判定のため）
+        $message = ! empty( $attributes['message'] )
+            ? $attributes['message']
+            : sprintf(
+                __( '💡 証券口座をお探しなら → %s（国内株手数料0円）', 'soico-securities-cta' ),
+                $security['name']
+            );
         
         $tracking_attrs = $securities_data->get_tracking_attributes( $company_slug, 'subtle_banner' );
         
