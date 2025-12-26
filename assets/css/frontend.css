@@ -499,3 +499,47 @@ body .soico-cta-comparison-table tbody tr.soico-cta-row-highlight {
 body .soico-cta-comparison-table tbody tr.soico-cta-row-highlight:hover {
     background: #FFF5F0 !important;
 }
+
+/* SWELL .editor-content テーブルスタイル上書き */
+.editor-content .soico-cta-comparison-table tr:nth-of-type(1) th,
+.editor-content .soico-cta-comparison-table tr:nth-of-type(1) td,
+.editor-content table.soico-cta-comparison-table tr:nth-of-type(1) th,
+.editor-content table.soico-cta-comparison-table tr:nth-of-type(1) td {
+    background-color: transparent !important;
+    background: transparent !important;
+    color: inherit !important;
+}
+
+/* thead（ヘッダー行）のスタイル */
+.editor-content .soico-cta-comparison-table thead tr th,
+.editor-content table.soico-cta-comparison-table thead tr th {
+    background: linear-gradient(135deg, #1E3A5F 0%, #2C5282 100%) !important;
+    color: #fff !important;
+}
+
+/* tbody（データ行）のスタイル */
+.editor-content .soico-cta-comparison-table tbody tr td,
+.editor-content table.soico-cta-comparison-table tbody tr td {
+    background: #fff !important;
+    color: #333 !important;
+}
+
+.editor-content .soico-cta-comparison-table tbody tr:nth-child(even) td,
+.editor-content table.soico-cta-comparison-table tbody tr:nth-child(even) td {
+    background: #F8FAFC !important;
+}
+
+.editor-content .soico-cta-comparison-table tbody tr:hover td,
+.editor-content table.soico-cta-comparison-table tbody tr:hover td {
+    background: #EDF2F7 !important;
+}
+
+.editor-content .soico-cta-comparison-table tbody tr.soico-cta-row-highlight td,
+.editor-content table.soico-cta-comparison-table tbody tr.soico-cta-row-highlight td {
+    background: #fff !important;
+}
+
+.editor-content .soico-cta-comparison-table tbody tr.soico-cta-row-highlight:hover td,
+.editor-content table.soico-cta-comparison-table tbody tr.soico-cta-row-highlight:hover td {
+    background: #FFF5F0 !important;
+}
