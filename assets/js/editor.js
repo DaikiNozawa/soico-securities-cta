@@ -32,16 +32,6 @@
         }
     }
 
-    function error(message, data) {
-        if (console && console.error) {
-            if (data !== undefined) {
-                console.error('[SOICO CTA] ' + message, data);
-            } else {
-                console.error('[SOICO CTA] ' + message);
-            }
-        }
-    }
-
     log('=== 初期化開始 ===');
 
     // ==========================================================================
@@ -111,13 +101,6 @@
         return slug;
     }
 
-    /**
-     * 共通のsave関数（動的ブロック用 - PHPでレンダリング）
-     */
-    function saveDynamic() {
-        return null;
-    }
-
     // ==========================================================================
     // Edit関数定義（静的プレビュー方式）
     // ==========================================================================
@@ -130,8 +113,6 @@
         var setAttributes = props.setAttributes;
         var blockProps = useBlockProps();
         var companyName = getCompanyName(attributes.company);
-
-        log('結論ボックス render', { company: attributes.company });
 
         return el('div', blockProps,
             el(InspectorControls, null,
@@ -392,9 +373,9 @@
     }
 
     // ==========================================================================
-    // ブロック登録フィルター（重要！）
-    // PHPで登録されるブロックに対して、登録時にedit/save関数を注入する
-    // これによりServerSideRenderの使用を防ぐ
+    // editor.BlockEdit フィルター
+    // ブロックのレンダリング時に呼ばれ、カスタムedit関数で置き換える
+    // PHPで登録されたブロックにも確実に適用される
     // ==========================================================================
 
     var editFunctions = {
@@ -405,30 +386,26 @@
         'soico-cta/subtle-banner': EditSubtleBanner
     };
 
-    log('=== ブロック登録フィルター設定 ===');
+    log('=== editor.BlockEdit フィルター設定 ===');
 
     /**
-     * blocks.registerBlockType フィルター
-     * PHPがブロックを登録する際に呼ばれ、edit/save関数を注入する
+     * editor.BlockEdit フィルター
+     * ブロックのeditコンポーネントをレンダリング時にラップ/置換する
      */
     addFilter(
-        'blocks.registerBlockType',
-        'soico-cta/inject-edit-functions',
-        function(settings, name) {
-            // soico-ctaブロックのみ処理
-            if (editFunctions[name]) {
-                log('ブロック登録をインターセプト: ' + name);
+        'editor.BlockEdit',
+        'soico-cta/custom-edit',
+        function(BlockEdit) {
+            return function(props) {
+                // soico-ctaブロックの場合、カスタムedit関数を使用
+                if (editFunctions[props.name]) {
+                    log('カスタムedit使用: ' + props.name);
+                    return editFunctions[props.name](props);
+                }
 
-                // edit関数を注入（ServerSideRenderを使用しない静的プレビュー）
-                settings.edit = editFunctions[name];
-
-                // save関数を注入（動的ブロックなのでnullを返す）
-                settings.save = saveDynamic;
-
-                log('edit/save関数を注入完了: ' + name);
-            }
-
-            return settings;
+                // その他のブロックはデフォルトのまま
+                return el(BlockEdit, props);
+            };
         }
     );
 
