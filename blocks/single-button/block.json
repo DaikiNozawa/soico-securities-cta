@@ -1,0 +1,31 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "soico-cta/single-button",
+    "version": "1.0.0",
+    "title": "CTAボタン",
+    "category": "soico-securities-cta",
+    "icon": "button",
+    "description": "シンプルなCTAボタン。PR表記付き。",
+    "keywords": ["cta", "ボタン", "証券", "button"],
+    "textdomain": "soico-securities-cta",
+    "attributes": {
+        "company": {
+            "type": "string",
+            "default": "sbi"
+        },
+        "buttonText": {
+            "type": "string",
+            "default": ""
+        },
+        "showPR": {
+            "type": "boolean",
+            "default": true
+        }
+    },
+    "supports": {
+        "html": false,
+        "align": ["center", "wide"],
+        "className": true
+    }
+}

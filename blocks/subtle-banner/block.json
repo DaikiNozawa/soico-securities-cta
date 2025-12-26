@@ -1,0 +1,26 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "soico-cta/subtle-banner",
+    "version": "1.0.0",
+    "title": "控えめバナー",
+    "category": "soico-securities-cta",
+    "icon": "info-outline",
+    "description": "控えめなテキストリンクバナー。",
+    "keywords": ["cta", "バナー", "証券", "banner", "subtle"],
+    "textdomain": "soico-securities-cta",
+    "attributes": {
+        "company": {
+            "type": "string",
+            "default": "sbi"
+        },
+        "message": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "supports": {
+        "html": false,
+        "className": true
+    }
+}

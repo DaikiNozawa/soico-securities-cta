@@ -1,0 +1,34 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "soico-cta/comparison-table",
+    "version": "1.0.0",
+    "title": "比較表",
+    "category": "soico-securities-cta",
+    "icon": "editor-table",
+    "description": "複数の証券会社を比較する表。",
+    "keywords": ["cta", "比較", "証券", "table", "comparison"],
+    "textdomain": "soico-securities-cta",
+    "attributes": {
+        "companies": {
+            "type": "array",
+            "default": ["sbi", "monex", "rakuten"],
+            "items": {
+                "type": "string"
+            }
+        },
+        "limit": {
+            "type": "number",
+            "default": 3
+        },
+        "showCommission": {
+            "type": "boolean",
+            "default": true
+        }
+    },
+    "supports": {
+        "html": false,
+        "align": ["wide", "full"],
+        "className": true
+    }
+}

@@ -1,0 +1,287 @@
+/**
+ * SOICO Securities CTA - 管理画面スタイル
+ *
+ * @package Soico_Securities_CTA
+ */
+
+/* ==========================================================================
+   管理画面共通
+   ========================================================================== */
+.soico-cta-admin {
+    max-width: 1200px;
+}
+
+.soico-cta-admin h1 {
+    margin-bottom: 20px;
+}
+
+.soico-cta-admin-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ==========================================================================
+   証券会社リスト
+   ========================================================================== */
+.soico-cta-securities-list {
+    margin-bottom: 20px;
+}
+
+.soico-cta-security-row {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    transition: box-shadow 0.2s;
+}
+
+.soico-cta-security-row:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.soico-cta-security-row.ui-sortable-helper {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.soico-cta-security-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    gap: 12px;
+}
+
+.soico-cta-drag-handle {
+    color: #999;
+    cursor: move;
+}
+
+.soico-cta-security-name {
+    font-weight: bold;
+    font-size: 15px;
+    flex-grow: 1;
+}
+
+.soico-cta-security-priority {
+    color: #666;
+    font-size: 13px;
+}
+
+.soico-cta-toggle-details {
+    color: #0073aa;
+    text-decoration: none;
+}
+
+.soico-cta-toggle-details:hover {
+    color: #005177;
+}
+
+/* ==========================================================================
+   証券会社詳細
+   ========================================================================== */
+.soico-cta-security-details {
+    padding: 16px;
+    border-top: 1px solid #ddd;
+    background: #fff;
+}
+
+.soico-cta-field-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.soico-cta-field {
+    flex: 1;
+    min-width: 200px;
+}
+
+.soico-cta-field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: #23282d;
+}
+
+.soico-cta-field input[type="text"],
+.soico-cta-field input[type="url"],
+.soico-cta-field input[type="number"],
+.soico-cta-field select,
+.soico-cta-field textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.soico-cta-field textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.soico-cta-field input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.soico-cta-field-actions {
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+    margin-top: 16px;
+}
+
+/* ==========================================================================
+   アクション
+   ========================================================================== */
+.soico-cta-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+}
+
+/* ==========================================================================
+   モーダル
+   ========================================================================== */
+.soico-cta-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.soico-cta-modal-content {
+    background: #fff;
+    padding: 24px;
+    border-radius: 8px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.soico-cta-modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.soico-cta-modal-content p {
+    margin-bottom: 16px;
+}
+
+.soico-cta-modal-content label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.soico-cta-modal-content input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.soico-cta-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+/* ==========================================================================
+   GTMガイド
+   ========================================================================== */
+.soico-cta-gtm-guide {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f5f5f5;
+    border-radius: 4px;
+}
+
+.soico-cta-gtm-guide h3 {
+    margin-top: 0;
+}
+
+.soico-cta-gtm-guide pre {
+    background: #1E3A5F;
+    color: #E8F4FC;
+    padding: 16px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: monospace;
+    font-size: 13px;
+}
+
+/* ==========================================================================
+   カラーピッカー調整
+   ========================================================================== */
+.wp-picker-container {
+    display: inline-block;
+}
+
+.wp-picker-container .wp-color-result {
+    margin: 0;
+}
+
+/* ==========================================================================
+   通知
+   ========================================================================== */
+.soico-cta-notice {
+    position: fixed;
+    top: 50px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 4px;
+    background: #46b450;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 100001;
+    animation: soico-cta-slide-in 0.3s ease;
+}
+
+.soico-cta-notice.error {
+    background: #dc3232;
+}
+
+@keyframes soico-cta-slide-in {
+    from {
+        transform: translateX(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ==========================================================================
+   レスポンシブ
+   ========================================================================== */
+@media (max-width: 782px) {
+    .soico-cta-field-row {
+        flex-direction: column;
+    }
+    
+    .soico-cta-field {
+        min-width: 100%;
+    }
+    
+    .soico-cta-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .soico-cta-actions button {
+        width: 100%;
+    }
+}

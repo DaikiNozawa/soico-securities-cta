@@ -1,0 +1,26 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "soico-cta/inline-cta",
+    "version": "1.0.0",
+    "title": "インラインCTA",
+    "category": "soico-securities-cta",
+    "icon": "migrate",
+    "description": "記事中に挿入する控えめなインラインCTA。",
+    "keywords": ["cta", "インライン", "証券", "inline"],
+    "textdomain": "soico-securities-cta",
+    "attributes": {
+        "company": {
+            "type": "string",
+            "default": "sbi"
+        },
+        "style": {
+            "type": "string",
+            "default": "default"
+        }
+    },
+    "supports": {
+        "html": false,
+        "className": true
+    }
+}

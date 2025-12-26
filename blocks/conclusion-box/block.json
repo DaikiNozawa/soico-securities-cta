@@ -1,0 +1,31 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "soico-cta/conclusion-box",
+    "version": "1.0.0",
+    "title": "結論ボックス",
+    "category": "soico-securities-cta",
+    "icon": "megaphone",
+    "description": "証券会社をおすすめする結論ボックス。特徴リストとCTAボタン付き。",
+    "keywords": ["cta", "結論", "証券", "conclusion"],
+    "textdomain": "soico-securities-cta",
+    "attributes": {
+        "company": {
+            "type": "string",
+            "default": "sbi"
+        },
+        "showFeatures": {
+            "type": "boolean",
+            "default": true
+        },
+        "customTitle": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "supports": {
+        "html": false,
+        "align": ["wide", "full"],
+        "className": true
+    }
+}

@@ -1,0 +1,151 @@
+/**
+ * SOICO Securities CTA - ブロックエディタスタイル
+ *
+ * @package Soico_Securities_CTA
+ */
+
+/* ==========================================================================
+   ブロックプレビュー共通
+   ========================================================================== */
+.wp-block-soico-conclusion-box,
+.wp-block-soico-inline-cta,
+.wp-block-soico-single-button,
+.wp-block-soico-comparison-table,
+.wp-block-soico-subtle-banner {
+    margin: 16px 0;
+}
+
+/* ==========================================================================
+   ブロック選択時のスタイル
+   ========================================================================== */
+.wp-block[data-type="soico-cta/conclusion-box"],
+.wp-block[data-type="soico-cta/inline-cta"],
+.wp-block[data-type="soico-cta/single-button"],
+.wp-block[data-type="soico-cta/comparison-table"],
+.wp-block[data-type="soico-cta/subtle-banner"] {
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+/* ==========================================================================
+   ブロックアイコン
+   ========================================================================== */
+.editor-block-list-item-soico-cta-conclusion-box .block-editor-block-icon,
+.editor-block-list-item-soico-cta-inline-cta .block-editor-block-icon,
+.editor-block-list-item-soico-cta-single-button .block-editor-block-icon,
+.editor-block-list-item-soico-cta-comparison-table .block-editor-block-icon,
+.editor-block-list-item-soico-cta-subtle-banner .block-editor-block-icon {
+    color: #FF6B35;
+}
+
+/* ==========================================================================
+   インスペクターコントロール
+   ========================================================================== */
+.soico-cta-inspector-section {
+    margin-bottom: 16px;
+}
+
+.soico-cta-inspector-section h3 {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: #1e1e1e;
+    margin-bottom: 8px;
+}
+
+/* ==========================================================================
+   エディタ内プレビュー
+   ========================================================================== */
+.soico-cta-editor-preview {
+    position: relative;
+}
+
+.soico-cta-editor-preview::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border: 2px dashed transparent;
+    border-radius: 4px;
+    pointer-events: none;
+    transition: border-color 0.2s;
+}
+
+.is-selected .soico-cta-editor-preview::before {
+    border-color: #007cba;
+}
+
+/* ==========================================================================
+   プレースホルダー
+   ========================================================================== */
+.soico-cta-placeholder {
+    background: #f0f0f0;
+    border: 2px dashed #c0c0c0;
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    color: #666;
+}
+
+.soico-cta-placeholder-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.soico-cta-placeholder-text {
+    font-size: 14px;
+}
+
+/* ==========================================================================
+   サーバーサイドレンダリング調整
+   ========================================================================== */
+.wp-block-soico-conclusion-box .components-server-side-render,
+.wp-block-soico-inline-cta .components-server-side-render,
+.wp-block-soico-single-button .components-server-side-render,
+.wp-block-soico-comparison-table .components-server-side-render,
+.wp-block-soico-subtle-banner .components-server-side-render {
+    pointer-events: none;
+}
+
+/* クリック無効化 */
+.wp-block-soico-conclusion-box a,
+.wp-block-soico-inline-cta a,
+.wp-block-soico-single-button a,
+.wp-block-soico-comparison-table a,
+.wp-block-soico-subtle-banner a {
+    pointer-events: none;
+    cursor: default;
+}
+
+/* ==========================================================================
+   ブロックツールバー
+   ========================================================================== */
+.soico-cta-toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ==========================================================================
+   警告表示
+   ========================================================================== */
+.soico-cta-warning {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 4px;
+    padding: 12px;
+    margin: 12px 0;
+    font-size: 13px;
+    color: #856404;
+}
+
+.soico-cta-warning-icon {
+    margin-right: 8px;
+}
+
+/* ==========================================================================
+   フロントエンドスタイルのインポート（エディタプレビュー用）
+   ========================================================================== */
+@import url('./frontend.css');
