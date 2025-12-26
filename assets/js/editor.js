@@ -52,12 +52,12 @@
     var getBlockType = wp.blocks.getBlockType;
     var useBlockProps = wp.blockEditor.useBlockProps;
     var InspectorControls = wp.blockEditor.InspectorControls;
-    var ServerSideRender = wp.serverSideRender;
     var PanelBody = wp.components.PanelBody;
     var SelectControl = wp.components.SelectControl;
     var ToggleControl = wp.components.ToggleControl;
     var TextControl = wp.components.TextControl;
     var RangeControl = wp.components.RangeControl;
+    // ServerSideRender は REST API 404問題のため使用せず、静的プレビューを採用
 
     log('WordPress コンポーネント読み込み完了');
 
@@ -146,6 +146,22 @@
     // Edit関数定義
     // ==========================================================================
 
+    // ==========================================================================
+    // 静的プレビューコンポーネント（REST API不要）
+    // ==========================================================================
+
+    /**
+     * 証券会社名を取得
+     */
+    function getCompanyName(slug) {
+        for (var i = 0; i < companyOptions.length; i++) {
+            if (companyOptions[i].value === slug) {
+                return companyOptions[i].label;
+            }
+        }
+        return slug;
+    }
+
     /**
      * 結論ボックス Edit
      */
@@ -153,6 +169,7 @@
         var attributes = props.attributes;
         var setAttributes = props.setAttributes;
         var blockProps = useBlockProps();
+        var companyName = getCompanyName(attributes.company);
 
         log('結論ボックス render', { company: attributes.company });
 
@@ -188,21 +205,29 @@
                     })
                 )
             ),
-            el('div', { className: 'soico-cta-editor-preview' },
-                el(ServerSideRender, {
-                    block: 'soico-cta/conclusion-box',
-                    attributes: attributes,
-                    EmptyResponsePlaceholder: function() {
-                        return el('div', { className: 'soico-cta-placeholder' },
-                            '結論ボックス: プレビューを読み込み中...'
-                        );
-                    },
-                    ErrorResponsePlaceholder: function() {
-                        return el('div', { className: 'soico-cta-error' },
-                            '結論ボックス: プレビューを読み込めませんでした。証券会社の設定を確認してください。'
-                        );
-                    }
-                })
+            // 静的プレビュー（REST API不要）
+            el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview' },
+                el('div', { className: 'soico-cta-preview-box', style: { border: '2px solid #1E88E5', borderRadius: '8px', padding: '20px', background: '#f8f9fa' } },
+                    el('div', { style: { marginBottom: '10px' } },
+                        el('span', { style: { background: '#1E88E5', color: '#fff', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' } }, '結論')
+                    ),
+                    el('h3', { style: { margin: '10px 0', fontSize: '18px' } },
+                        attributes.customTitle || '証券口座を開設するなら' + companyName + 'がおすすめ'
+                    ),
+                    attributes.showFeatures && el('ul', { style: { margin: '10px 0', paddingLeft: '20px', color: '#666' } },
+                        el('li', null, '特徴1（実際の表示はフロントエンドで確認）'),
+                        el('li', null, '特徴2'),
+                        el('li', null, '特徴3')
+                    ),
+                    el('div', { style: { marginTop: '15px' } },
+                        el('span', { style: { background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: '4px', display: 'inline-block' } },
+                            companyName + 'で口座開設（無料）'
+                        )
+                    ),
+                    el('p', { style: { fontSize: '12px', color: '#999', marginTop: '10px' } },
+                        '※エディタプレビュー - 実際の表示はフロントエンドで確認してください'
+                    )
+                )
             )
         );
     }
@@ -214,6 +239,7 @@
         var attributes = props.attributes;
         var setAttributes = props.setAttributes;
         var blockProps = useBlockProps();
+        var companyName = getCompanyName(attributes.company);
 
         return el('div', blockProps,
             el(InspectorControls, null,
@@ -236,16 +262,15 @@
                     })
                 )
             ),
-            el('div', { className: 'soico-cta-editor-preview' },
-                el(ServerSideRender, {
-                    block: 'soico-cta/inline-cta',
-                    attributes: attributes,
-                    EmptyResponsePlaceholder: function() {
-                        return el('div', { className: 'soico-cta-placeholder' },
-                            'インラインCTA: プレビューを読み込み中...'
-                        );
-                    }
-                })
+            el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview' },
+                el('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: attributes.style === 'subtle' ? '#f5f5f5' : '#e3f2fd', borderRadius: '6px', border: '1px solid #ddd' } },
+                    el('div', null,
+                        el('strong', null, companyName),
+                        el('span', { style: { marginLeft: '10px', color: '#666', fontSize: '14px' } }, '特徴テキスト')
+                    ),
+                    el('span', { style: { background: '#FF6B35', color: '#fff', padding: '6px 12px', borderRadius: '4px', fontSize: '13px' } }, '詳細を見る →')
+                ),
+                el('p', { style: { fontSize: '11px', color: '#999', marginTop: '5px', marginBottom: '0' } }, '※エディタプレビュー')
             )
         );
     }
@@ -257,6 +282,8 @@
         var attributes = props.attributes;
         var setAttributes = props.setAttributes;
         var blockProps = useBlockProps();
+        var companyName = getCompanyName(attributes.company);
+        var buttonText = attributes.buttonText || companyName + 'の公式サイトを見る';
 
         return el('div', blockProps,
             el(InspectorControls, null,
@@ -286,16 +313,12 @@
                     })
                 )
             ),
-            el('div', { className: 'soico-cta-editor-preview' },
-                el(ServerSideRender, {
-                    block: 'soico-cta/single-button',
-                    attributes: attributes,
-                    EmptyResponsePlaceholder: function() {
-                        return el('div', { className: 'soico-cta-placeholder' },
-                            'CTAボタン: プレビューを読み込み中...'
-                        );
-                    }
-                })
+            el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview', style: { textAlign: 'center' } },
+                el('span', { style: { background: '#FF6B35', color: '#fff', padding: '14px 28px', borderRadius: '6px', display: 'inline-block', fontSize: '16px', fontWeight: 'bold' } },
+                    buttonText
+                ),
+                attributes.showPR && el('p', { style: { fontSize: '12px', color: '#999', marginTop: '8px', marginBottom: '0' } }, 'PR'),
+                el('p', { style: { fontSize: '11px', color: '#999', marginTop: '5px', marginBottom: '0' } }, '※エディタプレビュー')
             )
         );
     }
@@ -307,6 +330,24 @@
         var attributes = props.attributes;
         var setAttributes = props.setAttributes;
         var blockProps = useBlockProps();
+
+        // プレビュー用のサンプルデータ
+        var sampleRows = [];
+        for (var i = 0; i < Math.min(attributes.limit, 3); i++) {
+            var rank = i + 1;
+            var name = companyOptions[i] ? companyOptions[i].label : '証券会社' + rank;
+            sampleRows.push(
+                el('tr', { key: i, style: { background: rank === 1 ? '#fff3e0' : '#fff' } },
+                    el('td', { style: { padding: '10px', textAlign: 'center', fontWeight: 'bold', color: rank === 1 ? '#FF6B35' : '#666' } }, rank),
+                    el('td', { style: { padding: '10px' } }, name),
+                    el('td', { style: { padding: '10px', color: '#666' } }, '特徴1 / 特徴2'),
+                    attributes.showCommission && el('td', { style: { padding: '10px' } }, '0円〜'),
+                    el('td', { style: { padding: '10px' } },
+                        el('span', { style: { background: '#FF6B35', color: '#fff', padding: '4px 10px', borderRadius: '4px', fontSize: '12px' } }, '詳細')
+                    )
+                )
+            );
+        }
 
         return el('div', blockProps,
             el(InspectorControls, null,
@@ -329,16 +370,22 @@
                     })
                 )
             ),
-            el('div', { className: 'soico-cta-editor-preview' },
-                el(ServerSideRender, {
-                    block: 'soico-cta/comparison-table',
-                    attributes: attributes,
-                    EmptyResponsePlaceholder: function() {
-                        return el('div', { className: 'soico-cta-placeholder' },
-                            '比較表: プレビューを読み込み中...'
-                        );
-                    }
-                })
+            el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview' },
+                el('table', { style: { width: '100%', borderCollapse: 'collapse', border: '1px solid #ddd', fontSize: '14px' } },
+                    el('thead', null,
+                        el('tr', { style: { background: '#f5f5f5' } },
+                            el('th', { style: { padding: '10px', borderBottom: '1px solid #ddd' } }, '順位'),
+                            el('th', { style: { padding: '10px', borderBottom: '1px solid #ddd' } }, '証券会社'),
+                            el('th', { style: { padding: '10px', borderBottom: '1px solid #ddd' } }, '特徴'),
+                            attributes.showCommission && el('th', { style: { padding: '10px', borderBottom: '1px solid #ddd' } }, '手数料'),
+                            el('th', { style: { padding: '10px', borderBottom: '1px solid #ddd' } }, '口座開設')
+                        )
+                    ),
+                    el('tbody', null, sampleRows)
+                ),
+                el('p', { style: { fontSize: '11px', color: '#999', marginTop: '8px', marginBottom: '0' } },
+                    '※エディタプレビュー（' + attributes.limit + '件表示設定）'
+                )
             )
         );
     }
@@ -350,6 +397,8 @@
         var attributes = props.attributes;
         var setAttributes = props.setAttributes;
         var blockProps = useBlockProps();
+        var companyName = getCompanyName(attributes.company);
+        var message = attributes.message || '💡 証券口座をお探しなら → ' + companyName + '（国内株手数料0円）';
 
         return el('div', blockProps,
             el(InspectorControls, null,
@@ -372,16 +421,12 @@
                     })
                 )
             ),
-            el('div', { className: 'soico-cta-editor-preview' },
-                el(ServerSideRender, {
-                    block: 'soico-cta/subtle-banner',
-                    attributes: attributes,
-                    EmptyResponsePlaceholder: function() {
-                        return el('div', { className: 'soico-cta-placeholder' },
-                            '控えめバナー: プレビューを読み込み中...'
-                        );
-                    }
-                })
+            el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview' },
+                el('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#fafafa', border: '1px solid #eee', borderRadius: '4px', fontSize: '14px' } },
+                    el('span', null, message),
+                    el('span', { style: { background: '#eee', color: '#666', padding: '2px 6px', borderRadius: '2px', fontSize: '11px' } }, 'PR')
+                ),
+                el('p', { style: { fontSize: '11px', color: '#999', marginTop: '5px', marginBottom: '0' } }, '※エディタプレビュー')
             )
         );
     }
