@@ -88,6 +88,15 @@ class Soico_CTA_Admin_Settings {
             'soico-cta-tracking',
             array( $this, 'render_tracking_page' )
         );
+
+        add_submenu_page(
+            'soico-cta-settings',
+            __( '使い方ガイド', 'soico-securities-cta' ),
+            __( '使い方ガイド', 'soico-securities-cta' ),
+            'manage_options',
+            'soico-cta-guide',
+            array( $this, 'render_guide_page' )
+        );
     }
     
     /**
@@ -505,5 +514,151 @@ data-cta-type="[CTAタイプ]"
         } else {
             wp_send_json_error( array( 'message' => '削除に失敗しました' ) );
         }
+    }
+
+    /**
+     * 使い方ガイドページ描画
+     */
+    public function render_guide_page() {
+        ?>
+        <div class="wrap soico-cta-admin soico-cta-guide">
+            <h1><?php esc_html_e( '使い方ガイド', 'soico-securities-cta' ); ?></h1>
+
+            <div class="soico-cta-guide-section">
+                <h2>🚀 クイックスタート</h2>
+                <ol>
+                    <li><strong>証券会社を設定</strong> - 「証券会社管理」で証券会社の情報とアフィリエイトリンクを設定します</li>
+                    <li><strong>記事でブロックを挿入</strong> - 投稿編集画面で「/」を入力し、「証券」と検索してブロックを追加します</li>
+                    <li><strong>サイドバーで設定</strong> - ブロックを選択し、右サイドバーで証券会社やオプションを選択します</li>
+                </ol>
+            </div>
+
+            <div class="soico-cta-guide-section">
+                <h2>📦 利用可能なブロック</h2>
+
+                <div class="soico-cta-guide-block">
+                    <h3>1. 結論ボックス</h3>
+                    <p>記事冒頭に最適。証券会社のおすすめポイントと特徴リスト、CTAボタンを表示します。</p>
+                    <p><strong>使用例:</strong> 「〇〇証券がおすすめ」という結論を最初に提示したい場合</p>
+                    <p><strong>設定項目:</strong></p>
+                    <ul>
+                        <li>証券会社を選択</li>
+                        <li>特徴を表示（ON/OFF）</li>
+                        <li>カスタムタイトル（任意）</li>
+                    </ul>
+                </div>
+
+                <div class="soico-cta-guide-block">
+                    <h3>2. インラインCTA</h3>
+                    <p>記事の途中に自然に挿入できる控えめなCTA。流れを邪魔しません。</p>
+                    <p><strong>使用例:</strong> 記事中で証券会社に言及したタイミングで挿入</p>
+                    <p><strong>設定項目:</strong></p>
+                    <ul>
+                        <li>証券会社を選択</li>
+                        <li>スタイル（デフォルト/控えめ）</li>
+                    </ul>
+                </div>
+
+                <div class="soico-cta-guide-block">
+                    <h3>3. CTAボタン</h3>
+                    <p>シンプルなボタンのみ。任意の場所に配置できます。</p>
+                    <p><strong>使用例:</strong> 記事末尾やセクション終わりに</p>
+                    <p><strong>設定項目:</strong></p>
+                    <ul>
+                        <li>証券会社を選択</li>
+                        <li>ボタンテキスト（任意）</li>
+                        <li>PR表記を表示（ON/OFF）</li>
+                    </ul>
+                </div>
+
+                <div class="soico-cta-guide-block">
+                    <h3>4. 比較表</h3>
+                    <p>複数の証券会社を比較する表形式のCTA。ランキング記事に最適。</p>
+                    <p><strong>使用例:</strong> 「おすすめ証券会社ランキング」記事</p>
+                    <p><strong>設定項目:</strong></p>
+                    <ul>
+                        <li>表示件数（1〜10）</li>
+                        <li>手数料を表示（ON/OFF）</li>
+                    </ul>
+                </div>
+
+                <div class="soico-cta-guide-block">
+                    <h3>5. 控えめバナー</h3>
+                    <p>テキストリンク形式の最も控えめなCTA。読者の邪魔をしません。</p>
+                    <p><strong>使用例:</strong> 記事内の補足情報として</p>
+                    <p><strong>設定項目:</strong></p>
+                    <ul>
+                        <li>証券会社を選択</li>
+                        <li>メッセージ（任意）</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="soico-cta-guide-section">
+                <h2>⚙️ 設定項目の説明</h2>
+
+                <h3>証券会社管理</h3>
+                <table class="widefat">
+                    <tr><th>項目</th><th>説明</th></tr>
+                    <tr><td>有効</td><td>チェックを外すと、そのの証券会社はブロックで選択できなくなります</td></tr>
+                    <tr><td>ThirstyAffiliateリンク</td><td>ThirstyAffiliatesプラグインで作成したリンクを選択（推奨）</td></tr>
+                    <tr><td>直接URL</td><td>ThirstyAffiliates未使用時に直接アフィリエイトURLを入力</td></tr>
+                    <tr><td>特徴</td><td>1行ずつ入力。結論ボックスや比較表で表示されます</td></tr>
+                    <tr><td>手数料</td><td>比較表で表示される手数料情報</td></tr>
+                    <tr><td>バッジ</td><td>「おすすめ」などのラベル。比較表で表示されます</td></tr>
+                    <tr><td>優先順位</td><td>ドラッグ&ドロップで並べ替え。比較表の表示順に影響します</td></tr>
+                </table>
+
+                <h3>デザイン設定</h3>
+                <table class="widefat">
+                    <tr><th>項目</th><th>説明</th></tr>
+                    <tr><td>メインカラー</td><td>CTAボタンの背景色</td></tr>
+                    <tr><td>セカンダリカラー</td><td>ボーダーやアクセントカラー</td></tr>
+                    <tr><td>角丸の半径</td><td>ボタンやボックスの角の丸み</td></tr>
+                </table>
+
+                <h3>トラッキング設定</h3>
+                <table class="widefat">
+                    <tr><th>項目</th><th>説明</th></tr>
+                    <tr><td>GTMトラッキング</td><td>Google Tag Manager用のdata属性を出力します</td></tr>
+                    <tr><td>イベントカテゴリ/アクション</td><td>GTMで計測する際のイベント名</td></tr>
+                </table>
+            </div>
+
+            <div class="soico-cta-guide-section">
+                <h2>💡 Tips</h2>
+                <ul>
+                    <li><strong>ブロックの素早い挿入:</strong> エディタで「/結論」「/比較」と入力すると、該当ブロックが候補に表示されます</li>
+                    <li><strong>ThirstyAffiliatesとの連携:</strong> アフィリエイトリンクの管理はThirstyAffiliatesプラグインの使用を推奨します。リンク切れチェックやクリック計測が可能になります</li>
+                    <li><strong>PR表記:</strong> 各ブロックには自動でPR表記が含まれます（景品表示法対応）</li>
+                </ul>
+            </div>
+
+            <div class="soico-cta-guide-section">
+                <h2>❓ よくある質問</h2>
+
+                <h4>Q: ブロックが表示されません</h4>
+                <p>A: 「証券会社管理」で該当の証券会社が「有効」になっているか確認してください。また、アフィリエイトURL（ThirstyAffiliateリンクまたは直接URL）が設定されている必要があります。</p>
+
+                <h4>Q: 色を変更したい</h4>
+                <p>A: 「デザイン設定」でメインカラーを変更できます。また、各証券会社のボタン色は「証券会社管理」で個別に設定できます。</p>
+
+                <h4>Q: 表示順を変更したい</h4>
+                <p>A: 「証券会社管理」でドラッグ&ドロップで並べ替えてください。比較表では優先順位の高い順に表示されます。</p>
+            </div>
+        </div>
+
+        <style>
+            .soico-cta-guide { max-width: 900px; }
+            .soico-cta-guide-section { background: #fff; padding: 20px 25px; margin: 20px 0; border: 1px solid #ccd0d4; border-radius: 4px; }
+            .soico-cta-guide-section h2 { margin-top: 0; padding-bottom: 10px; border-bottom: 2px solid #FF6B35; }
+            .soico-cta-guide-block { background: #f9f9f9; padding: 15px; margin: 15px 0; border-left: 4px solid #FF6B35; }
+            .soico-cta-guide-block h3 { margin-top: 0; color: #23282d; }
+            .soico-cta-guide-block ul { margin-left: 20px; }
+            .soico-cta-guide table { margin: 15px 0; }
+            .soico-cta-guide table th { background: #f1f1f1; text-align: left; }
+            .soico-cta-guide h4 { margin-bottom: 5px; }
+        </style>
+        <?php
     }
 }
