@@ -51,7 +51,15 @@ class Soico_CTA_Block_Register {
      * フック初期化
      */
     private function init_hooks() {
-        add_action( 'init', array( $this, 'register_blocks' ) );
+        // Note: このクラスは init フック内でインスタンス化されるため、
+        // add_action('init', ...) では間に合わない。
+        // did_action('init') をチェックして、既に init が実行済みなら直接呼び出す。
+        if ( did_action( 'init' ) ) {
+            $this->register_blocks();
+        } else {
+            add_action( 'init', array( $this, 'register_blocks' ) );
+        }
+
         add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_editor_assets' ) );
 
         // フロントエンドでのブロック解析をデバッグ
