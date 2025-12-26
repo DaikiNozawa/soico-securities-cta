@@ -84,10 +84,11 @@ class Soico_CTA_Block_Register {
      * ブロック設定取得
      */
     private function get_block_settings( $block ) {
+        // Note: editor_script は設定しない
+        // JavaScriptでunregister→registerを行い、edit関数を提供する
+        // スクリプトは enqueue_block_editor_assets で別途読み込む
         $settings = array(
             'api_version'    => 3,
-            'editor_script'  => 'soico-cta-editor',
-            'editor_style'   => 'soico-cta-editor-style',
             'style'          => 'soico-cta-frontend',
             'supports'       => array(
                 'html' => false,

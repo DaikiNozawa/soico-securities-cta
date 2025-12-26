@@ -32,13 +32,25 @@
         }
     }
 
+    function error(message, data) {
+        if (console && console.error) {
+            if (data !== undefined) {
+                console.error('[SOICO CTA] ' + message, data);
+            } else {
+                console.error('[SOICO CTA] ' + message);
+            }
+        }
+    }
+
     log('=== 初期化開始 ===');
 
     // ==========================================================================
     // WordPress コンポーネント
     // ==========================================================================
     var el = wp.element.createElement;
-    var addFilter = wp.hooks.addFilter;
+    var registerBlockType = wp.blocks.registerBlockType;
+    var unregisterBlockType = wp.blocks.unregisterBlockType;
+    var getBlockType = wp.blocks.getBlockType;
     var useBlockProps = wp.blockEditor.useBlockProps;
     var InspectorControls = wp.blockEditor.InspectorControls;
     var PanelBody = wp.components.PanelBody;
@@ -99,6 +111,13 @@
             }
         }
         return slug;
+    }
+
+    /**
+     * 動的ブロック用save関数（PHPでレンダリング）
+     */
+    function saveDynamic() {
+        return null;
     }
 
     // ==========================================================================
@@ -373,58 +392,140 @@
     }
 
     // ==========================================================================
-    // editor.BlockEdit フィルター
-    // ブロックのレンダリング時に呼ばれ、カスタムedit関数で置き換える
-    // PHPで登録されたブロックにも確実に適用される
+    // ブロック登録
+    // PHPで登録されたブロックを一度解除し、edit関数付きで再登録する
     // ==========================================================================
 
-    var editFunctions = {
-        'soico-cta/conclusion-box': EditConclusionBox,
-        'soico-cta/inline-cta': EditInlineCTA,
-        'soico-cta/single-button': EditSingleButton,
-        'soico-cta/comparison-table': EditComparisonTable,
-        'soico-cta/subtle-banner': EditSubtleBanner
-    };
-
-    log('=== editor.BlockEdit フィルター設定 ===');
+    log('=== ブロック再登録開始 ===');
 
     /**
-     * editor.BlockEdit フィルター
-     * ブロックのeditコンポーネントをレンダリング時にラップ/置換する
+     * ブロックを再登録する
+     * PHPで登録された設定を引き継ぎつつ、edit/save関数を追加
      */
-    addFilter(
-        'editor.BlockEdit',
-        'soico-cta/custom-edit',
-        function(BlockEdit) {
-            return function(props) {
-                // soico-ctaブロックの場合、カスタムedit関数を使用
-                if (editFunctions[props.name]) {
-                    log('カスタムedit使用: ' + props.name);
-                    return editFunctions[props.name](props);
-                }
+    function reRegisterBlock(name, editFunc, blockConfig) {
+        var existingBlock = getBlockType(name);
 
-                // その他のブロックはデフォルトのまま
-                return el(BlockEdit, props);
-            };
+        if (existingBlock) {
+            log('既存ブロックを解除: ' + name);
+            try {
+                unregisterBlockType(name);
+            } catch (e) {
+                error('ブロック解除エラー: ' + name, e);
+            }
         }
-    );
 
-    log('=== フィルター設定完了 ===');
+        // 新しい設定でブロックを登録
+        var settings = {
+            title: blockConfig.title,
+            icon: blockConfig.icon,
+            category: 'soico-securities-cta',
+            description: blockConfig.description,
+            attributes: blockConfig.attributes,
+            supports: {
+                html: false
+            },
+            edit: editFunc,
+            save: saveDynamic
+        };
+
+        try {
+            registerBlockType(name, settings);
+            log('ブロック登録完了: ' + name);
+            return true;
+        } catch (e) {
+            error('ブロック登録エラー: ' + name, e);
+            return false;
+        }
+    }
+
+    // ブロック定義
+    var blockDefinitions = [
+        {
+            name: 'soico-cta/conclusion-box',
+            title: i18n.conclusionBox || '結論ボックス',
+            icon: 'megaphone',
+            description: '記事冒頭に最適。証券会社のおすすめポイントと特徴リスト、CTAボタンを表示します。',
+            attributes: {
+                company: { type: 'string', default: 'sbi' },
+                showFeatures: { type: 'boolean', default: true },
+                customTitle: { type: 'string', default: '' }
+            },
+            edit: EditConclusionBox
+        },
+        {
+            name: 'soico-cta/inline-cta',
+            title: i18n.inlineCTA || 'インラインCTA',
+            icon: 'migrate',
+            description: '記事の途中に自然に挿入できる控えめなCTA。流れを邪魔しません。',
+            attributes: {
+                company: { type: 'string', default: 'sbi' },
+                style: { type: 'string', default: 'default' }
+            },
+            edit: EditInlineCTA
+        },
+        {
+            name: 'soico-cta/single-button',
+            title: i18n.singleButton || 'CTAボタン',
+            icon: 'button',
+            description: 'シンプルなボタンのみ。任意の場所に配置できます。',
+            attributes: {
+                company: { type: 'string', default: 'sbi' },
+                buttonText: { type: 'string', default: '' },
+                showPR: { type: 'boolean', default: true }
+            },
+            edit: EditSingleButton
+        },
+        {
+            name: 'soico-cta/comparison-table',
+            title: i18n.comparisonTable || '比較表',
+            icon: 'editor-table',
+            description: '複数の証券会社を比較する表形式のCTA。ランキング記事に最適。',
+            attributes: {
+                companies: { type: 'array', default: ['sbi', 'monex', 'rakuten'] },
+                limit: { type: 'number', default: 3 },
+                showCommission: { type: 'boolean', default: true }
+            },
+            edit: EditComparisonTable
+        },
+        {
+            name: 'soico-cta/subtle-banner',
+            title: i18n.subtleBanner || '控えめバナー',
+            icon: 'info-outline',
+            description: 'テキストリンク形式の最も控えめなCTA。読者の邪魔をしません。',
+            attributes: {
+                company: { type: 'string', default: 'sbi' },
+                message: { type: 'string', default: '' }
+            },
+            edit: EditSubtleBanner
+        }
+    ];
+
+    // 各ブロックを登録
+    var registrationResults = { success: [], failed: [] };
+
+    blockDefinitions.forEach(function(block) {
+        var result = reRegisterBlock(block.name, block.edit, block);
+        if (result) {
+            registrationResults.success.push(block.name);
+        } else {
+            registrationResults.failed.push(block.name);
+        }
+    });
+
+    log('=== ブロック登録完了 ===');
+    log('成功: ' + registrationResults.success.length + '件', registrationResults.success);
+    if (registrationResults.failed.length > 0) {
+        warn('失敗: ' + registrationResults.failed.length + '件', registrationResults.failed);
+    }
 
     // ==========================================================================
     // 利用可能なブロック情報
     // ==========================================================================
     log('=== 利用可能なブロック ===');
-    log('📦 結論ボックス (soico-cta/conclusion-box)');
-    log('   記事冒頭に最適。証券会社のおすすめポイントと特徴リスト、CTAボタンを表示します。');
-    log('📦 インラインCTA (soico-cta/inline-cta)');
-    log('   記事の途中に自然に挿入できる控えめなCTA。流れを邪魔しません。');
-    log('📦 CTAボタン (soico-cta/single-button)');
-    log('   シンプルなボタンのみ。任意の場所に配置できます。');
-    log('📦 比較表 (soico-cta/comparison-table)');
-    log('   複数の証券会社を比較する表形式のCTA。ランキング記事に最適。');
-    log('📦 控えめバナー (soico-cta/subtle-banner)');
-    log('   テキストリンク形式の最も控えめなCTA。読者の邪魔をしません。');
+    blockDefinitions.forEach(function(block) {
+        log('📦 ' + block.title + ' (' + block.name + ')');
+        log('   ' + block.description);
+    });
 
     log('=== SOICO CTA 初期化完了 ===');
 
