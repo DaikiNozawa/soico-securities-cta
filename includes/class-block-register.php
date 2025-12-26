@@ -122,9 +122,28 @@ class Soico_CTA_Block_Register {
      */
     private function register_block_php( $block ) {
         $block_settings = $this->get_block_settings( $block );
-        
+
         if ( $block_settings ) {
-            register_block_type( 'soico-cta/' . $block, $block_settings );
+            $block_name = 'soico-cta/' . $block;
+            $result = register_block_type( $block_name, $block_settings );
+
+            if ( is_wp_error( $result ) ) {
+                $this->debug_log( 'Block registration FAILED', array(
+                    'name' => $block_name,
+                    'error' => $result->get_error_message(),
+                ) );
+            } elseif ( $result === false ) {
+                $this->debug_log( 'Block registration returned false', array(
+                    'name' => $block_name,
+                ) );
+            } else {
+                $this->debug_log( 'Block registration SUCCESS', array(
+                    'name' => $block_name,
+                    'result_type' => get_class( $result ),
+                ) );
+            }
+        } else {
+            $this->debug_log( 'Block settings not found', array( 'block' => $block ) );
         }
     }
     
