@@ -48,6 +48,30 @@
     // Block 1: Conclusion Box (結論ボックス)
     // =========================================================================
     registerBlockType('soico-cta/conclusion-box', {
+        title: '結論ボックス',
+        icon: 'megaphone',
+        category: 'soico-securities-cta',
+        description: '証券会社をおすすめする結論ボックス。特徴リストとCTAボタン付き。',
+        keywords: ['cta', '結論', '証券', 'conclusion'],
+        attributes: {
+            company: {
+                type: 'string',
+                default: 'sbi'
+            },
+            showFeatures: {
+                type: 'boolean',
+                default: true
+            },
+            customTitle: {
+                type: 'string',
+                default: ''
+            }
+        },
+        supports: {
+            html: false,
+            align: ['wide', 'full'],
+            className: true
+        },
         edit: function(props) {
             var attributes = props.attributes;
             var setAttributes = props.setAttributes;
@@ -98,6 +122,25 @@
     // Block 2: Inline CTA (インラインCTA)
     // =========================================================================
     registerBlockType('soico-cta/inline-cta', {
+        title: 'インラインCTA',
+        icon: 'migrate',
+        category: 'soico-securities-cta',
+        description: '記事中に挿入する控えめなインラインCTA。',
+        keywords: ['cta', 'インライン', '証券', 'inline'],
+        attributes: {
+            company: {
+                type: 'string',
+                default: 'sbi'
+            },
+            style: {
+                type: 'string',
+                default: 'default'
+            }
+        },
+        supports: {
+            html: false,
+            className: true
+        },
         edit: function(props) {
             var attributes = props.attributes;
             var setAttributes = props.setAttributes;
@@ -141,6 +184,30 @@
     // Block 3: Single Button (CTAボタン)
     // =========================================================================
     registerBlockType('soico-cta/single-button', {
+        title: 'CTAボタン',
+        icon: 'button',
+        category: 'soico-securities-cta',
+        description: 'シンプルなCTAボタン。PR表記付き。',
+        keywords: ['cta', 'ボタン', '証券', 'button'],
+        attributes: {
+            company: {
+                type: 'string',
+                default: 'sbi'
+            },
+            buttonText: {
+                type: 'string',
+                default: ''
+            },
+            showPR: {
+                type: 'boolean',
+                default: true
+            }
+        },
+        supports: {
+            html: false,
+            align: ['center', 'wide'],
+            className: true
+        },
         edit: function(props) {
             var attributes = props.attributes;
             var setAttributes = props.setAttributes;
@@ -191,6 +258,30 @@
     // Block 4: Comparison Table (比較表)
     // =========================================================================
     registerBlockType('soico-cta/comparison-table', {
+        title: '比較表',
+        icon: 'editor-table',
+        category: 'soico-securities-cta',
+        description: '複数の証券会社を比較する表。',
+        keywords: ['cta', '比較', '証券', 'table', 'comparison'],
+        attributes: {
+            companies: {
+                type: 'array',
+                default: ['sbi', 'monex', 'rakuten']
+            },
+            limit: {
+                type: 'number',
+                default: 3
+            },
+            showCommission: {
+                type: 'boolean',
+                default: true
+            }
+        },
+        supports: {
+            html: false,
+            align: ['wide', 'full'],
+            className: true
+        },
         edit: function(props) {
             var attributes = props.attributes;
             var setAttributes = props.setAttributes;
@@ -234,6 +325,25 @@
     // Block 5: Subtle Banner (控えめバナー)
     // =========================================================================
     registerBlockType('soico-cta/subtle-banner', {
+        title: '控えめバナー',
+        icon: 'info-outline',
+        category: 'soico-securities-cta',
+        description: '控えめなテキストリンクバナー。',
+        keywords: ['cta', 'バナー', '証券', 'banner', 'subtle'],
+        attributes: {
+            company: {
+                type: 'string',
+                default: 'sbi'
+            },
+            message: {
+                type: 'string',
+                default: ''
+            }
+        },
+        supports: {
+            html: false,
+            className: true
+        },
         edit: function(props) {
             var attributes = props.attributes;
             var setAttributes = props.setAttributes;

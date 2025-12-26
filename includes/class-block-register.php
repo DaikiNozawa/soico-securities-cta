@@ -57,20 +57,15 @@ class Soico_CTA_Block_Register {
     
     /**
      * ブロック登録
+     *
+     * Note: ブロックのメタデータ（title, icon, attributes等）はJavaScript側で定義。
+     * PHP側ではrender_callbackのみを登録し、サーバーサイドレンダリングを担当。
+     * block.jsonはWordPressのブロックディレクトリ等の参照用に残すが、登録には使用しない。
      */
     public function register_blocks() {
         foreach ( $this->blocks as $block ) {
-            $block_path = SOICO_CTA_PLUGIN_DIR . 'blocks/' . $block;
-            
-            // block.json が存在する場合はそれを使用
-            if ( file_exists( $block_path . '/block.json' ) ) {
-                register_block_type( $block_path, array(
-                    'render_callback' => array( $this, 'render_' . str_replace( '-', '_', $block ) ),
-                ) );
-            } else {
-                // PHPでブロック登録
-                $this->register_block_php( $block );
-            }
+            // PHP配列ベースで登録（JSと競合しないよう、render_callbackのみ設定）
+            $this->register_block_php( $block );
         }
     }
     
