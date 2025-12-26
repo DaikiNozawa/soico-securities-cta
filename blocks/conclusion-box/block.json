@@ -21,6 +21,10 @@
         "customTitle": {
             "type": "string",
             "default": ""
+        },
+        "customFeatures": {
+            "type": "string",
+            "default": ""
         }
     },
     "supports": {

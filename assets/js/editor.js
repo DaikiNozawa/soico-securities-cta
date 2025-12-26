@@ -57,6 +57,7 @@
     var SelectControl = wp.components.SelectControl;
     var ToggleControl = wp.components.ToggleControl;
     var TextControl = wp.components.TextControl;
+    var TextareaControl = wp.components.TextareaControl;
     var RangeControl = wp.components.RangeControl;
 
     log('WordPress コンポーネント読み込み完了');
@@ -133,6 +134,15 @@
         var blockProps = useBlockProps();
         var companyName = getCompanyName(attributes.company);
 
+        // カスタム特徴のプレビュー用配列
+        var previewFeatures = [];
+        if (attributes.customFeatures) {
+            previewFeatures = attributes.customFeatures.split('\n').filter(function(f) { return f.trim(); });
+        }
+        if (previewFeatures.length === 0) {
+            previewFeatures = ['特徴1（証券会社管理で設定）', '特徴2', '特徴3'];
+        }
+
         return el('div', blockProps,
             el(InspectorControls, null,
                 el(PanelBody, {
@@ -162,6 +172,15 @@
                             setAttributes({ customTitle: value });
                         },
                         help: '空欄の場合はデフォルトタイトルを使用'
+                    }),
+                    el(TextareaControl, {
+                        label: 'カスタム特徴',
+                        value: attributes.customFeatures,
+                        onChange: function(value) {
+                            setAttributes({ customFeatures: value });
+                        },
+                        help: '1行につき1つの特徴。空欄の場合は証券会社管理で設定した特徴を表示',
+                        rows: 4
                     })
                 )
             ),
@@ -175,9 +194,9 @@
                         attributes.customTitle || '証券口座を開設するなら' + companyName + 'がおすすめ'
                     ),
                     attributes.showFeatures && el('ul', { style: { margin: '10px 0', paddingLeft: '20px', color: '#666' } },
-                        el('li', null, '特徴1（実際の表示はフロントエンドで確認）'),
-                        el('li', null, '特徴2'),
-                        el('li', null, '特徴3')
+                        previewFeatures.map(function(feature, idx) {
+                            return el('li', { key: idx }, feature);
+                        })
                     ),
                     el('div', { style: { marginTop: '15px' } },
                         el('span', { style: { background: '#FF6B35', color: '#fff', padding: '12px 24px', borderRadius: '4px', display: 'inline-block' } },
@@ -185,7 +204,7 @@
                         )
                     ),
                     el('p', { style: { fontSize: '12px', color: '#999', marginTop: '10px' } },
-                        '※エディタプレビュー - 実際の表示はフロントエンドで確認してください'
+                        '※エディタプレビュー'
                     )
                 )
             )
@@ -200,6 +219,7 @@
         var setAttributes = props.setAttributes;
         var blockProps = useBlockProps();
         var companyName = getCompanyName(attributes.company);
+        var featureText = attributes.featureText || '特徴（証券会社管理で設定）';
 
         return el('div', blockProps,
             el(InspectorControls, null,
@@ -219,6 +239,14 @@
                         onChange: function(value) {
                             setAttributes({ style: value });
                         }
+                    }),
+                    el(TextControl, {
+                        label: '特徴テキスト',
+                        value: attributes.featureText,
+                        onChange: function(value) {
+                            setAttributes({ featureText: value });
+                        },
+                        help: '空欄の場合は証券会社管理で設定した特徴を表示'
                     })
                 )
             ),
@@ -226,7 +254,7 @@
                 el('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: attributes.style === 'subtle' ? '#f5f5f5' : '#e3f2fd', borderRadius: '6px', border: '1px solid #ddd' } },
                     el('div', null,
                         el('strong', null, companyName),
-                        el('span', { style: { marginLeft: '10px', color: '#666', fontSize: '14px' } }, '特徴テキスト')
+                        el('span', { style: { marginLeft: '10px', color: '#666', fontSize: '14px' } }, featureText)
                     ),
                     el('span', { style: { background: '#FF6B35', color: '#fff', padding: '6px 12px', borderRadius: '4px', fontSize: '13px' } }, '詳細を見る →')
                 ),
@@ -448,7 +476,8 @@
             attributes: {
                 company: { type: 'string', default: 'sbi' },
                 showFeatures: { type: 'boolean', default: true },
-                customTitle: { type: 'string', default: '' }
+                customTitle: { type: 'string', default: '' },
+                customFeatures: { type: 'string', default: '' }
             },
             edit: EditConclusionBox
         },
@@ -459,7 +488,8 @@
             description: '記事の途中に自然に挿入できる控えめなCTA。流れを邪魔しません。',
             attributes: {
                 company: { type: 'string', default: 'sbi' },
-                style: { type: 'string', default: 'default' }
+                style: { type: 'string', default: 'default' },
+                featureText: { type: 'string', default: '' }
             },
             edit: EditInlineCTA
         },

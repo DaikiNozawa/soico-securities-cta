@@ -17,6 +17,10 @@
         "style": {
             "type": "string",
             "default": "default"
+        },
+        "featureText": {
+            "type": "string",
+            "default": ""
         }
     },
     "supports": {

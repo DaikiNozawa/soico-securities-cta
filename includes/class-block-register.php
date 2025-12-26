@@ -466,14 +466,23 @@ class Soico_CTA_Block_Register {
         
         $show_features = $attributes['showFeatures'] ?? true;
         $custom_title = $attributes['customTitle'] ?? '';
-        
+        $custom_features = $attributes['customFeatures'] ?? '';
+
         $title = $custom_title ? $custom_title : sprintf(
             __( '証券口座を開設するなら<span style="color: #E53935;">%s</span>がおすすめ', 'soico-securities-cta' ),
             esc_html( $security['name'] )
         );
-        
+
+        // カスタム特徴がある場合は使用、なければ証券会社データから取得
+        $features = array();
+        if ( ! empty( $custom_features ) ) {
+            $features = array_filter( array_map( 'trim', explode( "\n", $custom_features ) ) );
+        } elseif ( ! empty( $security['features'] ) ) {
+            $features = (array) $security['features'];
+        }
+
         $tracking_attrs = $securities_data->get_tracking_attributes( $company_slug, 'conclusion_box' );
-        
+
         ob_start();
         ?>
         <div class="soico-cta-conclusion-box">
@@ -481,10 +490,10 @@ class Soico_CTA_Block_Register {
                 <span class="soico-cta-conclusion-label"><?php esc_html_e( '結論', 'soico-securities-cta' ); ?></span>
                 <h3 class="soico-cta-conclusion-title"><?php echo wp_kses_post( $title ); ?></h3>
             </div>
-            
-            <?php if ( $show_features && ! empty( $security['features'] ) ) : ?>
+
+            <?php if ( $show_features && ! empty( $features ) ) : ?>
                 <ul class="soico-cta-conclusion-features">
-                    <?php foreach ( (array) $security['features'] as $feature ) : ?>
+                    <?php foreach ( $features as $feature ) : ?>
                         <li><?php echo esc_html( $feature ); ?></li>
                     <?php endforeach; ?>
                 </ul>
@@ -533,8 +542,11 @@ class Soico_CTA_Block_Register {
         
         $style = $attributes['style'] ?? 'default';
         $tracking_attrs = $securities_data->get_tracking_attributes( $company_slug, 'inline_cta' );
-        
-        $feature_text = ! empty( $security['features'] ) ? $security['features'][0] : '';
+
+        // カスタム特徴テキストがある場合は使用、なければ証券会社データから取得
+        $feature_text = ! empty( $attributes['featureText'] )
+            ? $attributes['featureText']
+            : ( ! empty( $security['features'] ) ? $security['features'][0] : '' );
         
         ob_start();
         ?>
@@ -647,9 +659,18 @@ class Soico_CTA_Block_Register {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ( $securities as $slug => $security ) : 
+                    <?php foreach ( $securities as $slug => $security ) :
                         $tracking_attrs = $securities_data->get_tracking_attributes( $slug, 'comparison_table' );
-                        $rank_class = $rank === 1 ? 'soico-cta-rank-gold' : ( $rank === 2 ? 'soico-cta-rank-silver' : 'soico-cta-rank-bronze' );
+                        // ランクに応じたクラスを設定（4位以降はデフォルト）
+                        if ( $rank === 1 ) {
+                            $rank_class = 'soico-cta-rank-gold';
+                        } elseif ( $rank === 2 ) {
+                            $rank_class = 'soico-cta-rank-silver';
+                        } elseif ( $rank === 3 ) {
+                            $rank_class = 'soico-cta-rank-bronze';
+                        } else {
+                            $rank_class = 'soico-cta-rank-default';
+                        }
                     ?>
                         <tr class="<?php echo $rank === 1 ? 'soico-cta-row-highlight' : ''; ?>">
                             <td class="soico-cta-col-rank">
@@ -719,20 +740,34 @@ class Soico_CTA_Block_Register {
         }
         
         // 空文字もフォールバック対象とする（?? は null のみ判定のため）
-        $message = ! empty( $attributes['message'] )
-            ? $attributes['message']
-            : sprintf(
-                __( '💡 証券口座をお探しなら → %s（国内株手数料0円）', 'soico-securities-cta' ),
-                $security['name']
-            );
-        
+        $custom_message = ! empty( $attributes['message'] ) ? $attributes['message'] : '';
         $tracking_attrs = $securities_data->get_tracking_attributes( $company_slug, 'subtle_banner' );
-        
+
+        // リンク生成
+        $link_html = '<a href="' . esc_url( $security['affiliate_url'] ) . '" target="_blank" rel="noopener noreferrer sponsored"' . $tracking_attrs . '>' . esc_html( $security['name'] ) . '</a>';
+
+        if ( $custom_message ) {
+            // カスタムメッセージがある場合
+            if ( strpos( $custom_message, $security['name'] ) !== false ) {
+                // メッセージ内に証券会社名があればリンクに置換
+                $message_html = str_replace( $security['name'], $link_html, $custom_message );
+            } else {
+                // メッセージ内に証券会社名がなければ末尾にリンクを追加
+                $message_html = $custom_message . ' → ' . $link_html;
+            }
+        } else {
+            // デフォルトメッセージ
+            $message_html = sprintf(
+                __( '💡 証券口座をお探しなら → %s（国内株手数料0円）', 'soico-securities-cta' ),
+                $link_html
+            );
+        }
+
         ob_start();
         ?>
         <div class="soico-cta-subtle-banner">
             <span class="soico-cta-subtle-message">
-                <?php echo wp_kses_post( str_replace( $security['name'], '<a href="' . esc_url( $security['affiliate_url'] ) . '" target="_blank" rel="noopener noreferrer sponsored"' . $tracking_attrs . '>' . esc_html( $security['name'] ) . '</a>', $message ) ); ?>
+                <?php echo wp_kses_post( $message_html ); ?>
             </span>
             <span class="soico-cta-subtle-pr">PR</span>
         </div>

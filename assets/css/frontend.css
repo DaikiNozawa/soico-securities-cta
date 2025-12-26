@@ -189,6 +189,8 @@
 .soico-cta-comparison-wrapper {
     margin: 24px 0;
     overflow-x: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .soico-cta-comparison-table {
@@ -196,17 +198,20 @@
     border-collapse: collapse;
     font-size: 14px;
     min-width: 600px;
+    background: #fff;
 }
 
 .soico-cta-comparison-table thead tr {
-    background: #1E3A5F;
+    background: linear-gradient(135deg, #1E3A5F 0%, #2C5282 100%);
     color: #fff;
 }
 
 .soico-cta-comparison-table th {
-    padding: 12px;
+    padding: 14px 12px;
     text-align: left;
     font-weight: bold;
+    font-size: 13px;
+    letter-spacing: 0.5px;
 }
 
 .soico-cta-comparison-table th.soico-cta-col-rank,
@@ -215,9 +220,24 @@
     text-align: center;
 }
 
+.soico-cta-comparison-table tbody tr {
+    background: #fff;
+    transition: background 0.2s;
+}
+
+/* 偶数行のゼブラストライプ */
+.soico-cta-comparison-table tbody tr:nth-child(even) {
+    background: #F8FAFC;
+}
+
+/* ホバー効果 */
+.soico-cta-comparison-table tbody tr:hover {
+    background: #EDF2F7;
+}
+
 .soico-cta-comparison-table td {
-    padding: 14px 12px;
-    border-bottom: 1px solid #ddd;
+    padding: 16px 12px;
+    border-bottom: 1px solid #E2E8F0;
     vertical-align: middle;
 }
 
@@ -227,63 +247,109 @@
     text-align: center;
 }
 
+/* 1位のハイライト - 左ボーダーで控えめに強調 */
 .soico-cta-row-highlight {
-    background: #FFF8E1;
+    background: #fff !important;
+    border-left: 4px solid var(--soico-cta-primary);
 }
 
+.soico-cta-row-highlight:hover {
+    background: #FFF5F0 !important;
+}
+
+/* 証券会社名の強調 */
+.soico-cta-comparison-table td.soico-cta-col-name strong {
+    color: #1E3A5F;
+    font-size: 15px;
+}
+
+.soico-cta-row-highlight td.soico-cta-col-name strong {
+    color: var(--soico-cta-primary);
+}
+
+/* ランキングバッジ */
 .soico-cta-rank {
-    display: inline-block;
-    width: 28px;
-    height: 28px;
-    line-height: 28px;
-    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     font-weight: bold;
-    font-size: 12px;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .soico-cta-rank-gold {
-    background: #FFD700;
-    color: #333;
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .soico-cta-rank-silver {
-    background: #C0C0C0;
-    color: #333;
+    background: linear-gradient(135deg, #E8E8E8 0%, #A0A0A0 100%);
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .soico-cta-rank-bronze {
-    background: #CD7F32;
+    background: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%);
     color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
+/* 4位以降のランク */
+.soico-cta-rank-default {
+    background: #E2E8F0;
+    color: #4A5568;
+}
+
+/* 手数料 */
 .soico-cta-commission {
     color: #E53935;
     font-weight: bold;
+    font-size: 15px;
 }
 
+/* 特徴テキスト */
+.soico-cta-col-features {
+    color: #4A5568;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* テーブルボタン */
 .soico-cta-table-button {
     display: inline-block;
-    padding: 8px 16px;
-    border-radius: 4px;
+    padding: 10px 20px;
+    border-radius: 6px;
     color: #fff;
     text-decoration: none;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: bold;
-    transition: opacity 0.2s;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .soico-cta-table-button:hover {
-    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     color: #fff;
     text-decoration: none;
+}
+
+/* 1位のボタン強調 */
+.soico-cta-row-highlight .soico-cta-table-button {
+    padding: 12px 24px;
+    font-size: 14px;
 }
 
 .soico-cta-table-note {
     text-align: right;
     font-size: 12px;
-    color: #888;
-    margin-top: 8px;
+    color: #718096;
+    margin-top: 12px;
+    padding-right: 4px;
 }
 
 /* ==========================================================================
