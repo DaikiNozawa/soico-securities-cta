@@ -222,7 +222,7 @@ class Soico_CTA_Block_Register {
                 'wp-components',
                 'wp-i18n',
                 'wp-block-editor',
-                // wp-server-side-render は静的プレビュー方式のため不要
+                'wp-hooks', // addFilter を使用するため必要
             ),
             SOICO_CTA_VERSION,
             true

@@ -10,7 +10,7 @@
     // ==========================================================================
     // デバッグ・ログユーティリティ
     // ==========================================================================
-    var DEBUG = true; // 本番環境ではfalseに変更
+    var DEBUG = true;
 
     function log(message, data) {
         if (DEBUG && console && console.log) {
@@ -48,8 +48,7 @@
     // WordPress コンポーネント
     // ==========================================================================
     var el = wp.element.createElement;
-    var registerBlockType = wp.blocks.registerBlockType;
-    var getBlockType = wp.blocks.getBlockType;
+    var addFilter = wp.hooks.addFilter;
     var useBlockProps = wp.blockEditor.useBlockProps;
     var InspectorControls = wp.blockEditor.InspectorControls;
     var PanelBody = wp.components.PanelBody;
@@ -57,7 +56,6 @@
     var ToggleControl = wp.components.ToggleControl;
     var TextControl = wp.components.TextControl;
     var RangeControl = wp.components.RangeControl;
-    // ServerSideRender は REST API 404問題のため使用せず、静的プレビューを採用
 
     log('WordPress コンポーネント読み込み完了');
 
@@ -98,56 +96,7 @@
     ];
 
     // ==========================================================================
-    // ブロック登録関数
-    // ==========================================================================
-
-    /**
-     * PHPで登録済みのブロックにedit関数を追加する
-     * PHPのrender_callbackを保持したまま、JS側のedit/save関数を設定
-     */
-    function enhanceBlock(name, editFunction, saveFunction) {
-        var existingBlock = getBlockType(name);
-
-        if (existingBlock) {
-            // PHPで既に登録されている場合、edit/save関数を直接設定
-            log('既存ブロックを拡張: ' + name, {
-                hasEdit: !!existingBlock.edit,
-                hasRenderCallback: !!existingBlock.render_callback,
-                attributes: Object.keys(existingBlock.attributes || {})
-            });
-
-            existingBlock.edit = editFunction;
-            existingBlock.save = saveFunction;
-
-            log('ブロック拡張完了: ' + name);
-            return true;
-        } else {
-            // PHPで登録されていない場合は新規登録
-            warn('ブロックが未登録のため新規登録: ' + name);
-            return false;
-        }
-    }
-
-    /**
-     * 新規ブロック登録（PHPで登録されていない場合のフォールバック）
-     */
-    function registerNewBlock(name, settings) {
-        try {
-            registerBlockType(name, settings);
-            log('新規ブロック登録完了: ' + name);
-            return true;
-        } catch (e) {
-            error('ブロック登録エラー: ' + name, e);
-            return false;
-        }
-    }
-
-    // ==========================================================================
-    // Edit関数定義
-    // ==========================================================================
-
-    // ==========================================================================
-    // 静的プレビューコンポーネント（REST API不要）
+    // ヘルパー関数
     // ==========================================================================
 
     /**
@@ -163,9 +112,20 @@
     }
 
     /**
+     * 共通のsave関数（動的ブロック用 - PHPでレンダリング）
+     */
+    function saveDynamic() {
+        return null;
+    }
+
+    // ==========================================================================
+    // Edit関数定義（静的プレビュー方式）
+    // ==========================================================================
+
+    /**
      * 結論ボックス Edit
      */
-    function editConclusionBox(props) {
+    function EditConclusionBox(props) {
         var attributes = props.attributes;
         var setAttributes = props.setAttributes;
         var blockProps = useBlockProps();
@@ -205,7 +165,7 @@
                     })
                 )
             ),
-            // 静的プレビュー（REST API不要）
+            // 静的プレビュー
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview' },
                 el('div', { className: 'soico-cta-preview-box', style: { border: '2px solid #1E88E5', borderRadius: '8px', padding: '20px', background: '#f8f9fa' } },
                     el('div', { style: { marginBottom: '10px' } },
@@ -235,7 +195,7 @@
     /**
      * インラインCTA Edit
      */
-    function editInlineCTA(props) {
+    function EditInlineCTA(props) {
         var attributes = props.attributes;
         var setAttributes = props.setAttributes;
         var blockProps = useBlockProps();
@@ -278,7 +238,7 @@
     /**
      * CTAボタン Edit
      */
-    function editSingleButton(props) {
+    function EditSingleButton(props) {
         var attributes = props.attributes;
         var setAttributes = props.setAttributes;
         var blockProps = useBlockProps();
@@ -326,7 +286,7 @@
     /**
      * 比較表 Edit
      */
-    function editComparisonTable(props) {
+    function EditComparisonTable(props) {
         var attributes = props.attributes;
         var setAttributes = props.setAttributes;
         var blockProps = useBlockProps();
@@ -393,7 +353,7 @@
     /**
      * 控えめバナー Edit
      */
-    function editSubtleBanner(props) {
+    function EditSubtleBanner(props) {
         var attributes = props.attributes;
         var setAttributes = props.setAttributes;
         var blockProps = useBlockProps();
@@ -431,81 +391,63 @@
         );
     }
 
-    /**
-     * 共通のsave関数（動的ブロック用）
-     */
-    function saveDynamic() {
-        return null; // PHPでレンダリング
-    }
-
     // ==========================================================================
-    // ブロック登録実行
+    // ブロック登録フィルター（重要！）
+    // PHPで登録されるブロックに対して、登録時にedit/save関数を注入する
+    // これによりServerSideRenderの使用を防ぐ
     // ==========================================================================
 
-    log('=== ブロック登録開始 ===');
-
-    // 利用可能なブロック一覧
-    var blocks = [
-        {
-            name: 'soico-cta/conclusion-box',
-            title: '結論ボックス',
-            description: '記事冒頭に最適。証券会社のおすすめポイントと特徴リスト、CTAボタンを表示します。',
-            edit: editConclusionBox
-        },
-        {
-            name: 'soico-cta/inline-cta',
-            title: 'インラインCTA',
-            description: '記事の途中に自然に挿入できる控えめなCTA。流れを邪魔しません。',
-            edit: editInlineCTA
-        },
-        {
-            name: 'soico-cta/single-button',
-            title: 'CTAボタン',
-            description: 'シンプルなボタンのみ。任意の場所に配置できます。',
-            edit: editSingleButton
-        },
-        {
-            name: 'soico-cta/comparison-table',
-            title: '比較表',
-            description: '複数の証券会社を比較する表形式のCTA。ランキング記事に最適。',
-            edit: editComparisonTable
-        },
-        {
-            name: 'soico-cta/subtle-banner',
-            title: '控えめバナー',
-            description: 'テキストリンク形式の最も控えめなCTA。読者の邪魔をしません。',
-            edit: editSubtleBanner
-        }
-    ];
-
-    // 各ブロックの登録状態を確認・拡張
-    var registrationResults = {
-        enhanced: [],
-        failed: []
+    var editFunctions = {
+        'soico-cta/conclusion-box': EditConclusionBox,
+        'soico-cta/inline-cta': EditInlineCTA,
+        'soico-cta/single-button': EditSingleButton,
+        'soico-cta/comparison-table': EditComparisonTable,
+        'soico-cta/subtle-banner': EditSubtleBanner
     };
 
-    blocks.forEach(function(block) {
-        var result = enhanceBlock(block.name, block.edit, saveDynamic);
-        if (result) {
-            registrationResults.enhanced.push(block.name);
-        } else {
-            registrationResults.failed.push(block.name);
+    log('=== ブロック登録フィルター設定 ===');
+
+    /**
+     * blocks.registerBlockType フィルター
+     * PHPがブロックを登録する際に呼ばれ、edit/save関数を注入する
+     */
+    addFilter(
+        'blocks.registerBlockType',
+        'soico-cta/inject-edit-functions',
+        function(settings, name) {
+            // soico-ctaブロックのみ処理
+            if (editFunctions[name]) {
+                log('ブロック登録をインターセプト: ' + name);
+
+                // edit関数を注入（ServerSideRenderを使用しない静的プレビュー）
+                settings.edit = editFunctions[name];
+
+                // save関数を注入（動的ブロックなのでnullを返す）
+                settings.save = saveDynamic;
+
+                log('edit/save関数を注入完了: ' + name);
+            }
+
+            return settings;
         }
-    });
+    );
 
-    // 登録結果をログ出力
-    log('=== ブロック登録完了 ===');
-    log('拡張成功:', registrationResults.enhanced);
-    if (registrationResults.failed.length > 0) {
-        warn('拡張失敗:', registrationResults.failed);
-    }
+    log('=== フィルター設定完了 ===');
 
-    // 利用可能なブロック情報をコンソールに表示
+    // ==========================================================================
+    // 利用可能なブロック情報
+    // ==========================================================================
     log('=== 利用可能なブロック ===');
-    blocks.forEach(function(block) {
-        log('📦 ' + block.title + ' (' + block.name + ')');
-        log('   ' + block.description);
-    });
+    log('📦 結論ボックス (soico-cta/conclusion-box)');
+    log('   記事冒頭に最適。証券会社のおすすめポイントと特徴リスト、CTAボタンを表示します。');
+    log('📦 インラインCTA (soico-cta/inline-cta)');
+    log('   記事の途中に自然に挿入できる控えめなCTA。流れを邪魔しません。');
+    log('📦 CTAボタン (soico-cta/single-button)');
+    log('   シンプルなボタンのみ。任意の場所に配置できます。');
+    log('📦 比較表 (soico-cta/comparison-table)');
+    log('   複数の証券会社を比較する表形式のCTA。ランキング記事に最適。');
+    log('📦 控えめバナー (soico-cta/subtle-banner)');
+    log('   テキストリンク形式の最も控えめなCTA。読者の邪魔をしません。');
 
     log('=== SOICO CTA 初期化完了 ===');
 
