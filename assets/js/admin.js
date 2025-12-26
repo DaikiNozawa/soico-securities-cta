@@ -141,22 +141,27 @@
 
             $submitBtn.prop('disabled', true).text(config.i18n && config.i18n.saving ? config.i18n.saving : '保存中...');
 
+            var formData = getFormData($form);
+            console.log('[SOICO CTA Admin] Saving securities:', formData);
+
             $.ajax({
                 url: config.ajaxUrl,
                 type: 'POST',
                 data: {
                     action: 'soico_cta_save_securities',
                     nonce: config.nonce,
-                    securities: getFormData($form)
+                    securities: formData
                 },
                 success: function(response) {
+                    console.log('[SOICO CTA Admin] Save response:', response);
                     if (response.success) {
                         showNotice(config.i18n && config.i18n.saved ? config.i18n.saved : '保存しました', 'success');
                     } else {
                         showNotice(response.data && response.data.message ? response.data.message : 'エラーが発生しました', 'error');
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error('[SOICO CTA Admin] Save error:', status, error, xhr.responseText);
                     showNotice(config.i18n && config.i18n.error ? config.i18n.error : 'エラーが発生しました', 'error');
                 },
                 complete: function() {

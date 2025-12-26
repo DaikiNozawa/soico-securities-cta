@@ -431,27 +431,55 @@ data-cta-type="[CTAタイプ]"
     }
     
     /**
+     * デバッグログ出力
+     */
+    private function debug_log( $message, $context = array() ) {
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            $log_message = '[SOICO CTA Admin] ' . $message;
+            if ( ! empty( $context ) ) {
+                $log_message .= ' | ' . wp_json_encode( $context, JSON_UNESCAPED_UNICODE );
+            }
+            error_log( $log_message );
+        }
+    }
+
+    /**
      * AJAX: 証券会社保存
      */
     public function ajax_save_securities() {
-        check_ajax_referer( 'soico_cta_admin_nonce', 'nonce' );
-        
+        $this->debug_log( 'ajax_save_securities called' );
+
+        // Nonce検証
+        if ( ! check_ajax_referer( 'soico_cta_admin_nonce', 'nonce', false ) ) {
+            $this->debug_log( 'Nonce verification failed' );
+            wp_send_json_error( array( 'message' => 'セキュリティ検証に失敗しました' ) );
+        }
+
         if ( ! current_user_can( 'manage_options' ) ) {
+            $this->debug_log( 'Permission denied' );
             wp_send_json_error( array( 'message' => '権限がありません' ) );
         }
-        
+
         $securities = isset( $_POST['securities'] ) ? $_POST['securities'] : array();
-        
+        $this->debug_log( 'Received securities', array( 'count' => count( $securities ), 'slugs' => array_keys( $securities ) ) );
+
+        if ( empty( $securities ) ) {
+            $this->debug_log( 'No securities data received' );
+            wp_send_json_error( array( 'message' => 'データが送信されていません' ) );
+        }
+
         // features を配列に変換
         foreach ( $securities as $slug => &$data ) {
             if ( isset( $data['features'] ) && is_string( $data['features'] ) ) {
                 $data['features'] = array_filter( array_map( 'trim', explode( "\n", $data['features'] ) ) );
             }
         }
-        
+
         $securities_data = Soico_CTA_Securities_Data::get_instance();
         $result = $securities_data->save_securities( $securities );
-        
+
+        $this->debug_log( 'Save result', array( 'result' => $result ) );
+
         if ( $result ) {
             wp_send_json_success( array( 'message' => '保存しました' ) );
         } else {

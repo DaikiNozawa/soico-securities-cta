@@ -205,15 +205,33 @@ class Soico_CTA_Securities_Data {
      * @return bool
      */
     public function save_securities( $data ) {
+        $this->debug_log( 'save_securities called', array( 'data_count' => count( $data ) ) );
+
         // バリデーション
         $sanitized = $this->sanitize_securities_data( $data );
-        
+
+        $this->debug_log( 'Sanitized data', array(
+            'slugs' => array_keys( $sanitized ),
+            'count' => count( $sanitized ),
+        ) );
+
         // 保存
+        // Note: update_option() はデータに変更がない場合も false を返すため、
+        // 実際にエラーかどうかを確認するために get_option で比較する
+        $current = get_option( 'soico_cta_securities_data', array() );
         $result = update_option( 'soico_cta_securities_data', $sanitized );
-        
+
+        // データが同じ場合は成功とみなす
+        if ( ! $result && $current === $sanitized ) {
+            $this->debug_log( 'Data unchanged, treating as success' );
+            $result = true;
+        }
+
+        $this->debug_log( 'Save result', array( 'result' => $result ) );
+
         // キャッシュクリア
         $this->clear_cache();
-        
+
         return $result;
     }
     
