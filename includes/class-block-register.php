@@ -85,13 +85,18 @@ class Soico_CTA_Block_Register {
      */
     private function get_block_settings( $block ) {
         $settings = array(
+            'api_version'   => 3,
             'editor_script' => 'soico-cta-editor',
             'editor_style'  => 'soico-cta-editor-style',
             'style'         => 'soico-cta-frontend',
         );
-        
+
         switch ( $block ) {
             case 'conclusion-box':
+                $settings['title'] = __( '結論ボックス', 'soico-securities-cta' );
+                $settings['icon'] = 'megaphone';
+                $settings['category'] = 'soico-securities-cta';
+                $settings['description'] = __( '証券会社をおすすめする結論ボックス', 'soico-securities-cta' );
                 $settings['attributes'] = array(
                     'company' => array(
                         'type'    => 'string',
@@ -110,6 +115,10 @@ class Soico_CTA_Block_Register {
                 break;
                 
             case 'inline-cta':
+                $settings['title'] = __( 'インラインCTA', 'soico-securities-cta' );
+                $settings['icon'] = 'migrate';
+                $settings['category'] = 'soico-securities-cta';
+                $settings['description'] = __( '記事中に挿入する控えめなインラインCTA', 'soico-securities-cta' );
                 $settings['attributes'] = array(
                     'company' => array(
                         'type'    => 'string',
@@ -124,6 +133,10 @@ class Soico_CTA_Block_Register {
                 break;
                 
             case 'single-button':
+                $settings['title'] = __( 'CTAボタン', 'soico-securities-cta' );
+                $settings['icon'] = 'button';
+                $settings['category'] = 'soico-securities-cta';
+                $settings['description'] = __( 'シンプルなCTAボタン。PR表記付き', 'soico-securities-cta' );
                 $settings['attributes'] = array(
                     'company' => array(
                         'type'    => 'string',
@@ -142,6 +155,10 @@ class Soico_CTA_Block_Register {
                 break;
                 
             case 'comparison-table':
+                $settings['title'] = __( '比較表', 'soico-securities-cta' );
+                $settings['icon'] = 'editor-table';
+                $settings['category'] = 'soico-securities-cta';
+                $settings['description'] = __( '複数の証券会社を比較する表', 'soico-securities-cta' );
                 $settings['attributes'] = array(
                     'companies' => array(
                         'type'    => 'array',
@@ -160,6 +177,10 @@ class Soico_CTA_Block_Register {
                 break;
                 
             case 'subtle-banner':
+                $settings['title'] = __( '控えめバナー', 'soico-securities-cta' );
+                $settings['icon'] = 'info-outline';
+                $settings['category'] = 'soico-securities-cta';
+                $settings['description'] = __( '控えめなテキストリンクバナー', 'soico-securities-cta' );
                 $settings['attributes'] = array(
                     'company' => array(
                         'type'    => 'string',

@@ -9,6 +9,7 @@
 
     var el = wp.element.createElement;
     var registerBlockType = wp.blocks.registerBlockType;
+    var getBlockType = wp.blocks.getBlockType;
     var useBlockProps = wp.blockEditor.useBlockProps;
     var InspectorControls = wp.blockEditor.InspectorControls;
     var ServerSideRender = wp.serverSideRender;
@@ -18,6 +19,18 @@
     var TextControl = wp.components.TextControl;
     var RangeControl = wp.components.RangeControl;
     var __ = wp.i18n.__;
+
+    /**
+     * ブロック登録ヘルパー（二重登録を防止）
+     */
+    function safeRegisterBlockType(name, settings) {
+        // 既に登録されている場合はスキップ
+        if (getBlockType(name)) {
+            console.log('Block already registered: ' + name);
+            return;
+        }
+        registerBlockType(name, settings);
+    }
 
     // Get localized data
     var data = window.soicoCTAData || {};
@@ -47,7 +60,7 @@
     // =========================================================================
     // Block 1: Conclusion Box (結論ボックス)
     // =========================================================================
-    registerBlockType('soico-cta/conclusion-box', {
+    safeRegisterBlockType('soico-cta/conclusion-box', {
         title: '結論ボックス',
         icon: 'megaphone',
         category: 'soico-securities-cta',
@@ -121,7 +134,7 @@
     // =========================================================================
     // Block 2: Inline CTA (インラインCTA)
     // =========================================================================
-    registerBlockType('soico-cta/inline-cta', {
+    safeRegisterBlockType('soico-cta/inline-cta', {
         title: 'インラインCTA',
         icon: 'migrate',
         category: 'soico-securities-cta',
@@ -183,7 +196,7 @@
     // =========================================================================
     // Block 3: Single Button (CTAボタン)
     // =========================================================================
-    registerBlockType('soico-cta/single-button', {
+    safeRegisterBlockType('soico-cta/single-button', {
         title: 'CTAボタン',
         icon: 'button',
         category: 'soico-securities-cta',
@@ -257,7 +270,7 @@
     // =========================================================================
     // Block 4: Comparison Table (比較表)
     // =========================================================================
-    registerBlockType('soico-cta/comparison-table', {
+    safeRegisterBlockType('soico-cta/comparison-table', {
         title: '比較表',
         icon: 'editor-table',
         category: 'soico-securities-cta',
@@ -324,7 +337,7 @@
     // =========================================================================
     // Block 5: Subtle Banner (控えめバナー)
     // =========================================================================
-    registerBlockType('soico-cta/subtle-banner', {
+    safeRegisterBlockType('soico-cta/subtle-banner', {
         title: '控えめバナー',
         icon: 'info-outline',
         category: 'soico-securities-cta',
