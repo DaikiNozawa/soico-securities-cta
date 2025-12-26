@@ -70,19 +70,22 @@ final class Soico_Securities_CTA {
         // プラグイン有効化・無効化
         register_activation_hook( __FILE__, array( $this, 'activate' ) );
         register_deactivation_hook( __FILE__, array( $this, 'deactivate' ) );
-        
+
         // 初期化
         add_action( 'init', array( $this, 'init' ) );
         add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
-        
+
         // ブロックカテゴリ追加
         add_filter( 'block_categories_all', array( $this, 'add_block_category' ), 10, 2 );
-        
+
         // フロントエンドアセット
         add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_frontend_assets' ) );
-        
+
         // 管理画面リンク
         add_filter( 'plugin_action_links_' . SOICO_CTA_PLUGIN_BASENAME, array( $this, 'add_settings_link' ) );
+
+        // テスト用ショートコード
+        add_shortcode( 'soico_cta_test', array( $this, 'render_test_shortcode' ) );
     }
     
     /**
@@ -305,6 +308,87 @@ final class Soico_Securities_CTA {
         // キャッシュクリア
         delete_transient( 'soico_cta_securities_cache' );
         delete_transient( 'soico_cta_thirsty_links_cache' );
+    }
+
+    /**
+     * テスト用ショートコード
+     *
+     * @param array $atts ショートコード属性
+     * @return string
+     */
+    public function render_test_shortcode( $atts ) {
+        $atts = shortcode_atts( array(
+            'type'    => 'conclusion-box',
+            'company' => 'sbi',
+            'limit'   => 3,
+        ), $atts, 'soico_cta_test' );
+
+        // CSSを読み込み
+        wp_enqueue_style(
+            'soico-cta-frontend',
+            SOICO_CTA_PLUGIN_URL . 'assets/css/frontend.css',
+            array(),
+            SOICO_CTA_VERSION
+        );
+
+        $block_register = Soico_CTA_Block_Register::get_instance();
+
+        $output = '';
+
+        switch ( $atts['type'] ) {
+            case 'conclusion-box':
+                $output = $block_register->render_conclusion_box( array(
+                    'company'      => sanitize_key( $atts['company'] ),
+                    'showFeatures' => true,
+                    'customTitle'  => '',
+                ) );
+                break;
+
+            case 'inline-cta':
+                $output = $block_register->render_inline_cta( array(
+                    'company' => sanitize_key( $atts['company'] ),
+                    'style'   => 'default',
+                ) );
+                break;
+
+            case 'single-button':
+                $output = $block_register->render_single_button( array(
+                    'company'    => sanitize_key( $atts['company'] ),
+                    'buttonText' => '',
+                    'showPR'     => true,
+                ) );
+                break;
+
+            case 'comparison-table':
+                $output = $block_register->render_comparison_table( array(
+                    'limit'          => absint( $atts['limit'] ),
+                    'showCommission' => true,
+                ) );
+                break;
+
+            case 'subtle-banner':
+                $output = $block_register->render_subtle_banner( array(
+                    'company' => sanitize_key( $atts['company'] ),
+                    'message' => '',
+                ) );
+                break;
+
+            default:
+                $output = '<!-- [SOICO CTA Test] Unknown type: ' . esc_attr( $atts['type'] ) . ' -->';
+        }
+
+        // デバッグ情報を追加（WP_DEBUG時のみ）
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            $debug_info = sprintf(
+                '<!-- [SOICO CTA Test Shortcode] type=%s, company=%s, output_length=%d -->',
+                esc_attr( $atts['type'] ),
+                esc_attr( $atts['company'] ),
+                strlen( $output )
+            );
+            $output = $debug_info . $output;
+        }
+
+        return $output;
     }
 }
 

@@ -58,6 +58,11 @@ class Soico_CTA_Block_Register {
         if ( defined( 'WP_DEBUG' ) && WP_DEBUG && ! is_admin() ) {
             add_filter( 'the_content', array( $this, 'debug_content_blocks' ), 5 );
         }
+
+        // 管理画面でのデバッグ用メタボックス
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            add_action( 'add_meta_boxes', array( $this, 'add_debug_meta_box' ) );
+        }
     }
 
     /**
@@ -327,6 +332,80 @@ class Soico_CTA_Block_Register {
             return '<!-- [SOICO CTA Debug] ' . esc_html( $message ) . ' -->';
         }
         return '';
+    }
+
+    /**
+     * デバッグ用メタボックス追加
+     */
+    public function add_debug_meta_box() {
+        $post_types = array( 'post', 'page' );
+        foreach ( $post_types as $post_type ) {
+            add_meta_box(
+                'soico_cta_debug',
+                '🔧 SOICO CTA デバッグ情報',
+                array( $this, 'render_debug_meta_box' ),
+                $post_type,
+                'normal',
+                'low'
+            );
+        }
+    }
+
+    /**
+     * デバッグ用メタボックス描画
+     */
+    public function render_debug_meta_box( $post ) {
+        $content = $post->post_content;
+
+        // SOICO CTAブロックを検索
+        preg_match_all( '/<!-- wp:soico-cta\/([a-z-]+)(\s+(\{.*?\}))?\s*(\/)?-->/', $content, $matches, PREG_SET_ORDER );
+
+        echo '<div style="background: #f9f9f9; padding: 15px; border: 1px solid #ddd; border-radius: 4px;">';
+
+        if ( empty( $matches ) ) {
+            echo '<p style="color: #666;">⚠️ この投稿にはSOICO CTAブロックが含まれていません。</p>';
+            echo '<p style="font-size: 12px; color: #999;">ブロックエディタで証券CTAブロックを挿入し、保存してください。</p>';
+        } else {
+            echo '<p style="color: green; margin-bottom: 10px;">✅ ' . count( $matches ) . '個のSOICO CTAブロックが見つかりました</p>';
+            echo '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+            echo '<thead><tr style="background: #eee;"><th style="padding: 8px; text-align: left;">ブロック</th><th style="padding: 8px; text-align: left;">属性</th></tr></thead>';
+            echo '<tbody>';
+            foreach ( $matches as $match ) {
+                $block_type = $match[1];
+                $attrs_json = isset( $match[3] ) ? $match[3] : '{}';
+                $is_self_closing = isset( $match[4] ) && $match[4] === '/';
+
+                echo '<tr style="border-bottom: 1px solid #eee;">';
+                echo '<td style="padding: 8px;"><code>soico-cta/' . esc_html( $block_type ) . '</code></td>';
+                echo '<td style="padding: 8px;"><code style="font-size: 11px; word-break: break-all;">' . esc_html( $attrs_json ) . '</code></td>';
+                echo '</tr>';
+            }
+            echo '</tbody></table>';
+        }
+
+        // 生のブロックコメントを表示（折りたたみ）
+        echo '<details style="margin-top: 15px;">';
+        echo '<summary style="cursor: pointer; color: #0073aa;">生のブロックコメントを表示</summary>';
+        echo '<pre style="background: #fff; padding: 10px; margin-top: 10px; font-size: 11px; overflow: auto; max-height: 200px; border: 1px solid #ddd;">';
+
+        // コンテンツからブロックコメント行のみを抽出
+        preg_match_all( '/<!-- wp:[^>]+-->/', $content, $all_blocks );
+        if ( ! empty( $all_blocks[0] ) ) {
+            foreach ( $all_blocks[0] as $block_comment ) {
+                if ( strpos( $block_comment, 'soico-cta' ) !== false ) {
+                    echo '<span style="color: #0073aa; font-weight: bold;">' . esc_html( $block_comment ) . '</span>' . "\n";
+                } else {
+                    echo esc_html( $block_comment ) . "\n";
+                }
+            }
+        } else {
+            echo '（ブロックコメントなし - クラシックエディタまたはHTMLモード使用中）';
+        }
+
+        echo '</pre>';
+        echo '</details>';
+
+        echo '</div>';
     }
 
     /**

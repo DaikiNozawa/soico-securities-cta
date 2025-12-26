@@ -97,6 +97,15 @@ class Soico_CTA_Admin_Settings {
             'soico-cta-guide',
             array( $this, 'render_guide_page' )
         );
+
+        add_submenu_page(
+            'soico-cta-settings',
+            __( '診断ツール', 'soico-securities-cta' ),
+            __( '診断ツール', 'soico-securities-cta' ),
+            'manage_options',
+            'soico-cta-diagnostics',
+            array( $this, 'render_diagnostics_page' )
+        );
     }
     
     /**
@@ -686,6 +695,274 @@ data-cta-type="[CTAタイプ]"
             .soico-cta-guide table { margin: 15px 0; }
             .soico-cta-guide table th { background: #f1f1f1; text-align: left; }
             .soico-cta-guide h4 { margin-bottom: 5px; }
+        </style>
+        <?php
+    }
+
+    /**
+     * 診断ツールページ描画
+     */
+    public function render_diagnostics_page() {
+        $securities_data = Soico_CTA_Securities_Data::get_instance();
+        $thirsty = Soico_CTA_Thirsty_Integration::get_instance();
+        $block_register = Soico_CTA_Block_Register::get_instance();
+
+        $securities = $securities_data->get_all_securities( false );
+        $enabled_securities = $securities_data->get_enabled_securities();
+        $registry = WP_Block_Type_Registry::get_instance();
+
+        $blocks = array(
+            'soico-cta/conclusion-box',
+            'soico-cta/inline-cta',
+            'soico-cta/single-button',
+            'soico-cta/comparison-table',
+            'soico-cta/subtle-banner',
+        );
+        ?>
+        <div class="wrap soico-cta-admin">
+            <h1><?php esc_html_e( '診断ツール', 'soico-securities-cta' ); ?></h1>
+
+            <!-- ブロック登録状態 -->
+            <div class="soico-cta-diag-section">
+                <h2>📦 ブロック登録状態</h2>
+                <table class="widefat">
+                    <thead>
+                        <tr>
+                            <th>ブロック名</th>
+                            <th>登録済み</th>
+                            <th>render_callback</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ( $blocks as $block_name ) :
+                            $block_type = $registry->get_registered( $block_name );
+                            $is_registered = ! empty( $block_type );
+                            $has_callback = $is_registered && is_callable( $block_type->render_callback );
+                        ?>
+                        <tr>
+                            <td><code><?php echo esc_html( $block_name ); ?></code></td>
+                            <td><?php echo $is_registered ? '✅ 登録済み' : '❌ 未登録'; ?></td>
+                            <td><?php echo $has_callback ? '✅ 設定済み' : '❌ 未設定'; ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 証券会社データ状態 -->
+            <div class="soico-cta-diag-section">
+                <h2>🏦 証券会社データ状態</h2>
+                <p>
+                    <strong>全証券会社:</strong> <?php echo count( $securities ); ?>件 |
+                    <strong>有効:</strong> <?php echo count( $enabled_securities ); ?>件
+                </p>
+                <table class="widefat">
+                    <thead>
+                        <tr>
+                            <th>スラッグ</th>
+                            <th>名前</th>
+                            <th>有効</th>
+                            <th>ThirstyLink ID</th>
+                            <th>affiliate_url</th>
+                            <th>特徴</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ( $securities as $slug => $data ) : ?>
+                        <tr style="<?php echo empty( $data['enabled'] ) ? 'opacity: 0.5;' : ''; ?>">
+                            <td><code><?php echo esc_html( $slug ); ?></code></td>
+                            <td><?php echo esc_html( $data['name'] ); ?></td>
+                            <td><?php echo ! empty( $data['enabled'] ) ? '✅' : '❌'; ?></td>
+                            <td><?php echo ! empty( $data['thirsty_link'] ) ? esc_html( $data['thirsty_link'] ) : '<em>未設定</em>'; ?></td>
+                            <td>
+                                <?php if ( ! empty( $data['affiliate_url'] ) ) : ?>
+                                    <a href="<?php echo esc_url( $data['affiliate_url'] ); ?>" target="_blank" style="word-break: break-all;">
+                                        <?php echo esc_html( mb_strimwidth( $data['affiliate_url'], 0, 50, '...' ) ); ?>
+                                    </a>
+                                <?php else : ?>
+                                    <span style="color: red;">❌ 未設定</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php
+                                $features = $data['features'] ?? array();
+                                if ( is_array( $features ) && ! empty( $features ) ) {
+                                    echo esc_html( count( $features ) . '件' );
+                                } else {
+                                    echo '<em>なし</em>';
+                                }
+                                ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ThirstyAffiliate状態 -->
+            <div class="soico-cta-diag-section">
+                <h2>🔗 ThirstyAffiliate連携状態</h2>
+                <p>
+                    <strong>ThirstyAffiliate:</strong>
+                    <?php echo $thirsty->is_thirsty_active() ? '✅ 有効' : '❌ 無効または未インストール'; ?>
+                </p>
+                <?php
+                $thirsty_links = $thirsty->get_all_links();
+                if ( ! empty( $thirsty_links ) ) :
+                ?>
+                <p><strong>登録リンク数:</strong> <?php echo count( $thirsty_links ); ?>件</p>
+                <details>
+                    <summary>リンク一覧を表示</summary>
+                    <table class="widefat" style="margin-top: 10px;">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>名前</th>
+                                <th>クローキングURL</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ( $thirsty_links as $link ) : ?>
+                            <tr>
+                                <td><?php echo esc_html( $link['id'] ); ?></td>
+                                <td><?php echo esc_html( $link['name'] ); ?></td>
+                                <td><a href="<?php echo esc_url( $link['url'] ); ?>" target="_blank"><?php echo esc_html( $link['url'] ); ?></a></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </details>
+                <?php endif; ?>
+            </div>
+
+            <!-- テストレンダリング -->
+            <div class="soico-cta-diag-section">
+                <h2>🧪 テストレンダリング</h2>
+                <p>以下は「結論ボックス」ブロックのテストレンダリングです。正常に表示されれば、ブロックの描画機能は動作しています。</p>
+
+                <?php
+                // 最初の有効な証券会社を取得
+                $test_security = reset( $enabled_securities );
+                if ( $test_security ) :
+                    $test_slug = $test_security['slug'] ?? key( $enabled_securities );
+                ?>
+                <div style="background: #f9f9f9; padding: 20px; margin: 15px 0; border: 1px solid #ddd;">
+                    <p><strong>テスト対象:</strong> <?php echo esc_html( $test_security['name'] ); ?> (<?php echo esc_html( $test_slug ); ?>)</p>
+                    <hr>
+                    <?php
+                    // フロントエンドCSSを読み込み
+                    wp_enqueue_style(
+                        'soico-cta-frontend-test',
+                        SOICO_CTA_PLUGIN_URL . 'assets/css/frontend.css',
+                        array(),
+                        SOICO_CTA_VERSION
+                    );
+
+                    // render_conclusion_box を直接呼び出し
+                    $rendered = $block_register->render_conclusion_box( array(
+                        'company' => $test_slug,
+                        'showFeatures' => true,
+                        'customTitle' => '',
+                    ) );
+
+                    if ( empty( $rendered ) || strpos( $rendered, '<!--' ) === 0 ) {
+                        echo '<div style="color: red; padding: 10px; background: #ffe0e0;">';
+                        echo '<strong>⚠️ レンダリング結果が空またはコメントのみです</strong>';
+                        if ( ! empty( $rendered ) ) {
+                            echo '<pre>' . esc_html( $rendered ) . '</pre>';
+                        }
+                        echo '<p>考えられる原因:</p>';
+                        echo '<ul>';
+                        echo '<li>証券会社データが見つからない</li>';
+                        echo '<li>affiliate_url が設定されていない（ThirstyAffiliateリンクまたは直接URLが必要）</li>';
+                        echo '</ul>';
+                        echo '</div>';
+                    } else {
+                        echo '<div style="color: green; margin-bottom: 10px;">✅ レンダリング成功</div>';
+                        echo $rendered;
+                    }
+                    ?>
+                </div>
+                <?php else : ?>
+                <div style="color: orange; padding: 10px; background: #fff3cd;">
+                    ⚠️ 有効な証券会社がありません。「証券会社管理」で証券会社を有効にしてください。
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- テストショートコード -->
+            <div class="soico-cta-diag-section">
+                <h2>📝 テストショートコード</h2>
+                <p>以下のショートコードを投稿や固定ページに貼り付けて、CTAブロックの動作をテストできます。</p>
+                <table class="widefat">
+                    <tr>
+                        <td><code>[soico_cta_test type="conclusion-box" company="sbi"]</code></td>
+                        <td>結論ボックスをテスト表示</td>
+                    </tr>
+                    <tr>
+                        <td><code>[soico_cta_test type="comparison-table" limit="3"]</code></td>
+                        <td>比較表をテスト表示</td>
+                    </tr>
+                    <tr>
+                        <td><code>[soico_cta_test type="single-button" company="sbi"]</code></td>
+                        <td>CTAボタンをテスト表示</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- デバッグ情報 -->
+            <div class="soico-cta-diag-section">
+                <h2>🔧 デバッグ情報</h2>
+                <table class="widefat">
+                    <tr>
+                        <th>項目</th>
+                        <th>値</th>
+                    </tr>
+                    <tr>
+                        <td>WordPress バージョン</td>
+                        <td><?php echo get_bloginfo( 'version' ); ?></td>
+                    </tr>
+                    <tr>
+                        <td>PHP バージョン</td>
+                        <td><?php echo phpversion(); ?></td>
+                    </tr>
+                    <tr>
+                        <td>プラグインバージョン</td>
+                        <td><?php echo SOICO_CTA_VERSION; ?></td>
+                    </tr>
+                    <tr>
+                        <td>WP_DEBUG</td>
+                        <td><?php echo defined( 'WP_DEBUG' ) && WP_DEBUG ? '有効' : '無効'; ?></td>
+                    </tr>
+                    <tr>
+                        <td>ブロックエディタ</td>
+                        <td><?php echo function_exists( 'use_block_editor_for_posts' ) ? '利用可能' : '利用不可'; ?></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <style>
+            .soico-cta-diag-section {
+                background: #fff;
+                padding: 20px 25px;
+                margin: 20px 0;
+                border: 1px solid #ccd0d4;
+                border-radius: 4px;
+            }
+            .soico-cta-diag-section h2 {
+                margin-top: 0;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #FF6B35;
+            }
+            .soico-cta-diag-section table {
+                margin-top: 10px;
+            }
+            .soico-cta-diag-section code {
+                background: #f1f1f1;
+                padding: 2px 6px;
+                border-radius: 3px;
+            }
         </style>
         <?php
     }
