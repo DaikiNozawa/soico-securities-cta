@@ -85,10 +85,13 @@ class Soico_CTA_Block_Register {
      */
     private function get_block_settings( $block ) {
         $settings = array(
-            'api_version'   => 3,
-            'editor_script' => 'soico-cta-editor',
-            'editor_style'  => 'soico-cta-editor-style',
-            'style'         => 'soico-cta-frontend',
+            'api_version'    => 3,
+            'editor_script'  => 'soico-cta-editor',
+            'editor_style'   => 'soico-cta-editor-style',
+            'style'          => 'soico-cta-frontend',
+            'supports'       => array(
+                'html' => false,
+            ),
         );
 
         switch ( $block ) {

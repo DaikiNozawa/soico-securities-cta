@@ -9,6 +9,7 @@
 
     var el = wp.element.createElement;
     var registerBlockType = wp.blocks.registerBlockType;
+    var unregisterBlockType = wp.blocks.unregisterBlockType;
     var getBlockType = wp.blocks.getBlockType;
     var useBlockProps = wp.blockEditor.useBlockProps;
     var InspectorControls = wp.blockEditor.InspectorControls;
@@ -21,13 +22,13 @@
     var __ = wp.i18n.__;
 
     /**
-     * ブロック登録ヘルパー（二重登録を防止）
+     * ブロック登録ヘルパー（既存ブロックを再登録）
      */
     function safeRegisterBlockType(name, settings) {
-        // 既に登録されている場合はスキップ
+        // 既に登録されている場合は一度解除してから再登録
         if (getBlockType(name)) {
-            console.log('Block already registered: ' + name);
-            return;
+            console.log('Re-registering block: ' + name);
+            unregisterBlockType(name);
         }
         registerBlockType(name, settings);
     }
