@@ -454,3 +454,48 @@
     border: none;
     border-bottom: 1px solid #ddd;
 }
+
+/* SWELLテーマのテーブルスタイルを上書き */
+.post_content .soico-cta-comparison-table,
+.post_content table.soico-cta-comparison-table,
+body .soico-cta-comparison-table {
+    background: #fff !important;
+}
+
+.post_content .soico-cta-comparison-table thead tr,
+.post_content table.soico-cta-comparison-table thead tr,
+body .soico-cta-comparison-table thead tr {
+    background: linear-gradient(135deg, #1E3A5F 0%, #2C5282 100%) !important;
+    color: #fff !important;
+}
+
+.post_content .soico-cta-comparison-table tbody tr,
+.post_content table.soico-cta-comparison-table tbody tr,
+body .soico-cta-comparison-table tbody tr {
+    background: #fff !important;
+}
+
+.post_content .soico-cta-comparison-table tbody tr:nth-child(even),
+.post_content table.soico-cta-comparison-table tbody tr:nth-child(even),
+body .soico-cta-comparison-table tbody tr:nth-child(even) {
+    background: #F8FAFC !important;
+}
+
+.post_content .soico-cta-comparison-table tbody tr:hover,
+.post_content table.soico-cta-comparison-table tbody tr:hover,
+body .soico-cta-comparison-table tbody tr:hover {
+    background: #EDF2F7 !important;
+}
+
+.post_content .soico-cta-comparison-table tbody tr.soico-cta-row-highlight,
+.post_content table.soico-cta-comparison-table tbody tr.soico-cta-row-highlight,
+body .soico-cta-comparison-table tbody tr.soico-cta-row-highlight {
+    background: #fff !important;
+    border-left: 4px solid var(--soico-cta-primary) !important;
+}
+
+.post_content .soico-cta-comparison-table tbody tr.soico-cta-row-highlight:hover,
+.post_content table.soico-cta-comparison-table tbody tr.soico-cta-row-highlight:hover,
+body .soico-cta-comparison-table tbody tr.soico-cta-row-highlight:hover {
+    background: #FFF5F0 !important;
+}
