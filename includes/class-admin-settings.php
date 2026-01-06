@@ -46,6 +46,11 @@ class Soico_CTA_Admin_Settings {
         add_action( 'wp_ajax_soico_cta_save_securities', array( $this, 'ajax_save_securities' ) );
         add_action( 'wp_ajax_soico_cta_add_security', array( $this, 'ajax_add_security' ) );
         add_action( 'wp_ajax_soico_cta_delete_security', array( $this, 'ajax_delete_security' ) );
+
+        // カードローン用AJAX
+        add_action( 'wp_ajax_soico_cta_save_cardloans', array( $this, 'ajax_save_cardloans' ) );
+        add_action( 'wp_ajax_soico_cta_add_cardloan', array( $this, 'ajax_add_cardloan' ) );
+        add_action( 'wp_ajax_soico_cta_delete_cardloan', array( $this, 'ajax_delete_cardloan' ) );
     }
     
     /**
@@ -106,20 +111,77 @@ class Soico_CTA_Admin_Settings {
             'soico-cta-diagnostics',
             array( $this, 'render_diagnostics_page' )
         );
+
+        // カードローンCTAメニュー
+        add_menu_page(
+            __( 'カードローンCTA設定', 'soico-securities-cta' ),
+            __( 'カードローンCTA', 'soico-securities-cta' ),
+            'manage_options',
+            'soico-cardloan-settings',
+            array( $this, 'render_cardloan_settings_page' ),
+            'dashicons-money-alt',
+            81
+        );
+
+        add_submenu_page(
+            'soico-cardloan-settings',
+            __( 'カードローン管理', 'soico-securities-cta' ),
+            __( 'カードローン管理', 'soico-securities-cta' ),
+            'manage_options',
+            'soico-cardloan-settings',
+            array( $this, 'render_cardloan_settings_page' )
+        );
+
+        add_submenu_page(
+            'soico-cardloan-settings',
+            __( 'デザイン設定', 'soico-securities-cta' ),
+            __( 'デザイン設定', 'soico-securities-cta' ),
+            'manage_options',
+            'soico-cardloan-design',
+            array( $this, 'render_cardloan_design_page' )
+        );
+
+        add_submenu_page(
+            'soico-cardloan-settings',
+            __( 'トラッキング設定', 'soico-securities-cta' ),
+            __( 'トラッキング設定', 'soico-securities-cta' ),
+            'manage_options',
+            'soico-cardloan-tracking',
+            array( $this, 'render_cardloan_tracking_page' )
+        );
+
+        add_submenu_page(
+            'soico-cardloan-settings',
+            __( '使い方ガイド', 'soico-securities-cta' ),
+            __( '使い方ガイド', 'soico-securities-cta' ),
+            'manage_options',
+            'soico-cardloan-guide',
+            array( $this, 'render_cardloan_guide_page' )
+        );
     }
     
     /**
      * 設定登録
      */
     public function register_settings() {
-        // デザイン設定
+        // 証券デザイン設定
         register_setting( 'soico_cta_design_group', 'soico_cta_design_settings', array(
             'sanitize_callback' => array( $this, 'sanitize_design_settings' ),
         ) );
-        
-        // トラッキング設定
+
+        // 証券トラッキング設定
         register_setting( 'soico_cta_tracking_group', 'soico_cta_tracking_settings', array(
             'sanitize_callback' => array( $this, 'sanitize_tracking_settings' ),
+        ) );
+
+        // カードローンデザイン設定
+        register_setting( 'soico_cardloan_design_group', 'soico_cardloan_design_settings', array(
+            'sanitize_callback' => array( $this, 'sanitize_cardloan_design_settings' ),
+        ) );
+
+        // カードローントラッキング設定
+        register_setting( 'soico_cardloan_tracking_group', 'soico_cardloan_tracking_settings', array(
+            'sanitize_callback' => array( $this, 'sanitize_cardloan_tracking_settings' ),
         ) );
     }
     
@@ -154,10 +216,11 @@ class Soico_CTA_Admin_Settings {
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
             'nonce'   => wp_create_nonce( 'soico_cta_admin_nonce' ),
             'i18n'    => array(
-                'confirmDelete' => __( 'この証券会社を削除しますか？', 'soico-securities-cta' ),
-                'saving'        => __( '保存中...', 'soico-securities-cta' ),
-                'saved'         => __( '保存しました', 'soico-securities-cta' ),
-                'error'         => __( 'エラーが発生しました', 'soico-securities-cta' ),
+                'confirmDelete'         => __( 'この証券会社を削除しますか？', 'soico-securities-cta' ),
+                'confirmDeleteCardloan' => __( 'このカードローン会社を削除しますか？', 'soico-securities-cta' ),
+                'saving'                => __( '保存中...', 'soico-securities-cta' ),
+                'saved'                 => __( '保存しました', 'soico-securities-cta' ),
+                'error'                 => __( 'エラーが発生しました', 'soico-securities-cta' ),
             ),
         ) );
     }
@@ -965,5 +1028,472 @@ data-cta-type="[CTAタイプ]"
             }
         </style>
         <?php
+    }
+
+    /**
+     * カードローン設定ページ描画
+     */
+    public function render_cardloan_settings_page() {
+        $securities_data = Soico_CTA_Securities_Data::get_instance();
+        $thirsty = Soico_CTA_Thirsty_Integration::get_instance();
+
+        $cardloans = $securities_data->get_all_cardloans( false );
+        $thirsty_links = $thirsty->get_all_links();
+        ?>
+        <div class="wrap soico-cta-admin soico-cardloan-admin">
+            <h1><?php esc_html_e( 'カードローン管理', 'soico-securities-cta' ); ?></h1>
+
+            <?php echo $thirsty->get_not_installed_message(); ?>
+
+            <div class="soico-cta-admin-content">
+                <form id="soico-cardloan-form">
+                    <?php wp_nonce_field( 'soico_cta_admin_nonce', 'soico_cta_nonce' ); ?>
+
+                    <div class="soico-cta-securities-list" id="cardloans-list">
+                        <?php foreach ( $cardloans as $slug => $data ) : ?>
+                            <?php $this->render_cardloan_row( $slug, $data, $thirsty_links ); ?>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <div class="soico-cta-actions">
+                        <button type="button" class="button" id="add-cardloan-btn">
+                            <?php esc_html_e( '＋ カードローン会社を追加', 'soico-securities-cta' ); ?>
+                        </button>
+                        <button type="submit" class="button button-primary">
+                            <?php esc_html_e( '変更を保存', 'soico-securities-cta' ); ?>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 新規追加モーダル -->
+            <div id="add-cardloan-modal" class="soico-cta-modal" style="display:none;">
+                <div class="soico-cta-modal-content">
+                    <h2><?php esc_html_e( 'カードローン会社を追加', 'soico-securities-cta' ); ?></h2>
+                    <form id="add-cardloan-form">
+                        <p>
+                            <label><?php esc_html_e( 'スラッグ（英数字）', 'soico-securities-cta' ); ?></label>
+                            <input type="text" name="slug" required pattern="[a-z0-9_-]+" />
+                        </p>
+                        <p>
+                            <label><?php esc_html_e( '会社名', 'soico-securities-cta' ); ?></label>
+                            <input type="text" name="name" required />
+                        </p>
+                        <p class="soico-cta-modal-actions">
+                            <button type="button" class="button" id="cancel-add-cardloan">
+                                <?php esc_html_e( 'キャンセル', 'soico-securities-cta' ); ?>
+                            </button>
+                            <button type="submit" class="button button-primary">
+                                <?php esc_html_e( '追加', 'soico-securities-cta' ); ?>
+                            </button>
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * カードローン行を描画
+     */
+    private function render_cardloan_row( $slug, $data, $thirsty_links ) {
+        ?>
+        <div class="soico-cta-security-row soico-cardloan-row" data-slug="<?php echo esc_attr( $slug ); ?>">
+            <div class="soico-cta-security-header">
+                <span class="dashicons dashicons-move soico-cta-drag-handle"></span>
+                <span class="soico-cta-security-name"><?php echo esc_html( $data['name'] ); ?></span>
+                <span class="soico-cta-security-priority">
+                    <?php printf( __( '優先順位: %d', 'soico-securities-cta' ), $data['priority'] ); ?>
+                </span>
+                <button type="button" class="button-link soico-cta-toggle-details">
+                    <?php esc_html_e( '詳細', 'soico-securities-cta' ); ?>
+                </button>
+            </div>
+
+            <div class="soico-cta-security-details" style="display:none;">
+                <input type="hidden" name="cardloans[<?php echo esc_attr( $slug ); ?>][slug]" value="<?php echo esc_attr( $slug ); ?>" />
+                <input type="hidden" name="cardloans[<?php echo esc_attr( $slug ); ?>][priority]" class="priority-input" value="<?php echo esc_attr( $data['priority'] ); ?>" />
+
+                <div class="soico-cta-field-row">
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( '有効', 'soico-securities-cta' ); ?></label>
+                        <input type="checkbox" name="cardloans[<?php echo esc_attr( $slug ); ?>][enabled]" value="1" <?php checked( ! empty( $data['enabled'] ) ); ?> />
+                    </div>
+
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( '会社名', 'soico-securities-cta' ); ?></label>
+                        <input type="text" name="cardloans[<?php echo esc_attr( $slug ); ?>][name]" value="<?php echo esc_attr( $data['name'] ); ?>" />
+                    </div>
+                </div>
+
+                <div class="soico-cta-field-row">
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( 'ThirstyAffiliateリンク', 'soico-securities-cta' ); ?></label>
+                        <select name="cardloans[<?php echo esc_attr( $slug ); ?>][thirsty_link]">
+                            <option value=""><?php esc_html_e( '-- 選択 --', 'soico-securities-cta' ); ?></option>
+                            <?php foreach ( $thirsty_links as $link ) : ?>
+                                <option value="<?php echo esc_attr( $link['id'] ); ?>" <?php selected( $data['thirsty_link'] ?? '', $link['id'] ); ?>>
+                                    <?php echo esc_html( $link['name'] ); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( '直接URL（ThirstyAffiliate未使用時）', 'soico-securities-cta' ); ?></label>
+                        <input type="url" name="cardloans[<?php echo esc_attr( $slug ); ?>][direct_url]" value="<?php echo esc_attr( $data['direct_url'] ?? '' ); ?>" />
+                    </div>
+                </div>
+
+                <!-- カードローン固有フィールド -->
+                <div class="soico-cta-field-row soico-cardloan-specific">
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( '金利', 'soico-securities-cta' ); ?></label>
+                        <input type="text" name="cardloans[<?php echo esc_attr( $slug ); ?>][interest_rate]" value="<?php echo esc_attr( $data['interest_rate'] ?? '' ); ?>" placeholder="例: 3.0%〜18.0%" />
+                    </div>
+
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( '限度額', 'soico-securities-cta' ); ?></label>
+                        <input type="text" name="cardloans[<?php echo esc_attr( $slug ); ?>][limit_amount]" value="<?php echo esc_attr( $data['limit_amount'] ?? '' ); ?>" placeholder="例: 800万円" />
+                    </div>
+
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( '審査時間', 'soico-securities-cta' ); ?></label>
+                        <input type="text" name="cardloans[<?php echo esc_attr( $slug ); ?>][review_time]" value="<?php echo esc_attr( $data['review_time'] ?? '' ); ?>" placeholder="例: 最短25分" />
+                    </div>
+                </div>
+
+                <div class="soico-cta-field">
+                    <label><?php esc_html_e( '特徴（1行ずつ入力）', 'soico-securities-cta' ); ?></label>
+                    <textarea name="cardloans[<?php echo esc_attr( $slug ); ?>][features]" rows="3"><?php echo esc_textarea( implode( "\n", (array) ( $data['features'] ?? array() ) ) ); ?></textarea>
+                </div>
+
+                <div class="soico-cta-field-row">
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( 'バッジテキスト', 'soico-securities-cta' ); ?></label>
+                        <input type="text" name="cardloans[<?php echo esc_attr( $slug ); ?>][badge]" value="<?php echo esc_attr( $data['badge'] ?? '' ); ?>" placeholder="例: おすすめ" />
+                    </div>
+
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( 'バッジ色', 'soico-securities-cta' ); ?></label>
+                        <input type="text" class="color-picker" name="cardloans[<?php echo esc_attr( $slug ); ?>][badge_color]" value="<?php echo esc_attr( $data['badge_color'] ?? '#4CAF50' ); ?>" />
+                    </div>
+                </div>
+
+                <div class="soico-cta-field-row">
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( 'ボタンテキスト', 'soico-securities-cta' ); ?></label>
+                        <input type="text" name="cardloans[<?php echo esc_attr( $slug ); ?>][button_text]" value="<?php echo esc_attr( $data['button_text'] ?? '' ); ?>" />
+                    </div>
+
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( 'ボタン色', 'soico-securities-cta' ); ?></label>
+                        <input type="text" class="color-picker" name="cardloans[<?php echo esc_attr( $slug ); ?>][button_color]" value="<?php echo esc_attr( $data['button_color'] ?? '#4CAF50' ); ?>" />
+                    </div>
+                </div>
+
+                <div class="soico-cta-field-actions">
+                    <button type="button" class="button-link button-link-delete soico-cta-delete-cardloan">
+                        <?php esc_html_e( '削除', 'soico-securities-cta' ); ?>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * カードローンデザイン設定ページ描画
+     */
+    public function render_cardloan_design_page() {
+        $settings = get_option( 'soico_cardloan_design_settings', array() );
+        ?>
+        <div class="wrap soico-cta-admin soico-cardloan-admin">
+            <h1><?php esc_html_e( 'カードローンCTA デザイン設定', 'soico-securities-cta' ); ?></h1>
+
+            <form method="post" action="options.php">
+                <?php settings_fields( 'soico_cardloan_design_group' ); ?>
+
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php esc_html_e( 'メインカラー（ボタン）', 'soico-securities-cta' ); ?></th>
+                        <td>
+                            <input type="text" class="color-picker" name="soico_cardloan_design_settings[primary_color]" value="<?php echo esc_attr( $settings['primary_color'] ?? '#4CAF50' ); ?>" />
+                            <p class="description"><?php esc_html_e( 'CTAボタンのメインカラー（緑系推奨）', 'soico-securities-cta' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e( 'セカンダリカラー', 'soico-securities-cta' ); ?></th>
+                        <td>
+                            <input type="text" class="color-picker" name="soico_cardloan_design_settings[secondary_color]" value="<?php echo esc_attr( $settings['secondary_color'] ?? '#2E7D32' ); ?>" />
+                            <p class="description"><?php esc_html_e( 'ボーダーやアクセントに使用', 'soico-securities-cta' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e( '角丸の半径', 'soico-securities-cta' ); ?></th>
+                        <td>
+                            <input type="number" name="soico_cardloan_design_settings[border_radius]" value="<?php echo esc_attr( $settings['border_radius'] ?? 8 ); ?>" min="0" max="30" /> px
+                        </td>
+                    </tr>
+                </table>
+
+                <?php submit_button(); ?>
+            </form>
+        </div>
+        <?php
+    }
+
+    /**
+     * カードローントラッキング設定ページ描画
+     */
+    public function render_cardloan_tracking_page() {
+        $settings = get_option( 'soico_cardloan_tracking_settings', array() );
+        ?>
+        <div class="wrap soico-cta-admin soico-cardloan-admin">
+            <h1><?php esc_html_e( 'カードローンCTA トラッキング設定', 'soico-securities-cta' ); ?></h1>
+
+            <form method="post" action="options.php">
+                <?php settings_fields( 'soico_cardloan_tracking_group' ); ?>
+
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php esc_html_e( 'GTMトラッキング', 'soico-securities-cta' ); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="soico_cardloan_tracking_settings[gtm_enabled]" value="1" <?php checked( ! empty( $settings['gtm_enabled'] ) ); ?> />
+                                <?php esc_html_e( 'GTMデータ属性を出力する', 'soico-securities-cta' ); ?>
+                            </label>
+                            <p class="description"><?php esc_html_e( 'CTAボタンにGTM用のdata属性を付与します', 'soico-securities-cta' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e( 'イベントカテゴリ', 'soico-securities-cta' ); ?></th>
+                        <td>
+                            <input type="text" name="soico_cardloan_tracking_settings[event_category]" value="<?php echo esc_attr( $settings['event_category'] ?? 'CTA Click' ); ?>" class="regular-text" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e( 'イベントアクション', 'soico-securities-cta' ); ?></th>
+                        <td>
+                            <input type="text" name="soico_cardloan_tracking_settings[event_action]" value="<?php echo esc_attr( $settings['event_action'] ?? 'cardloan_affiliate' ); ?>" class="regular-text" />
+                        </td>
+                    </tr>
+                </table>
+
+                <?php submit_button(); ?>
+            </form>
+
+            <div class="soico-cta-gtm-guide">
+                <h3><?php esc_html_e( 'GTM設定ガイド', 'soico-securities-cta' ); ?></h3>
+                <p><?php esc_html_e( '以下のデータ属性がCTAボタンに出力されます：', 'soico-securities-cta' ); ?></p>
+                <pre>
+data-gtm-category="<?php echo esc_html( $settings['event_category'] ?? 'CTA Click' ); ?>"
+data-gtm-action="<?php echo esc_html( $settings['event_action'] ?? 'cardloan_affiliate' ); ?>"
+data-gtm-label="[カードローン会社スラッグ]"
+data-cta-type="[CTAタイプ]"
+                </pre>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * カードローン使い方ガイドページ描画
+     */
+    public function render_cardloan_guide_page() {
+        ?>
+        <div class="wrap soico-cta-admin soico-cta-guide soico-cardloan-admin">
+            <h1><?php esc_html_e( 'カードローンCTA 使い方ガイド', 'soico-securities-cta' ); ?></h1>
+
+            <div class="soico-cta-guide-section">
+                <h2>🚀 クイックスタート</h2>
+                <ol>
+                    <li><strong>カードローン会社を設定</strong> - 「カードローン管理」で会社情報とアフィリエイトリンクを設定します</li>
+                    <li><strong>記事でブロックを挿入</strong> - 投稿編集画面で「/」を入力し、「カードローン」と検索してブロックを追加します</li>
+                    <li><strong>サイドバーで設定</strong> - ブロックを選択し、右サイドバーでカードローン会社やオプションを選択します</li>
+                </ol>
+            </div>
+
+            <div class="soico-cta-guide-section">
+                <h2>📦 利用可能なブロック</h2>
+
+                <div class="soico-cta-guide-block cardloan">
+                    <h3>1. カードローン結論ボックス</h3>
+                    <p>記事冒頭に最適。おすすめのカードローンと特徴リスト、CTAボタンを表示します。</p>
+                    <p><strong>使用例:</strong> 「〇〇がおすすめ」という結論を最初に提示したい場合</p>
+                </div>
+
+                <div class="soico-cta-guide-block cardloan">
+                    <h3>2. カードローンインラインCTA</h3>
+                    <p>記事の途中に自然に挿入できる控えめなCTA。流れを邪魔しません。</p>
+                    <p><strong>使用例:</strong> 記事中でカードローン会社に言及したタイミングで挿入</p>
+                </div>
+
+                <div class="soico-cta-guide-block cardloan">
+                    <h3>3. カードローンCTAボタン</h3>
+                    <p>シンプルなボタンのみ。任意の場所に配置できます。</p>
+                    <p><strong>使用例:</strong> 記事末尾やセクション終わりに</p>
+                </div>
+
+                <div class="soico-cta-guide-block cardloan">
+                    <h3>4. カードローン比較表</h3>
+                    <p>複数のカードローンを比較する表形式のCTA。ランキング記事に最適。</p>
+                    <p><strong>表示項目:</strong> 金利、限度額、審査時間（個別にON/OFF可能）</p>
+                </div>
+
+                <div class="soico-cta-guide-block cardloan">
+                    <h3>5. カードローン控えめバナー</h3>
+                    <p>テキストリンク形式の最も控えめなCTA。読者の邪魔をしません。</p>
+                </div>
+            </div>
+
+            <div class="soico-cta-guide-section">
+                <h2>⚙️ カードローン固有の設定項目</h2>
+                <table class="widefat">
+                    <tr><th>項目</th><th>説明</th></tr>
+                    <tr><td>金利</td><td>例: 3.0%〜18.0%（比較表で表示）</td></tr>
+                    <tr><td>限度額</td><td>例: 800万円（比較表で表示）</td></tr>
+                    <tr><td>審査時間</td><td>例: 最短25分（比較表で表示）</td></tr>
+                </table>
+            </div>
+
+            <div class="soico-cta-guide-section">
+                <h2>💡 Tips</h2>
+                <ul>
+                    <li><strong>ブロックの素早い挿入:</strong> エディタで「/カードローン結論」「/カードローン比較」と入力すると候補に表示されます</li>
+                    <li><strong>証券CTAとの違い:</strong> カードローンCTAは緑色ベースのデザインで、金利・限度額・審査時間の表示に対応しています</li>
+                </ul>
+            </div>
+        </div>
+
+        <style>
+            .soico-cardloan-admin .soico-cta-guide-section h2 { border-bottom-color: #4CAF50; }
+            .soico-cta-guide-block.cardloan { border-left-color: #4CAF50; }
+        </style>
+        <?php
+    }
+
+    /**
+     * カードローンデザイン設定サニタイズ
+     */
+    public function sanitize_cardloan_design_settings( $input ) {
+        return array(
+            'primary_color'   => sanitize_hex_color( $input['primary_color'] ?? '#4CAF50' ),
+            'secondary_color' => sanitize_hex_color( $input['secondary_color'] ?? '#2E7D32' ),
+            'border_radius'   => absint( $input['border_radius'] ?? 8 ),
+        );
+    }
+
+    /**
+     * カードローントラッキング設定サニタイズ
+     */
+    public function sanitize_cardloan_tracking_settings( $input ) {
+        return array(
+            'gtm_enabled'    => ! empty( $input['gtm_enabled'] ),
+            'event_category' => sanitize_text_field( $input['event_category'] ?? 'CTA Click' ),
+            'event_action'   => sanitize_text_field( $input['event_action'] ?? 'cardloan_affiliate' ),
+        );
+    }
+
+    /**
+     * AJAX: カードローン保存
+     */
+    public function ajax_save_cardloans() {
+        $this->debug_log( 'ajax_save_cardloans called' );
+
+        // Nonce検証
+        if ( ! check_ajax_referer( 'soico_cta_admin_nonce', 'nonce', false ) ) {
+            $this->debug_log( 'Nonce verification failed' );
+            wp_send_json_error( array( 'message' => 'セキュリティ検証に失敗しました' ) );
+        }
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            $this->debug_log( 'Permission denied' );
+            wp_send_json_error( array( 'message' => '権限がありません' ) );
+        }
+
+        $cardloans = isset( $_POST['cardloans'] ) ? $_POST['cardloans'] : array();
+        $this->debug_log( 'Received cardloans', array( 'count' => count( $cardloans ), 'slugs' => array_keys( $cardloans ) ) );
+
+        if ( empty( $cardloans ) ) {
+            $this->debug_log( 'No cardloans data received' );
+            wp_send_json_error( array( 'message' => 'データが送信されていません' ) );
+        }
+
+        // features を配列に変換
+        foreach ( $cardloans as $slug => &$data ) {
+            if ( isset( $data['features'] ) && is_string( $data['features'] ) ) {
+                $data['features'] = array_filter( array_map( 'trim', explode( "\n", $data['features'] ) ) );
+            }
+        }
+
+        $securities_data = Soico_CTA_Securities_Data::get_instance();
+        $result = $securities_data->save_cardloans( $cardloans );
+
+        $this->debug_log( 'Save result', array( 'result' => $result ) );
+
+        if ( $result ) {
+            wp_send_json_success( array( 'message' => '保存しました' ) );
+        } else {
+            wp_send_json_error( array( 'message' => '保存に失敗しました' ) );
+        }
+    }
+
+    /**
+     * AJAX: カードローン追加
+     */
+    public function ajax_add_cardloan() {
+        check_ajax_referer( 'soico_cta_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => '権限がありません' ) );
+        }
+
+        $slug = isset( $_POST['slug'] ) ? sanitize_key( $_POST['slug'] ) : '';
+        $name = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
+
+        if ( empty( $slug ) || empty( $name ) ) {
+            wp_send_json_error( array( 'message' => 'スラッグと名前は必須です' ) );
+        }
+
+        $securities_data = Soico_CTA_Securities_Data::get_instance();
+        $result = $securities_data->add_cardloan( array(
+            'slug'    => $slug,
+            'name'    => $name,
+            'enabled' => true,
+        ) );
+
+        if ( $result ) {
+            wp_send_json_success( array( 'message' => '追加しました', 'reload' => true ) );
+        } else {
+            wp_send_json_error( array( 'message' => '既に存在するスラッグか、追加に失敗しました' ) );
+        }
+    }
+
+    /**
+     * AJAX: カードローン削除
+     */
+    public function ajax_delete_cardloan() {
+        check_ajax_referer( 'soico_cta_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => '権限がありません' ) );
+        }
+
+        $slug = isset( $_POST['slug'] ) ? sanitize_key( $_POST['slug'] ) : '';
+
+        if ( empty( $slug ) ) {
+            wp_send_json_error( array( 'message' => 'スラッグが必要です' ) );
+        }
+
+        $securities_data = Soico_CTA_Securities_Data::get_instance();
+        $result = $securities_data->delete_cardloan( $slug );
+
+        if ( $result ) {
+            wp_send_json_success( array( 'message' => '削除しました' ) );
+        } else {
+            wp_send_json_error( array( 'message' => '削除に失敗しました' ) );
+        }
     }
 }

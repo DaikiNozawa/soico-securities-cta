@@ -1,0 +1,30 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "soico-cta/cardloan-inline-cta",
+    "version": "1.0.0",
+    "title": "カードローンインラインCTA",
+    "category": "soico-cardloan-cta",
+    "icon": "money-alt",
+    "description": "記事中に挿入する控えめなカードローンインラインCTA。",
+    "keywords": ["cta", "インライン", "カードローン", "cardloan", "inline"],
+    "textdomain": "soico-securities-cta",
+    "attributes": {
+        "company": {
+            "type": "string",
+            "default": "aiful"
+        },
+        "style": {
+            "type": "string",
+            "default": "default"
+        },
+        "featureText": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "supports": {
+        "html": false,
+        "className": true
+    }
+}

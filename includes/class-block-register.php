@@ -20,7 +20,7 @@ class Soico_CTA_Block_Register {
     private static $instance = null;
     
     /**
-     * 登録するブロック一覧
+     * 登録するブロック一覧（証券）
      */
     private $blocks = array(
         'conclusion-box',
@@ -28,6 +28,17 @@ class Soico_CTA_Block_Register {
         'single-button',
         'comparison-table',
         'subtle-banner',
+    );
+
+    /**
+     * 登録するブロック一覧（カードローン）
+     */
+    private $cardloan_blocks = array(
+        'cardloan-conclusion-box',
+        'cardloan-inline-cta',
+        'cardloan-single-button',
+        'cardloan-comparison-table',
+        'cardloan-subtle-banner',
     );
     
     /**
@@ -100,15 +111,21 @@ class Soico_CTA_Block_Register {
     public function register_blocks() {
         $this->debug_log( 'register_blocks called' );
 
+        // 証券ブロック登録
         foreach ( $this->blocks as $block ) {
-            // PHP配列ベースで登録（JSと競合しないよう、render_callbackのみ設定）
+            $this->register_block_php( $block );
+        }
+
+        // カードローンブロック登録
+        foreach ( $this->cardloan_blocks as $block ) {
             $this->register_block_php( $block );
         }
 
         // 登録確認
         $registry = WP_Block_Type_Registry::get_instance();
         $registered = array();
-        foreach ( $this->blocks as $block ) {
+        $all_blocks = array_merge( $this->blocks, $this->cardloan_blocks );
+        foreach ( $all_blocks as $block ) {
             $block_name = 'soico-cta/' . $block;
             $block_type = $registry->get_registered( $block_name );
             if ( $block_type ) {
@@ -272,7 +289,129 @@ class Soico_CTA_Block_Register {
                 );
                 $settings['render_callback'] = array( $this, 'render_subtle_banner' );
                 break;
-                
+
+            // ==========================================================================
+            // カードローンブロック
+            // ==========================================================================
+
+            case 'cardloan-conclusion-box':
+                $settings['title'] = __( 'カードローン結論ボックス', 'soico-securities-cta' );
+                $settings['icon'] = 'money-alt';
+                $settings['category'] = 'soico-cardloan-cta';
+                $settings['description'] = __( 'カードローンをおすすめする結論ボックス', 'soico-securities-cta' );
+                $settings['attributes'] = array(
+                    'company' => array(
+                        'type'    => 'string',
+                        'default' => 'aiful',
+                    ),
+                    'showFeatures' => array(
+                        'type'    => 'boolean',
+                        'default' => true,
+                    ),
+                    'customTitle' => array(
+                        'type'    => 'string',
+                        'default' => '',
+                    ),
+                    'customFeatures' => array(
+                        'type'    => 'string',
+                        'default' => '',
+                    ),
+                );
+                $settings['render_callback'] = array( $this, 'render_cardloan_conclusion_box' );
+                break;
+
+            case 'cardloan-inline-cta':
+                $settings['title'] = __( 'カードローンインラインCTA', 'soico-securities-cta' );
+                $settings['icon'] = 'money-alt';
+                $settings['category'] = 'soico-cardloan-cta';
+                $settings['description'] = __( '記事中に挿入する控えめなカードローンCTA', 'soico-securities-cta' );
+                $settings['attributes'] = array(
+                    'company' => array(
+                        'type'    => 'string',
+                        'default' => 'aiful',
+                    ),
+                    'style' => array(
+                        'type'    => 'string',
+                        'default' => 'default',
+                    ),
+                    'featureText' => array(
+                        'type'    => 'string',
+                        'default' => '',
+                    ),
+                );
+                $settings['render_callback'] = array( $this, 'render_cardloan_inline_cta' );
+                break;
+
+            case 'cardloan-single-button':
+                $settings['title'] = __( 'カードローンCTAボタン', 'soico-securities-cta' );
+                $settings['icon'] = 'money-alt';
+                $settings['category'] = 'soico-cardloan-cta';
+                $settings['description'] = __( 'シンプルなカードローンCTAボタン', 'soico-securities-cta' );
+                $settings['attributes'] = array(
+                    'company' => array(
+                        'type'    => 'string',
+                        'default' => 'aiful',
+                    ),
+                    'buttonText' => array(
+                        'type'    => 'string',
+                        'default' => '',
+                    ),
+                    'showPR' => array(
+                        'type'    => 'boolean',
+                        'default' => true,
+                    ),
+                );
+                $settings['render_callback'] = array( $this, 'render_cardloan_single_button' );
+                break;
+
+            case 'cardloan-comparison-table':
+                $settings['title'] = __( 'カードローン比較表', 'soico-securities-cta' );
+                $settings['icon'] = 'money-alt';
+                $settings['category'] = 'soico-cardloan-cta';
+                $settings['description'] = __( '複数のカードローンを比較する表', 'soico-securities-cta' );
+                $settings['attributes'] = array(
+                    'companies' => array(
+                        'type'    => 'array',
+                        'default' => array( 'aiful', 'promise', 'acom' ),
+                    ),
+                    'limit' => array(
+                        'type'    => 'number',
+                        'default' => 3,
+                    ),
+                    'showInterestRate' => array(
+                        'type'    => 'boolean',
+                        'default' => true,
+                    ),
+                    'showLimitAmount' => array(
+                        'type'    => 'boolean',
+                        'default' => true,
+                    ),
+                    'showReviewTime' => array(
+                        'type'    => 'boolean',
+                        'default' => true,
+                    ),
+                );
+                $settings['render_callback'] = array( $this, 'render_cardloan_comparison_table' );
+                break;
+
+            case 'cardloan-subtle-banner':
+                $settings['title'] = __( 'カードローン控えめバナー', 'soico-securities-cta' );
+                $settings['icon'] = 'money-alt';
+                $settings['category'] = 'soico-cardloan-cta';
+                $settings['description'] = __( '控えめなカードローンテキストリンクバナー', 'soico-securities-cta' );
+                $settings['attributes'] = array(
+                    'company' => array(
+                        'type'    => 'string',
+                        'default' => 'aiful',
+                    ),
+                    'message' => array(
+                        'type'    => 'string',
+                        'default' => '',
+                    ),
+                );
+                $settings['render_callback'] = array( $this, 'render_cardloan_subtle_banner' );
+                break;
+
             default:
                 return null;
         }
@@ -286,7 +425,7 @@ class Soico_CTA_Block_Register {
     public function enqueue_editor_assets() {
         $securities_data = Soico_CTA_Securities_Data::get_instance();
         $thirsty = Soico_CTA_Thirsty_Integration::get_instance();
-        
+
         // エディタスクリプト
         wp_enqueue_script(
             'soico-cta-editor',
@@ -303,7 +442,7 @@ class Soico_CTA_Block_Register {
             SOICO_CTA_VERSION,
             true
         );
-        
+
         // エディタスタイル
         wp_enqueue_style(
             'soico-cta-editor-style',
@@ -311,29 +450,47 @@ class Soico_CTA_Block_Register {
             array( 'wp-edit-blocks' ),
             SOICO_CTA_VERSION
         );
-        
+
         // JavaScriptに渡すデータ
         wp_localize_script( 'soico-cta-editor', 'soicoCTAData', array(
-            'securities'    => $securities_data->get_enabled_securities(),
-            'selectOptions' => $securities_data->get_securities_select_options(),
-            'thirstyActive' => $thirsty->is_thirsty_active(),
-            'designSettings'=> $securities_data->get_design_settings(),
-            'nonce'         => wp_create_nonce( 'soico_cta_nonce' ),
-            'i18n'          => array(
-                'blockTitle'     => __( '証券CTA', 'soico-securities-cta' ),
-                'conclusionBox'  => __( '結論ボックス', 'soico-securities-cta' ),
-                'inlineCTA'      => __( 'インラインCTA', 'soico-securities-cta' ),
-                'singleButton'   => __( 'CTAボタン', 'soico-securities-cta' ),
-                'comparisonTable'=> __( '比較表', 'soico-securities-cta' ),
-                'subtleBanner'   => __( '控えめバナー', 'soico-securities-cta' ),
-                'selectCompany'  => __( '証券会社を選択', 'soico-securities-cta' ),
-                'showFeatures'   => __( '特徴を表示', 'soico-securities-cta' ),
-                'customTitle'    => __( 'カスタムタイトル', 'soico-securities-cta' ),
-                'buttonText'     => __( 'ボタンテキスト', 'soico-securities-cta' ),
-                'showPR'         => __( 'PR表記を表示', 'soico-securities-cta' ),
-                'limit'          => __( '表示件数', 'soico-securities-cta' ),
-                'showCommission' => __( '手数料を表示', 'soico-securities-cta' ),
-                'message'        => __( 'メッセージ', 'soico-securities-cta' ),
+            // 証券データ
+            'securities'            => $securities_data->get_enabled_securities(),
+            'selectOptions'         => $securities_data->get_securities_select_options(),
+            'designSettings'        => $securities_data->get_design_settings(),
+            // カードローンデータ
+            'cardloans'             => $securities_data->get_enabled_cardloans(),
+            'cardloanSelectOptions' => $securities_data->get_cardloan_select_options(),
+            'cardloanDesignSettings'=> $securities_data->get_cardloan_design_settings(),
+            // 共通
+            'thirstyActive'         => $thirsty->is_thirsty_active(),
+            'nonce'                 => wp_create_nonce( 'soico_cta_nonce' ),
+            'i18n'                  => array(
+                // 証券
+                'blockTitle'            => __( '証券CTA', 'soico-securities-cta' ),
+                'conclusionBox'         => __( '結論ボックス', 'soico-securities-cta' ),
+                'inlineCTA'             => __( 'インラインCTA', 'soico-securities-cta' ),
+                'singleButton'          => __( 'CTAボタン', 'soico-securities-cta' ),
+                'comparisonTable'       => __( '比較表', 'soico-securities-cta' ),
+                'subtleBanner'          => __( '控えめバナー', 'soico-securities-cta' ),
+                'selectCompany'         => __( '証券会社を選択', 'soico-securities-cta' ),
+                'showFeatures'          => __( '特徴を表示', 'soico-securities-cta' ),
+                'customTitle'           => __( 'カスタムタイトル', 'soico-securities-cta' ),
+                'buttonText'            => __( 'ボタンテキスト', 'soico-securities-cta' ),
+                'showPR'                => __( 'PR表記を表示', 'soico-securities-cta' ),
+                'limit'                 => __( '表示件数', 'soico-securities-cta' ),
+                'showCommission'        => __( '手数料を表示', 'soico-securities-cta' ),
+                'message'               => __( 'メッセージ', 'soico-securities-cta' ),
+                // カードローン
+                'cardloanBlockTitle'    => __( 'カードローンCTA', 'soico-securities-cta' ),
+                'cardloanConclusionBox' => __( 'カードローン結論ボックス', 'soico-securities-cta' ),
+                'cardloanInlineCTA'     => __( 'カードローンインラインCTA', 'soico-securities-cta' ),
+                'cardloanSingleButton'  => __( 'カードローンCTAボタン', 'soico-securities-cta' ),
+                'cardloanComparisonTable' => __( 'カードローン比較表', 'soico-securities-cta' ),
+                'cardloanSubtleBanner'  => __( 'カードローン控えめバナー', 'soico-securities-cta' ),
+                'selectCardloan'        => __( 'カードローンを選択', 'soico-securities-cta' ),
+                'showInterestRate'      => __( '金利を表示', 'soico-securities-cta' ),
+                'showLimitAmount'       => __( '限度額を表示', 'soico-securities-cta' ),
+                'showReviewTime'        => __( '審査時間を表示', 'soico-securities-cta' ),
             ),
         ) );
     }
@@ -770,6 +927,321 @@ class Soico_CTA_Block_Register {
                 <?php echo wp_kses_post( $message_html ); ?>
             </span>
             <span class="soico-cta-subtle-pr">PR</span>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    // ==========================================================================
+    // カードローンブロック描画
+    // ==========================================================================
+
+    /**
+     * カードローン結論ボックス描画
+     */
+    public function render_cardloan_conclusion_box( $attributes ) {
+        $this->debug_log( 'render_cardloan_conclusion_box called', $attributes );
+
+        $data = Soico_CTA_Securities_Data::get_instance();
+        $company_slug = $attributes['company'] ?? 'aiful';
+        $cardloan = $data->get_cardloan( $company_slug );
+
+        if ( ! $cardloan ) {
+            return $this->debug_comment( 'Cardloan not found: ' . $company_slug );
+        }
+
+        if ( empty( $cardloan['affiliate_url'] ) ) {
+            return $this->debug_comment( 'No affiliate_url for cardloan: ' . $company_slug );
+        }
+
+        $show_features = $attributes['showFeatures'] ?? true;
+        $custom_title = $attributes['customTitle'] ?? '';
+        $custom_features = $attributes['customFeatures'] ?? '';
+
+        $title = $custom_title ? $custom_title : sprintf(
+            __( 'カードローンなら<span style="color: #00A95F;">%s</span>がおすすめ', 'soico-securities-cta' ),
+            esc_html( $cardloan['name'] )
+        );
+
+        // カスタム特徴がある場合は使用
+        $features = array();
+        if ( ! empty( $custom_features ) ) {
+            $features = array_filter( array_map( 'trim', explode( "\n", $custom_features ) ) );
+        } elseif ( ! empty( $cardloan['features'] ) ) {
+            $features = (array) $cardloan['features'];
+        }
+
+        $tracking_attrs = $data->get_cardloan_tracking_attributes( $company_slug, 'conclusion_box' );
+
+        ob_start();
+        ?>
+        <div class="soico-cta-cardloan-conclusion-box">
+            <div class="soico-cta-cardloan-conclusion-header">
+                <span class="soico-cta-cardloan-conclusion-label"><?php esc_html_e( '結論', 'soico-securities-cta' ); ?></span>
+                <h3 class="soico-cta-cardloan-conclusion-title"><?php echo wp_kses_post( $title ); ?></h3>
+            </div>
+
+            <?php if ( $show_features && ! empty( $features ) ) : ?>
+                <ul class="soico-cta-cardloan-conclusion-features">
+                    <?php foreach ( $features as $feature ) : ?>
+                        <li><?php echo esc_html( $feature ); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+
+            <div class="soico-cta-cardloan-conclusion-action">
+                <a href="<?php echo esc_url( $cardloan['affiliate_url'] ); ?>"
+                   class="soico-cta-cardloan-button soico-cta-cardloan-button-primary"
+                   style="background-color: <?php echo esc_attr( $cardloan['button_color'] ?? '#00A95F' ); ?>"
+                   target="_blank" rel="noopener noreferrer sponsored"
+                   <?php echo $tracking_attrs; ?>>
+                    <?php echo esc_html( $cardloan['button_text'] ?? $cardloan['name'] . 'に申し込む' ); ?>
+                </a>
+                <p class="soico-cta-cardloan-conclusion-note">
+                    <?php esc_html_e( '※最短即日融資 ※WEB完結可能', 'soico-securities-cta' ); ?>
+                </p>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * カードローンインラインCTA描画
+     */
+    public function render_cardloan_inline_cta( $attributes ) {
+        $this->debug_log( 'render_cardloan_inline_cta called', $attributes );
+
+        $data = Soico_CTA_Securities_Data::get_instance();
+        $company_slug = $attributes['company'] ?? 'aiful';
+        $cardloan = $data->get_cardloan( $company_slug );
+
+        if ( ! $cardloan ) {
+            return $this->debug_comment( 'Cardloan not found: ' . $company_slug );
+        }
+
+        if ( empty( $cardloan['affiliate_url'] ) ) {
+            return $this->debug_comment( 'No affiliate_url for cardloan inline: ' . $company_slug );
+        }
+
+        $style = $attributes['style'] ?? 'default';
+        $tracking_attrs = $data->get_cardloan_tracking_attributes( $company_slug, 'inline_cta' );
+
+        $feature_text = ! empty( $attributes['featureText'] )
+            ? $attributes['featureText']
+            : ( ! empty( $cardloan['features'] ) ? $cardloan['features'][0] : '' );
+
+        ob_start();
+        ?>
+        <div class="soico-cta-cardloan-inline soico-cta-cardloan-inline-<?php echo esc_attr( $style ); ?>">
+            <div class="soico-cta-cardloan-inline-content">
+                <strong class="soico-cta-cardloan-inline-name"><?php echo esc_html( $cardloan['name'] ); ?></strong>
+                <?php if ( $feature_text ) : ?>
+                    <span class="soico-cta-cardloan-inline-feature"><?php echo esc_html( $feature_text ); ?></span>
+                <?php endif; ?>
+            </div>
+            <a href="<?php echo esc_url( $cardloan['affiliate_url'] ); ?>"
+               class="soico-cta-cardloan-inline-button"
+               style="background-color: <?php echo esc_attr( $cardloan['button_color'] ?? '#00A95F' ); ?>"
+               target="_blank" rel="noopener noreferrer sponsored"
+               <?php echo $tracking_attrs; ?>>
+                <?php esc_html_e( '詳細を見る →', 'soico-securities-cta' ); ?>
+            </a>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * カードローン単体ボタン描画
+     */
+    public function render_cardloan_single_button( $attributes ) {
+        $this->debug_log( 'render_cardloan_single_button called', $attributes );
+
+        $data = Soico_CTA_Securities_Data::get_instance();
+        $company_slug = $attributes['company'] ?? 'aiful';
+        $cardloan = $data->get_cardloan( $company_slug );
+
+        if ( ! $cardloan ) {
+            return $this->debug_comment( 'Cardloan not found: ' . $company_slug );
+        }
+
+        if ( empty( $cardloan['affiliate_url'] ) ) {
+            return $this->debug_comment( 'No affiliate_url for cardloan button: ' . $company_slug );
+        }
+
+        $button_text = ! empty( $attributes['buttonText'] )
+            ? $attributes['buttonText']
+            : ( ! empty( $cardloan['button_text'] )
+                ? $cardloan['button_text']
+                : $cardloan['name'] . 'の公式サイトを見る' );
+        $show_pr = $attributes['showPR'] ?? true;
+        $tracking_attrs = $data->get_cardloan_tracking_attributes( $company_slug, 'single_button' );
+
+        ob_start();
+        ?>
+        <div class="soico-cta-cardloan-single-button-wrapper">
+            <a href="<?php echo esc_url( $cardloan['affiliate_url'] ); ?>"
+               class="soico-cta-cardloan-button soico-cta-cardloan-button-primary"
+               style="background-color: <?php echo esc_attr( $cardloan['button_color'] ?? '#00A95F' ); ?>"
+               target="_blank" rel="noopener noreferrer sponsored"
+               <?php echo $tracking_attrs; ?>>
+                <?php echo esc_html( $button_text ); ?>
+            </a>
+            <?php if ( $show_pr ) : ?>
+                <p class="soico-cta-cardloan-pr-label">PR</p>
+            <?php endif; ?>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * カードローン比較表描画
+     */
+    public function render_cardloan_comparison_table( $attributes ) {
+        $this->debug_log( 'render_cardloan_comparison_table called', $attributes );
+
+        $data = Soico_CTA_Securities_Data::get_instance();
+        $limit = $attributes['limit'] ?? 3;
+        $show_interest_rate = $attributes['showInterestRate'] ?? true;
+        $show_limit_amount = $attributes['showLimitAmount'] ?? true;
+        $show_review_time = $attributes['showReviewTime'] ?? true;
+
+        $cardloans = $data->get_enabled_cardloans( $limit );
+
+        if ( empty( $cardloans ) ) {
+            return $this->debug_comment( 'No enabled cardloans found for comparison_table' );
+        }
+
+        $rank = 1;
+        ob_start();
+        ?>
+        <div class="soico-cta-cardloan-comparison-wrapper">
+            <table class="soico-cta-cardloan-comparison-table">
+                <thead>
+                    <tr>
+                        <th class="soico-cta-col-rank"><?php esc_html_e( '順位', 'soico-securities-cta' ); ?></th>
+                        <th class="soico-cta-col-name"><?php esc_html_e( 'カードローン', 'soico-securities-cta' ); ?></th>
+                        <?php if ( $show_interest_rate ) : ?>
+                            <th class="soico-cta-col-interest"><?php esc_html_e( '金利', 'soico-securities-cta' ); ?></th>
+                        <?php endif; ?>
+                        <?php if ( $show_limit_amount ) : ?>
+                            <th class="soico-cta-col-limit"><?php esc_html_e( '限度額', 'soico-securities-cta' ); ?></th>
+                        <?php endif; ?>
+                        <?php if ( $show_review_time ) : ?>
+                            <th class="soico-cta-col-review"><?php esc_html_e( '審査時間', 'soico-securities-cta' ); ?></th>
+                        <?php endif; ?>
+                        <th class="soico-cta-col-action"><?php esc_html_e( '申し込み', 'soico-securities-cta' ); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ( $cardloans as $slug => $cardloan ) :
+                        $tracking_attrs = $data->get_cardloan_tracking_attributes( $slug, 'comparison_table' );
+                        if ( $rank === 1 ) {
+                            $rank_class = 'soico-cta-rank-gold';
+                        } elseif ( $rank === 2 ) {
+                            $rank_class = 'soico-cta-rank-silver';
+                        } elseif ( $rank === 3 ) {
+                            $rank_class = 'soico-cta-rank-bronze';
+                        } else {
+                            $rank_class = 'soico-cta-rank-default';
+                        }
+                    ?>
+                        <tr class="<?php echo $rank === 1 ? 'soico-cta-cardloan-row-highlight' : ''; ?>">
+                            <td class="soico-cta-col-rank">
+                                <span class="soico-cta-rank <?php echo esc_attr( $rank_class ); ?>"><?php echo esc_html( $rank ); ?></span>
+                            </td>
+                            <td class="soico-cta-col-name">
+                                <strong><?php echo esc_html( $cardloan['name'] ); ?></strong>
+                                <?php if ( ! empty( $cardloan['badge'] ) ) : ?>
+                                    <span class="soico-cta-badge" style="background-color: <?php echo esc_attr( $cardloan['badge_color'] ?? '#00A95F' ); ?>">
+                                        <?php echo esc_html( $cardloan['badge'] ); ?>
+                                    </span>
+                                <?php endif; ?>
+                            </td>
+                            <?php if ( $show_interest_rate ) : ?>
+                                <td class="soico-cta-col-interest">
+                                    <span class="soico-cta-interest"><?php echo esc_html( $cardloan['interest_rate'] ?? '-' ); ?></span>
+                                </td>
+                            <?php endif; ?>
+                            <?php if ( $show_limit_amount ) : ?>
+                                <td class="soico-cta-col-limit">
+                                    <span class="soico-cta-limit"><?php echo esc_html( $cardloan['limit_amount'] ?? '-' ); ?></span>
+                                </td>
+                            <?php endif; ?>
+                            <?php if ( $show_review_time ) : ?>
+                                <td class="soico-cta-col-review">
+                                    <span class="soico-cta-review"><?php echo esc_html( $cardloan['review_time'] ?? '-' ); ?></span>
+                                </td>
+                            <?php endif; ?>
+                            <td class="soico-cta-col-action">
+                                <?php if ( ! empty( $cardloan['affiliate_url'] ) ) : ?>
+                                    <a href="<?php echo esc_url( $cardloan['affiliate_url'] ); ?>"
+                                       class="soico-cta-cardloan-table-button"
+                                       style="background-color: <?php echo esc_attr( $cardloan['button_color'] ?? '#00A95F' ); ?>"
+                                       target="_blank" rel="noopener noreferrer sponsored"
+                                       <?php echo $tracking_attrs; ?>>
+                                        <?php echo $rank === 1 ? esc_html__( '申し込む', 'soico-securities-cta' ) : esc_html__( '詳細を見る', 'soico-securities-cta' ); ?>
+                                    </a>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php
+                        $rank++;
+                    endforeach; ?>
+                </tbody>
+            </table>
+            <p class="soico-cta-cardloan-table-note">PR | <?php printf( esc_html__( '情報は%s時点', 'soico-securities-cta' ), date_i18n( 'Y年n月' ) ); ?></p>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * カードローン控えめバナー描画
+     */
+    public function render_cardloan_subtle_banner( $attributes ) {
+        $this->debug_log( 'render_cardloan_subtle_banner called', $attributes );
+
+        $data = Soico_CTA_Securities_Data::get_instance();
+        $company_slug = $attributes['company'] ?? 'aiful';
+        $cardloan = $data->get_cardloan( $company_slug );
+
+        if ( ! $cardloan ) {
+            return $this->debug_comment( 'Cardloan not found: ' . $company_slug );
+        }
+
+        if ( empty( $cardloan['affiliate_url'] ) ) {
+            return $this->debug_comment( 'No affiliate_url for cardloan banner: ' . $company_slug );
+        }
+
+        $custom_message = ! empty( $attributes['message'] ) ? $attributes['message'] : '';
+        $tracking_attrs = $data->get_cardloan_tracking_attributes( $company_slug, 'subtle_banner' );
+
+        // リンク生成
+        $link_html = '<a href="' . esc_url( $cardloan['affiliate_url'] ) . '" target="_blank" rel="noopener noreferrer sponsored"' . $tracking_attrs . '>' . esc_html( $cardloan['name'] ) . '</a>';
+
+        if ( $custom_message ) {
+            if ( strpos( $custom_message, $cardloan['name'] ) !== false ) {
+                $message_html = str_replace( $cardloan['name'], $link_html, $custom_message );
+            } else {
+                $message_html = $custom_message . ' → ' . $link_html;
+            }
+        } else {
+            $message_html = sprintf(
+                __( '💰 お金が必要なら → %s（最短即日融資）', 'soico-securities-cta' ),
+                $link_html
+            );
+        }
+
+        ob_start();
+        ?>
+        <div class="soico-cta-cardloan-subtle-banner">
+            <span class="soico-cta-cardloan-subtle-message">
+                <?php echo wp_kses_post( $message_html ); ?>
+            </span>
+            <span class="soico-cta-cardloan-subtle-pr">PR</span>
         </div>
         <?php
         return ob_get_clean();

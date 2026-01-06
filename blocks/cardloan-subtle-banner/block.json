@@ -1,0 +1,26 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "soico-cta/cardloan-subtle-banner",
+    "version": "1.0.0",
+    "title": "カードローン控えめバナー",
+    "category": "soico-cardloan-cta",
+    "icon": "money-alt",
+    "description": "テキストリンク形式の最も控えめなカードローンCTA。読者の邪魔をしません。",
+    "keywords": ["cta", "バナー", "カードローン", "cardloan", "banner"],
+    "textdomain": "soico-securities-cta",
+    "attributes": {
+        "company": {
+            "type": "string",
+            "default": "aiful"
+        },
+        "message": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "supports": {
+        "html": false,
+        "className": true
+    }
+}

@@ -1,0 +1,35 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "soico-cta/cardloan-conclusion-box",
+    "version": "1.0.0",
+    "title": "カードローン結論ボックス",
+    "category": "soico-cardloan-cta",
+    "icon": "money-alt",
+    "description": "カードローンをおすすめする結論ボックス。特徴リストとCTAボタン付き。",
+    "keywords": ["cta", "結論", "カードローン", "cardloan", "conclusion"],
+    "textdomain": "soico-securities-cta",
+    "attributes": {
+        "company": {
+            "type": "string",
+            "default": "aiful"
+        },
+        "showFeatures": {
+            "type": "boolean",
+            "default": true
+        },
+        "customTitle": {
+            "type": "string",
+            "default": ""
+        },
+        "customFeatures": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "supports": {
+        "html": false,
+        "align": ["wide", "full"],
+        "className": true
+    }
+}

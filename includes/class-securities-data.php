@@ -20,10 +20,15 @@ class Soico_CTA_Securities_Data {
     private static $instance = null;
     
     /**
-     * キャッシュキー
+     * キャッシュキー（証券）
      */
     const CACHE_KEY = 'soico_cta_securities_cache';
-    
+
+    /**
+     * キャッシュキー（カードローン）
+     */
+    const CARDLOAN_CACHE_KEY = 'soico_cta_cardloan_cache';
+
     /**
      * キャッシュ有効期限（秒）
      */
@@ -45,6 +50,7 @@ class Soico_CTA_Securities_Data {
     private function __construct() {
         // データ更新時にキャッシュクリア
         add_action( 'update_option_soico_cta_securities_data', array( $this, 'clear_cache' ) );
+        add_action( 'update_option_soico_cta_cardloan_data', array( $this, 'clear_cardloan_cache' ) );
     }
     
     /**
@@ -405,14 +411,315 @@ class Soico_CTA_Securities_Data {
     public function get_securities_select_options() {
         $securities = $this->get_enabled_securities();
         $options = array();
-        
+
         foreach ( $securities as $slug => $data ) {
             $options[] = array(
                 'value' => $slug,
                 'label' => $data['name'],
             );
         }
-        
+
+        return $options;
+    }
+
+    // ==========================================================================
+    // カードローンデータ管理
+    // ==========================================================================
+
+    /**
+     * 全カードローンデータ取得
+     *
+     * @param bool $use_cache キャッシュを使用するか
+     * @return array
+     */
+    public function get_all_cardloans( $use_cache = true ) {
+        $this->debug_log( 'get_all_cardloans called', array( 'use_cache' => $use_cache ) );
+
+        // キャッシュチェック
+        if ( $use_cache ) {
+            $cached = get_transient( self::CARDLOAN_CACHE_KEY );
+            if ( false !== $cached ) {
+                $this->debug_log( 'Returning cached cardloan data', array( 'count' => count( $cached ) ) );
+                return $cached;
+            }
+        }
+
+        // データ取得
+        $cardloans = get_option( 'soico_cta_cardloan_data', array() );
+        $this->debug_log( 'Raw cardloan data from option', array(
+            'count' => count( $cardloans ),
+            'slugs' => array_keys( $cardloans ),
+        ) );
+
+        // ThirstyAffiliateリンクを解決
+        $cardloans = $this->resolve_thirsty_links( $cardloans );
+
+        // 優先順位でソート
+        uasort( $cardloans, function( $a, $b ) {
+            return ( $a['priority'] ?? 99 ) - ( $b['priority'] ?? 99 );
+        } );
+
+        // キャッシュ保存
+        set_transient( self::CARDLOAN_CACHE_KEY, $cardloans, self::CACHE_EXPIRATION );
+        $this->debug_log( 'Cardloan data cached', array( 'count' => count( $cardloans ) ) );
+
+        return $cardloans;
+    }
+
+    /**
+     * 有効なカードローンのみ取得
+     *
+     * @param int $limit 取得件数（0=無制限）
+     * @return array
+     */
+    public function get_enabled_cardloans( $limit = 0 ) {
+        $cardloans = $this->get_all_cardloans();
+
+        // 有効なもののみフィルタ
+        $enabled = array_filter( $cardloans, function( $item ) {
+            return ! empty( $item['enabled'] );
+        } );
+
+        // 件数制限
+        if ( $limit > 0 ) {
+            $enabled = array_slice( $enabled, 0, $limit, true );
+        }
+
+        return $enabled;
+    }
+
+    /**
+     * 単一のカードローンデータ取得
+     *
+     * @param string $slug カードローンスラッグ
+     * @return array|null
+     */
+    public function get_cardloan( $slug ) {
+        $cardloans = $this->get_all_cardloans();
+        return isset( $cardloans[ $slug ] ) ? $cardloans[ $slug ] : null;
+    }
+
+    /**
+     * 優先順位1位のカードローン取得
+     *
+     * @return array|null
+     */
+    public function get_top_cardloan() {
+        $enabled = $this->get_enabled_cardloans( 1 );
+        return ! empty( $enabled ) ? reset( $enabled ) : null;
+    }
+
+    /**
+     * カードローンデータ保存
+     *
+     * @param array $data
+     * @return bool
+     */
+    public function save_cardloans( $data ) {
+        $this->debug_log( 'save_cardloans called', array( 'data_count' => count( $data ) ) );
+
+        // バリデーション
+        $sanitized = $this->sanitize_cardloan_data( $data );
+
+        $this->debug_log( 'Sanitized cardloan data', array(
+            'slugs' => array_keys( $sanitized ),
+            'count' => count( $sanitized ),
+        ) );
+
+        // 保存
+        $current = get_option( 'soico_cta_cardloan_data', array() );
+        $result = update_option( 'soico_cta_cardloan_data', $sanitized );
+
+        // データが同じ場合は成功とみなす
+        if ( ! $result && $current === $sanitized ) {
+            $this->debug_log( 'Cardloan data unchanged, treating as success' );
+            $result = true;
+        }
+
+        $this->debug_log( 'Cardloan save result', array( 'result' => $result ) );
+
+        // キャッシュクリア
+        $this->clear_cardloan_cache();
+
+        return $result;
+    }
+
+    /**
+     * カードローンデータのサニタイズ
+     *
+     * @param array $data
+     * @return array
+     */
+    private function sanitize_cardloan_data( $data ) {
+        $sanitized = array();
+
+        foreach ( $data as $slug => $item ) {
+            $slug = sanitize_key( $slug );
+
+            // featuresを適切に配列に変換
+            $features = $item['features'] ?? array();
+            if ( is_string( $features ) ) {
+                $features = array_filter( array_map( 'trim', explode( "\n", $features ) ) );
+            }
+            $features = array_map( 'sanitize_text_field', (array) $features );
+
+            $sanitized[ $slug ] = array(
+                'name'          => sanitize_text_field( $item['name'] ?? '' ),
+                'slug'          => $slug,
+                'priority'      => absint( $item['priority'] ?? 99 ),
+                'enabled'       => ! empty( $item['enabled'] ),
+                'thirsty_link'  => absint( $item['thirsty_link'] ?? 0 ),
+                'direct_url'    => esc_url_raw( $item['direct_url'] ?? '' ),
+                'features'      => $features,
+                'interest_rate' => sanitize_text_field( $item['interest_rate'] ?? '' ),
+                'limit_amount'  => sanitize_text_field( $item['limit_amount'] ?? '' ),
+                'review_time'   => sanitize_text_field( $item['review_time'] ?? '' ),
+                'badge'         => sanitize_text_field( $item['badge'] ?? '' ),
+                'badge_color'   => sanitize_hex_color( $item['badge_color'] ?? '' ),
+                'button_text'   => sanitize_text_field( $item['button_text'] ?? '' ),
+                'button_color'  => sanitize_hex_color( $item['button_color'] ?? '#00A95F' ),
+            );
+        }
+
+        return $sanitized;
+    }
+
+    /**
+     * 新しいカードローンを追加
+     *
+     * @param array $data
+     * @return bool
+     */
+    public function add_cardloan( $data ) {
+        $cardloans = get_option( 'soico_cta_cardloan_data', array() );
+
+        $slug = sanitize_key( $data['slug'] ?? '' );
+        if ( empty( $slug ) ) {
+            return false;
+        }
+
+        // 既存チェック
+        if ( isset( $cardloans[ $slug ] ) ) {
+            return false;
+        }
+
+        // 優先順位を最後に設定
+        $max_priority = 0;
+        foreach ( $cardloans as $item ) {
+            $max_priority = max( $max_priority, $item['priority'] ?? 0 );
+        }
+        $data['priority'] = $max_priority + 1;
+
+        $cardloans[ $slug ] = $data;
+
+        return $this->save_cardloans( $cardloans );
+    }
+
+    /**
+     * カードローンを削除
+     *
+     * @param string $slug
+     * @return bool
+     */
+    public function delete_cardloan( $slug ) {
+        $cardloans = get_option( 'soico_cta_cardloan_data', array() );
+
+        if ( ! isset( $cardloans[ $slug ] ) ) {
+            return false;
+        }
+
+        unset( $cardloans[ $slug ] );
+
+        return $this->save_cardloans( $cardloans );
+    }
+
+    /**
+     * カードローンキャッシュクリア
+     */
+    public function clear_cardloan_cache() {
+        delete_transient( self::CARDLOAN_CACHE_KEY );
+        $this->debug_log( 'Cardloan cache cleared' );
+    }
+
+    /**
+     * カードローンデザイン設定取得
+     *
+     * @return array
+     */
+    public function get_cardloan_design_settings() {
+        $defaults = array(
+            'primary_color'   => '#00A95F',
+            'secondary_color' => '#2E7D32',
+            'border_radius'   => 8,
+        );
+
+        $settings = get_option( 'soico_cta_cardloan_design_settings', array() );
+
+        return wp_parse_args( $settings, $defaults );
+    }
+
+    /**
+     * カードローントラッキング設定取得
+     *
+     * @return array
+     */
+    public function get_cardloan_tracking_settings() {
+        $defaults = array(
+            'gtm_enabled'     => true,
+            'event_category'  => 'CTA Click',
+            'event_action'    => 'cardloan_affiliate',
+        );
+
+        $settings = get_option( 'soico_cta_cardloan_tracking_settings', array() );
+
+        return wp_parse_args( $settings, $defaults );
+    }
+
+    /**
+     * カードローントラッキング用データ属性を生成
+     *
+     * @param string $company_slug
+     * @param string $cta_type
+     * @return string
+     */
+    public function get_cardloan_tracking_attributes( $company_slug, $cta_type = 'button' ) {
+        $tracking = $this->get_cardloan_tracking_settings();
+
+        if ( empty( $tracking['gtm_enabled'] ) ) {
+            return '';
+        }
+
+        $attrs = array(
+            'data-gtm-category' => esc_attr( $tracking['event_category'] ),
+            'data-gtm-action'   => esc_attr( $tracking['event_action'] ),
+            'data-gtm-label'    => esc_attr( $company_slug ),
+            'data-cta-type'     => esc_attr( $cta_type ),
+        );
+
+        $output = '';
+        foreach ( $attrs as $key => $value ) {
+            $output .= sprintf( ' %s="%s"', $key, $value );
+        }
+
+        return $output;
+    }
+
+    /**
+     * ブロックエディタ用のカードローンセレクトオプション
+     *
+     * @return array
+     */
+    public function get_cardloan_select_options() {
+        $cardloans = $this->get_enabled_cardloans();
+        $options = array();
+
+        foreach ( $cardloans as $slug => $data ) {
+            $options[] = array(
+                'value' => $slug,
+                'label' => $data['name'],
+            );
+        }
+
         return $options;
     }
 }

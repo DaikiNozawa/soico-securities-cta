@@ -121,6 +121,11 @@ final class Soico_Securities_CTA {
                     'title' => __( '証券CTA', 'soico-securities-cta' ),
                     'icon'  => 'money-alt',
                 ),
+                array(
+                    'slug'  => 'soico-cardloan-cta',
+                    'title' => __( 'カードローンCTA', 'soico-securities-cta' ),
+                    'icon'  => 'money-alt',
+                ),
             ),
             $categories
         );
@@ -130,20 +135,30 @@ final class Soico_Securities_CTA {
      * フロントエンドアセット読み込み
      */
     public function enqueue_frontend_assets() {
-        // CTAブロックが存在する場合のみ読み込み
-        if ( has_block( 'soico-cta/conclusion-box' ) ||
+        // 証券CTAブロック
+        $has_securities_block = has_block( 'soico-cta/conclusion-box' ) ||
              has_block( 'soico-cta/inline-cta' ) ||
              has_block( 'soico-cta/single-button' ) ||
              has_block( 'soico-cta/comparison-table' ) ||
-             has_block( 'soico-cta/subtle-banner' ) ) {
-            
+             has_block( 'soico-cta/subtle-banner' );
+
+        // カードローンCTAブロック
+        $has_cardloan_block = has_block( 'soico-cta/cardloan-conclusion-box' ) ||
+             has_block( 'soico-cta/cardloan-inline-cta' ) ||
+             has_block( 'soico-cta/cardloan-single-button' ) ||
+             has_block( 'soico-cta/cardloan-comparison-table' ) ||
+             has_block( 'soico-cta/cardloan-subtle-banner' );
+
+        // いずれかのCTAブロックが存在する場合のみ読み込み
+        if ( $has_securities_block || $has_cardloan_block ) {
+
             wp_enqueue_style(
                 'soico-cta-frontend',
                 SOICO_CTA_PLUGIN_URL . 'assets/css/frontend.css',
                 array(),
                 SOICO_CTA_VERSION
             );
-            
+
             if ( file_exists( SOICO_CTA_PLUGIN_DIR . 'assets/js/frontend.js' ) ) {
                 wp_enqueue_script(
                     'soico-cta-frontend',
@@ -153,36 +168,65 @@ final class Soico_Securities_CTA {
                     true
                 );
             }
-            
+
             // CSS変数を出力
-            $this->output_css_variables();
+            $this->output_css_variables( $has_securities_block, $has_cardloan_block );
         }
     }
     
     /**
      * CSS変数出力
      */
-    private function output_css_variables() {
-        $design = get_option( 'soico_cta_design_settings', array() );
-        
-        $primary_color = isset( $design['primary_color'] ) ? $design['primary_color'] : '#FF6B35';
-        $secondary_color = isset( $design['secondary_color'] ) ? $design['secondary_color'] : '#1E88E5';
-        $border_radius = isset( $design['border_radius'] ) ? intval( $design['border_radius'] ) : 8;
-        
-        $css = sprintf(
-            ':root {
-                --soico-cta-primary: %s;
-                --soico-cta-secondary: %s;
-                --soico-cta-border-radius: %dpx;
-                --soico-cta-gradient-start: #E8F4FC;
-                --soico-cta-gradient-end: #F0F8FF;
-            }',
-            esc_attr( $primary_color ),
-            esc_attr( $secondary_color ),
-            $border_radius
-        );
-        
-        wp_add_inline_style( 'soico-cta-frontend', $css );
+    private function output_css_variables( $has_securities = true, $has_cardloan = false ) {
+        $css = '';
+
+        // 証券用CSS変数
+        if ( $has_securities ) {
+            $design = get_option( 'soico_cta_design_settings', array() );
+
+            $primary_color = isset( $design['primary_color'] ) ? $design['primary_color'] : '#FF6B35';
+            $secondary_color = isset( $design['secondary_color'] ) ? $design['secondary_color'] : '#1E88E5';
+            $border_radius = isset( $design['border_radius'] ) ? intval( $design['border_radius'] ) : 8;
+
+            $css .= sprintf(
+                ':root {
+                    --soico-cta-primary: %s;
+                    --soico-cta-secondary: %s;
+                    --soico-cta-border-radius: %dpx;
+                    --soico-cta-gradient-start: #E8F4FC;
+                    --soico-cta-gradient-end: #F0F8FF;
+                }',
+                esc_attr( $primary_color ),
+                esc_attr( $secondary_color ),
+                $border_radius
+            );
+        }
+
+        // カードローン用CSS変数
+        if ( $has_cardloan ) {
+            $cardloan_design = get_option( 'soico_cta_cardloan_design_settings', array() );
+
+            $cardloan_primary = isset( $cardloan_design['primary_color'] ) ? $cardloan_design['primary_color'] : '#00A95F';
+            $cardloan_secondary = isset( $cardloan_design['secondary_color'] ) ? $cardloan_design['secondary_color'] : '#2E7D32';
+            $cardloan_radius = isset( $cardloan_design['border_radius'] ) ? intval( $cardloan_design['border_radius'] ) : 8;
+
+            $css .= sprintf(
+                ':root {
+                    --soico-cta-cardloan-primary: %s;
+                    --soico-cta-cardloan-secondary: %s;
+                    --soico-cta-cardloan-border-radius: %dpx;
+                    --soico-cta-cardloan-gradient-start: #E8F8F0;
+                    --soico-cta-cardloan-gradient-end: #F0FFF8;
+                }',
+                esc_attr( $cardloan_primary ),
+                esc_attr( $cardloan_secondary ),
+                $cardloan_radius
+            );
+        }
+
+        if ( ! empty( $css ) ) {
+            wp_add_inline_style( 'soico-cta-frontend', $css );
+        }
     }
     
     /**
@@ -275,15 +319,135 @@ final class Soico_Securities_CTA {
             'secondary_color' => '#1E88E5',
             'border_radius'   => 8,
         );
-        
+
         // デフォルトトラッキング設定
         $default_tracking = array(
             'gtm_enabled'     => true,
             'event_category'  => 'CTA Click',
             'event_action'    => 'securities_affiliate',
         );
-        
+
+        // ==========================================================================
+        // カードローンデフォルトデータ
+        // ==========================================================================
+        $default_cardloans = array(
+            'aiful' => array(
+                'name'          => 'アイフル',
+                'slug'          => 'aiful',
+                'priority'      => 1,
+                'enabled'       => true,
+                'thirsty_link'  => '',
+                'direct_url'    => '',
+                'features'      => array(
+                    '最短25分で融資可能',
+                    'WEB完結で来店不要',
+                    '初めての方は30日間利息0円',
+                ),
+                'interest_rate' => '3.0%〜18.0%',
+                'limit_amount'  => '800万円',
+                'review_time'   => '最短25分',
+                'badge'         => '人気No.1',
+                'badge_color'   => '#E53935',
+                'button_text'   => '今すぐ申し込む',
+                'button_color'  => '#00A95F',
+            ),
+            'promise' => array(
+                'name'          => 'プロミス',
+                'slug'          => 'promise',
+                'priority'      => 2,
+                'enabled'       => true,
+                'thirsty_link'  => '',
+                'direct_url'    => '',
+                'features'      => array(
+                    '最短3分で融資可能',
+                    '初回30日間無利息',
+                ),
+                'interest_rate' => '4.5%〜17.8%',
+                'limit_amount'  => '500万円',
+                'review_time'   => '最短3分',
+                'badge'         => '',
+                'badge_color'   => '',
+                'button_text'   => '詳細を見る',
+                'button_color'  => '#00A95F',
+            ),
+            'acom' => array(
+                'name'          => 'アコム',
+                'slug'          => 'acom',
+                'priority'      => 3,
+                'enabled'       => true,
+                'thirsty_link'  => '',
+                'direct_url'    => '',
+                'features'      => array(
+                    '最短20分で融資可能',
+                    '初回30日間金利0円',
+                ),
+                'interest_rate' => '3.0%〜18.0%',
+                'limit_amount'  => '800万円',
+                'review_time'   => '最短20分',
+                'badge'         => '',
+                'badge_color'   => '',
+                'button_text'   => '詳細を見る',
+                'button_color'  => '#00A95F',
+            ),
+            'lake' => array(
+                'name'          => 'レイクALSA',
+                'slug'          => 'lake',
+                'priority'      => 4,
+                'enabled'       => true,
+                'thirsty_link'  => '',
+                'direct_url'    => '',
+                'features'      => array(
+                    '選べる無利息サービス',
+                    'WEB完結対応',
+                ),
+                'interest_rate' => '4.5%〜18.0%',
+                'limit_amount'  => '500万円',
+                'review_time'   => '最短25分',
+                'badge'         => '',
+                'badge_color'   => '',
+                'button_text'   => '詳細を見る',
+                'button_color'  => '#00A95F',
+            ),
+            'mobit' => array(
+                'name'          => 'SMBCモビット',
+                'slug'          => 'mobit',
+                'priority'      => 5,
+                'enabled'       => true,
+                'thirsty_link'  => '',
+                'direct_url'    => '',
+                'features'      => array(
+                    'WEB完結で電話連絡なし',
+                    'Tポイントが貯まる',
+                ),
+                'interest_rate' => '3.0%〜18.0%',
+                'limit_amount'  => '800万円',
+                'review_time'   => '最短30分',
+                'badge'         => '',
+                'badge_color'   => '',
+                'button_text'   => '詳細を見る',
+                'button_color'  => '#00A95F',
+            ),
+        );
+
+        // カードローンデフォルトデザイン設定
+        $default_cardloan_design = array(
+            'primary_color'   => '#00A95F',
+            'secondary_color' => '#2E7D32',
+            'border_radius'   => 8,
+        );
+
+        // カードローンデフォルトトラッキング設定
+        $default_cardloan_tracking = array(
+            'gtm_enabled'     => true,
+            'event_category'  => 'CTA Click',
+            'event_action'    => 'cardloan_affiliate',
+        );
+
+        // ==========================================================================
         // オプション保存（既存がない場合のみ）
+        // ==========================================================================
+
+        // 証券
         if ( ! get_option( 'soico_cta_securities_data' ) ) {
             add_option( 'soico_cta_securities_data', $default_securities );
         }
@@ -293,10 +457,22 @@ final class Soico_Securities_CTA {
         if ( ! get_option( 'soico_cta_tracking_settings' ) ) {
             add_option( 'soico_cta_tracking_settings', $default_tracking );
         }
-        
+
+        // カードローン
+        if ( ! get_option( 'soico_cta_cardloan_data' ) ) {
+            add_option( 'soico_cta_cardloan_data', $default_cardloans );
+        }
+        if ( ! get_option( 'soico_cta_cardloan_design_settings' ) ) {
+            add_option( 'soico_cta_cardloan_design_settings', $default_cardloan_design );
+        }
+        if ( ! get_option( 'soico_cta_cardloan_tracking_settings' ) ) {
+            add_option( 'soico_cta_cardloan_tracking_settings', $default_cardloan_tracking );
+        }
+
         // キャッシュクリア
         delete_transient( 'soico_cta_securities_cache' );
-        
+        delete_transient( 'soico_cta_cardloan_cache' );
+
         // リライトルール更新フラグ
         set_transient( 'soico_cta_flush_rewrite', true, 60 );
     }
@@ -307,6 +483,7 @@ final class Soico_Securities_CTA {
     public function deactivate() {
         // キャッシュクリア
         delete_transient( 'soico_cta_securities_cache' );
+        delete_transient( 'soico_cta_cardloan_cache' );
         delete_transient( 'soico_cta_thirsty_links_cache' );
     }
 
@@ -368,6 +545,46 @@ final class Soico_Securities_CTA {
 
             case 'subtle-banner':
                 $output = $block_register->render_subtle_banner( array(
+                    'company' => sanitize_key( $atts['company'] ),
+                    'message' => '',
+                ) );
+                break;
+
+            // カードローンブロック
+            case 'cardloan-conclusion-box':
+                $output = $block_register->render_cardloan_conclusion_box( array(
+                    'company'      => sanitize_key( $atts['company'] ),
+                    'showFeatures' => true,
+                    'customTitle'  => '',
+                ) );
+                break;
+
+            case 'cardloan-inline-cta':
+                $output = $block_register->render_cardloan_inline_cta( array(
+                    'company' => sanitize_key( $atts['company'] ),
+                    'style'   => 'default',
+                ) );
+                break;
+
+            case 'cardloan-single-button':
+                $output = $block_register->render_cardloan_single_button( array(
+                    'company'    => sanitize_key( $atts['company'] ),
+                    'buttonText' => '',
+                    'showPR'     => true,
+                ) );
+                break;
+
+            case 'cardloan-comparison-table':
+                $output = $block_register->render_cardloan_comparison_table( array(
+                    'limit'            => absint( $atts['limit'] ),
+                    'showInterestRate' => true,
+                    'showLimitAmount'  => true,
+                    'showReviewTime'   => true,
+                ) );
+                break;
+
+            case 'cardloan-subtle-banner':
+                $output = $block_register->render_cardloan_subtle_banner( array(
                     'company' => sanitize_key( $atts['company'] ),
                     'message' => '',
                 ) );

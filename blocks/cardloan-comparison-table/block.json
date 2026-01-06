@@ -1,0 +1,38 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "soico-cta/cardloan-comparison-table",
+    "version": "1.0.0",
+    "title": "カードローン比較表",
+    "category": "soico-cardloan-cta",
+    "icon": "money-alt",
+    "description": "複数のカードローンを比較する表形式のCTA。ランキング記事に最適。",
+    "keywords": ["cta", "比較", "カードローン", "cardloan", "table", "ランキング"],
+    "textdomain": "soico-securities-cta",
+    "attributes": {
+        "companies": {
+            "type": "array",
+            "default": ["aiful", "promise", "acom"]
+        },
+        "limit": {
+            "type": "number",
+            "default": 3
+        },
+        "showInterestRate": {
+            "type": "boolean",
+            "default": true
+        },
+        "showLimitAmount": {
+            "type": "boolean",
+            "default": true
+        },
+        "showReviewTime": {
+            "type": "boolean",
+            "default": true
+        }
+    },
+    "supports": {
+        "html": false,
+        "className": true
+    }
+}

@@ -543,3 +543,344 @@ body .soico-cta-comparison-table tbody tr.soico-cta-row-highlight:hover {
 .editor-content table.soico-cta-comparison-table tbody tr.soico-cta-row-highlight:hover td {
     background: #FFF5F0 !important;
 }
+
+/* ==========================================================================
+   カードローンCTA スタイル
+   ========================================================================== */
+
+/* カードローン用CSS変数 (fallback) */
+:root {
+    --soico-cardloan-primary: #4CAF50;
+    --soico-cardloan-secondary: #2E7D32;
+    --soico-cardloan-gradient-start: #E8F5E9;
+    --soico-cardloan-gradient-end: #F1F8E9;
+}
+
+/* --------------------------------------------------------------------------
+   カードローン結論ボックス
+   -------------------------------------------------------------------------- */
+.soico-cta-cardloan-conclusion-box {
+    background: linear-gradient(135deg, var(--soico-cardloan-gradient-start) 0%, var(--soico-cardloan-gradient-end) 100%);
+    border: 2px solid var(--soico-cardloan-secondary);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+    box-shadow: 0 4px 12px rgba(46, 125, 50, 0.15);
+}
+
+.soico-cta-cardloan-conclusion-box .soico-cta-conclusion-label {
+    background: var(--soico-cardloan-secondary);
+}
+
+.soico-cta-cardloan-conclusion-box .soico-cta-conclusion-title {
+    color: #1B5E20;
+}
+
+.soico-cta-cardloan-conclusion-box .soico-cta-button-primary {
+    background-color: var(--soico-cardloan-primary);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.soico-cta-cardloan-conclusion-box .soico-cta-button-primary:hover {
+    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.5);
+}
+
+/* --------------------------------------------------------------------------
+   カードローンインラインCTA
+   -------------------------------------------------------------------------- */
+.soico-cta-cardloan-inline {
+    background: #E8F5E9;
+    border-left: 4px solid var(--soico-cardloan-secondary);
+    padding: 16px 20px;
+    margin: 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.soico-cta-cardloan-inline .soico-cta-inline-name {
+    color: #1B5E20;
+}
+
+.soico-cta-cardloan-inline .soico-cta-inline-button {
+    background: var(--soico-cardloan-primary);
+}
+
+/* スタイルバリエーション */
+.soico-cta-cardloan-inline-subtle {
+    background: transparent;
+    border: 1px solid #C8E6C9;
+    border-left: 4px solid var(--soico-cardloan-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   カードローン単体ボタン
+   -------------------------------------------------------------------------- */
+.soico-cta-cardloan-single-button-wrapper .soico-cta-button-primary {
+    background-color: var(--soico-cardloan-primary);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.soico-cta-cardloan-single-button-wrapper .soico-cta-button-primary:hover {
+    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.5);
+}
+
+/* --------------------------------------------------------------------------
+   カードローン比較表
+   -------------------------------------------------------------------------- */
+.soico-cta-cardloan-comparison-wrapper {
+    margin: 24px 0;
+    overflow-x: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.soico-cta-cardloan-comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    min-width: 700px;
+    background: #fff;
+}
+
+.soico-cta-cardloan-comparison-table thead tr {
+    background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+    color: #fff;
+}
+
+.soico-cta-cardloan-comparison-table th {
+    padding: 14px 12px;
+    text-align: left;
+    font-weight: bold;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+}
+
+.soico-cta-cardloan-comparison-table th.soico-cta-col-rank,
+.soico-cta-cardloan-comparison-table th.soico-cta-col-interest,
+.soico-cta-cardloan-comparison-table th.soico-cta-col-limit,
+.soico-cta-cardloan-comparison-table th.soico-cta-col-review,
+.soico-cta-cardloan-comparison-table th.soico-cta-col-action {
+    text-align: center;
+}
+
+.soico-cta-cardloan-comparison-table tbody tr {
+    background: #fff;
+    transition: background 0.2s;
+}
+
+.soico-cta-cardloan-comparison-table tbody tr:nth-child(even) {
+    background: #F1F8E9;
+}
+
+.soico-cta-cardloan-comparison-table tbody tr:hover {
+    background: #E8F5E9;
+}
+
+.soico-cta-cardloan-comparison-table td {
+    padding: 16px 12px;
+    border-bottom: 1px solid #C8E6C9;
+    vertical-align: middle;
+}
+
+.soico-cta-cardloan-comparison-table td.soico-cta-col-rank,
+.soico-cta-cardloan-comparison-table td.soico-cta-col-interest,
+.soico-cta-cardloan-comparison-table td.soico-cta-col-limit,
+.soico-cta-cardloan-comparison-table td.soico-cta-col-review,
+.soico-cta-cardloan-comparison-table td.soico-cta-col-action {
+    text-align: center;
+}
+
+/* 1位のハイライト */
+.soico-cta-cardloan-comparison-table .soico-cta-row-highlight {
+    background: #fff !important;
+    border-left: 4px solid var(--soico-cardloan-primary);
+}
+
+.soico-cta-cardloan-comparison-table .soico-cta-row-highlight:hover {
+    background: #E8F5E9 !important;
+}
+
+/* 会社名の強調 */
+.soico-cta-cardloan-comparison-table td.soico-cta-col-name strong {
+    color: #1B5E20;
+    font-size: 15px;
+}
+
+.soico-cta-cardloan-comparison-table .soico-cta-row-highlight td.soico-cta-col-name strong {
+    color: var(--soico-cardloan-primary);
+}
+
+/* カードローン用ランキングバッジ */
+.soico-cta-cardloan-rank-gold {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.soico-cta-cardloan-rank-silver {
+    background: linear-gradient(135deg, #E8E8E8 0%, #A0A0A0 100%);
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.soico-cta-cardloan-rank-bronze {
+    background: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%);
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* 金利・限度額・審査時間のスタイル */
+.soico-cta-interest-rate {
+    color: #D32F2F;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.soico-cta-limit-amount {
+    color: #1B5E20;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.soico-cta-review-time {
+    color: #1565C0;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* カードローン用テーブルボタン */
+.soico-cta-cardloan-comparison-table .soico-cta-table-button {
+    background-color: var(--soico-cardloan-primary);
+}
+
+.soico-cta-cardloan-comparison-table .soico-cta-table-button:hover {
+    background-color: var(--soico-cardloan-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   カードローン控えめバナー
+   -------------------------------------------------------------------------- */
+.soico-cta-cardloan-subtle-banner {
+    background: #F1F8E9;
+    border: 1px solid #C8E6C9;
+    border-radius: var(--soico-cta-border-radius);
+    padding: 12px 16px;
+    margin: 16px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.soico-cta-cardloan-subtle-banner .soico-cta-subtle-message a {
+    color: var(--soico-cardloan-secondary);
+}
+
+.soico-cta-cardloan-subtle-banner .soico-cta-subtle-pr {
+    background: #C8E6C9;
+    color: #2E7D32;
+    padding: 2px 6px;
+    border-radius: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   カードローン レスポンシブ
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+    .soico-cta-cardloan-conclusion-box {
+        padding: 16px;
+    }
+
+    .soico-cta-cardloan-inline {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .soico-cta-cardloan-inline .soico-cta-inline-button {
+        width: 100%;
+        text-align: center;
+    }
+
+    .soico-cta-cardloan-comparison-table {
+        font-size: 12px;
+    }
+
+    .soico-cta-cardloan-comparison-table th,
+    .soico-cta-cardloan-comparison-table td {
+        padding: 10px 8px;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   SWELL テーマ カードローン互換性
+   -------------------------------------------------------------------------- */
+.post_content .soico-cta-cardloan-comparison-table,
+.post_content table.soico-cta-cardloan-comparison-table,
+body .soico-cta-cardloan-comparison-table {
+    background: #fff !important;
+}
+
+.post_content .soico-cta-cardloan-comparison-table thead tr,
+.post_content table.soico-cta-cardloan-comparison-table thead tr,
+body .soico-cta-cardloan-comparison-table thead tr {
+    background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%) !important;
+    color: #fff !important;
+}
+
+.post_content .soico-cta-cardloan-comparison-table tbody tr,
+.post_content table.soico-cta-cardloan-comparison-table tbody tr,
+body .soico-cta-cardloan-comparison-table tbody tr {
+    background: #fff !important;
+}
+
+.post_content .soico-cta-cardloan-comparison-table tbody tr:nth-child(even),
+.post_content table.soico-cta-cardloan-comparison-table tbody tr:nth-child(even),
+body .soico-cta-cardloan-comparison-table tbody tr:nth-child(even) {
+    background: #F1F8E9 !important;
+}
+
+.post_content .soico-cta-cardloan-comparison-table tbody tr:hover,
+.post_content table.soico-cta-cardloan-comparison-table tbody tr:hover,
+body .soico-cta-cardloan-comparison-table tbody tr:hover {
+    background: #E8F5E9 !important;
+}
+
+.post_content .soico-cta-cardloan-comparison-table tbody tr.soico-cta-row-highlight,
+.post_content table.soico-cta-cardloan-comparison-table tbody tr.soico-cta-row-highlight,
+body .soico-cta-cardloan-comparison-table tbody tr.soico-cta-row-highlight {
+    background: #fff !important;
+    border-left: 4px solid var(--soico-cardloan-primary) !important;
+}
+
+.post_content .soico-cta-cardloan-comparison-table tbody tr.soico-cta-row-highlight:hover,
+.post_content table.soico-cta-cardloan-comparison-table tbody tr.soico-cta-row-highlight:hover,
+body .soico-cta-cardloan-comparison-table tbody tr.soico-cta-row-highlight:hover {
+    background: #E8F5E9 !important;
+}
+
+/* SWELL .editor-content カードローンテーブルスタイル上書き */
+.editor-content .soico-cta-cardloan-comparison-table thead tr th,
+.editor-content table.soico-cta-cardloan-comparison-table thead tr th {
+    background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%) !important;
+    color: #fff !important;
+}
+
+.editor-content .soico-cta-cardloan-comparison-table tbody tr td,
+.editor-content table.soico-cta-cardloan-comparison-table tbody tr td {
+    background: #fff !important;
+    color: #333 !important;
+}
+
+.editor-content .soico-cta-cardloan-comparison-table tbody tr:nth-child(even) td,
+.editor-content table.soico-cta-cardloan-comparison-table tbody tr:nth-child(even) td {
+    background: #F1F8E9 !important;
+}
+
+.editor-content .soico-cta-cardloan-comparison-table tbody tr:hover td,
+.editor-content table.soico-cta-cardloan-comparison-table tbody tr:hover td {
+    background: #E8F5E9 !important;
+}

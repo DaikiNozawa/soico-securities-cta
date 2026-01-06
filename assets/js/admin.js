@@ -76,11 +76,21 @@
      */
     function initSortable() {
         if (typeof $.fn.sortable === 'function') {
+            // 証券会社リスト
             $('#securities-list').sortable({
                 handle: '.soico-cta-drag-handle',
                 placeholder: 'soico-cta-sortable-placeholder',
                 update: function(event, ui) {
-                    updatePriorities();
+                    updatePriorities('#securities-list');
+                }
+            });
+
+            // カードローンリスト
+            $('#cardloans-list').sortable({
+                handle: '.soico-cta-drag-handle',
+                placeholder: 'soico-cta-sortable-placeholder',
+                update: function(event, ui) {
+                    updatePriorities('#cardloans-list');
                 }
             });
         }
@@ -89,8 +99,9 @@
     /**
      * 優先順位更新
      */
-    function updatePriorities() {
-        $('.soico-cta-security-row').each(function(index) {
+    function updatePriorities(listSelector) {
+        var selector = listSelector || '#securities-list, #cardloans-list';
+        $(selector).find('.soico-cta-security-row').each(function(index) {
             $(this).find('.priority-input').val(index + 1);
             $(this).find('.soico-cta-security-priority').text('優先順位: ' + (index + 1));
         });
@@ -132,6 +143,7 @@
      * フォーム送信
      */
     function initFormSubmit() {
+        // 証券会社フォーム
         $('#soico-cta-securities-form').on('submit', function(e) {
             e.preventDefault();
 
@@ -141,7 +153,7 @@
 
             $submitBtn.prop('disabled', true).text(config.i18n && config.i18n.saving ? config.i18n.saving : '保存中...');
 
-            var formData = getFormData($form);
+            var formData = getFormData($form, 'securities');
             console.log('[SOICO CTA Admin] Saving securities:', formData);
 
             $.ajax({
@@ -169,19 +181,58 @@
                 }
             });
         });
+
+        // カードローンフォーム
+        $('#soico-cardloan-form').on('submit', function(e) {
+            e.preventDefault();
+
+            var $form = $(this);
+            var $submitBtn = $form.find('[type="submit"]');
+            var originalText = $submitBtn.text();
+
+            $submitBtn.prop('disabled', true).text(config.i18n && config.i18n.saving ? config.i18n.saving : '保存中...');
+
+            var formData = getFormData($form, 'cardloans');
+            console.log('[SOICO CTA Admin] Saving cardloans:', formData);
+
+            $.ajax({
+                url: config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'soico_cta_save_cardloans',
+                    nonce: config.nonce,
+                    cardloans: formData
+                },
+                success: function(response) {
+                    console.log('[SOICO CTA Admin] Cardloan save response:', response);
+                    if (response.success) {
+                        showNotice(config.i18n && config.i18n.saved ? config.i18n.saved : '保存しました', 'success');
+                    } else {
+                        showNotice(response.data && response.data.message ? response.data.message : 'エラーが発生しました', 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('[SOICO CTA Admin] Cardloan save error:', status, error, xhr.responseText);
+                    showNotice(config.i18n && config.i18n.error ? config.i18n.error : 'エラーが発生しました', 'error');
+                },
+                complete: function() {
+                    $submitBtn.prop('disabled', false).text(originalText);
+                }
+            });
+        });
     }
 
     /**
      * フォームデータ取得
      */
-    function getFormData($form) {
+    function getFormData($form, type) {
         var data = {};
 
         $form.find('.soico-cta-security-row').each(function() {
             var $row = $(this);
             var slug = $row.data('slug');
 
-            data[slug] = {
+            var rowData = {
                 slug: slug,
                 name: $row.find('input[name$="[name]"]').val(),
                 enabled: $row.find('input[name$="[enabled]"]').is(':checked') ? 1 : 0,
@@ -189,12 +240,25 @@
                 thirsty_link: $row.find('select[name$="[thirsty_link]"]').val(),
                 direct_url: $row.find('input[name$="[direct_url]"]').val(),
                 features: $row.find('textarea[name$="[features]"]').val(),
-                commission: $row.find('input[name$="[commission]"]').val(),
                 badge: $row.find('input[name$="[badge]"]').val(),
                 badge_color: $row.find('input[name$="[badge_color]"]').val(),
                 button_text: $row.find('input[name$="[button_text]"]').val(),
                 button_color: $row.find('input[name$="[button_color]"]').val()
             };
+
+            // 証券会社固有フィールド
+            if (type === 'securities') {
+                rowData.commission = $row.find('input[name$="[commission]"]').val();
+            }
+
+            // カードローン固有フィールド
+            if (type === 'cardloans') {
+                rowData.interest_rate = $row.find('input[name$="[interest_rate]"]').val();
+                rowData.limit_amount = $row.find('input[name$="[limit_amount]"]').val();
+                rowData.review_time = $row.find('input[name$="[review_time]"]').val();
+            }
+
+            data[slug] = rowData;
         });
 
         return data;
@@ -221,6 +285,49 @@
                 type: 'POST',
                 data: {
                     action: 'soico_cta_add_security',
+                    nonce: config.nonce,
+                    slug: $form.find('input[name="slug"]').val(),
+                    name: $form.find('input[name="name"]').val()
+                },
+                success: function(response) {
+                    if (response.success) {
+                        if (response.data && response.data.reload) {
+                            location.reload();
+                        } else {
+                            showNotice(response.data && response.data.message ? response.data.message : '追加しました', 'success');
+                            closeModal();
+                        }
+                    } else {
+                        showNotice(response.data && response.data.message ? response.data.message : 'エラーが発生しました', 'error');
+                    }
+                },
+                error: function() {
+                    showNotice('エラーが発生しました', 'error');
+                },
+                complete: function() {
+                    $submitBtn.prop('disabled', false);
+                }
+            });
+        });
+
+        // カードローン追加
+        $('#add-cardloan-btn').on('click', function() {
+            $('#add-cardloan-modal').show();
+        });
+
+        $('#add-cardloan-form').on('submit', function(e) {
+            e.preventDefault();
+
+            var $form = $(this);
+            var $submitBtn = $form.find('[type="submit"]');
+
+            $submitBtn.prop('disabled', true);
+
+            $.ajax({
+                url: config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'soico_cta_add_cardloan',
                     nonce: config.nonce,
                     slug: $form.find('input[name="slug"]').val(),
                     name: $form.find('input[name="name"]').val()
@@ -274,7 +381,44 @@
                     if (response.success) {
                         $row.slideUp(200, function() {
                             $(this).remove();
-                            updatePriorities();
+                            updatePriorities('#securities-list');
+                        });
+                        showNotice(response.data && response.data.message ? response.data.message : '削除しました', 'success');
+                    } else {
+                        showNotice(response.data && response.data.message ? response.data.message : 'エラーが発生しました', 'error');
+                    }
+                },
+                error: function() {
+                    showNotice('エラーが発生しました', 'error');
+                }
+            });
+        });
+
+        // カードローン削除
+        $(document).on('click', '.soico-cta-delete-cardloan', function(e) {
+            e.preventDefault();
+
+            var confirmMsg = config.i18n && config.i18n.confirmDeleteCardloan ? config.i18n.confirmDeleteCardloan : 'このカードローン会社を削除しますか？';
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+
+            var $row = $(this).closest('.soico-cta-security-row');
+            var slug = $row.data('slug');
+
+            $.ajax({
+                url: config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'soico_cta_delete_cardloan',
+                    nonce: config.nonce,
+                    slug: slug
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $row.slideUp(200, function() {
+                            $(this).remove();
+                            updatePriorities('#cardloans-list');
                         });
                         showNotice(response.data && response.data.message ? response.data.message : '削除しました', 'success');
                     } else {
@@ -293,6 +437,7 @@
      */
     function initModal() {
         $('#cancel-add-security').on('click', closeModal);
+        $('#cancel-add-cardloan').on('click', closeModal);
 
         $(document).on('click', '.soico-cta-modal', function(e) {
             if ($(e.target).hasClass('soico-cta-modal')) {
@@ -311,10 +456,14 @@
      * モーダルを閉じる
      */
     function closeModal() {
-        $('#add-security-modal').hide();
-        var form = document.getElementById('add-security-form');
-        if (form) {
-            form.reset();
+        $('#add-security-modal, #add-cardloan-modal').hide();
+        var securityForm = document.getElementById('add-security-form');
+        if (securityForm) {
+            securityForm.reset();
+        }
+        var cardloanForm = document.getElementById('add-cardloan-form');
+        if (cardloanForm) {
+            cardloanForm.reset();
         }
     }
 
