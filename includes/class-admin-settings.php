@@ -158,6 +158,15 @@ class Soico_CTA_Admin_Settings {
             'soico-cardloan-guide',
             array( $this, 'render_cardloan_guide_page' )
         );
+
+        add_submenu_page(
+            'soico-cardloan-settings',
+            __( '診断ツール', 'soico-securities-cta' ),
+            __( '診断ツール', 'soico-securities-cta' ),
+            'manage_options',
+            'soico-cardloan-diagnostics',
+            array( $this, 'render_cardloan_diagnostics_page' )
+        );
     }
     
     /**
@@ -189,8 +198,9 @@ class Soico_CTA_Admin_Settings {
      * 管理画面アセット読み込み
      */
     public function enqueue_admin_assets( $hook ) {
-        // 設定ページのみ
-        if ( strpos( $hook, 'soico-cta' ) === false ) {
+        // 設定ページのみ（証券CTA + カードローンCTA）
+        $is_soico_page = strpos( $hook, 'soico-cta' ) !== false || strpos( $hook, 'soico-cardloan' ) !== false;
+        if ( ! $is_soico_page ) {
             return;
         }
         
@@ -1495,5 +1505,341 @@ data-cta-type="[CTAタイプ]"
         } else {
             wp_send_json_error( array( 'message' => '削除に失敗しました' ) );
         }
+    }
+
+    /**
+     * カードローン診断ページ描画
+     */
+    public function render_cardloan_diagnostics_page() {
+        $securities_data = Soico_CTA_Securities_Data::get_instance();
+        $thirsty = Soico_CTA_Thirsty_Integration::get_instance();
+        $block_register = Soico_CTA_Block_Register::get_instance();
+
+        $cardloans = $securities_data->get_all_cardloans( false );
+        $enabled_cardloans = $securities_data->get_enabled_cardloans();
+        $registry = WP_Block_Type_Registry::get_instance();
+
+        $blocks = array(
+            'soico-cta/cardloan-conclusion-box',
+            'soico-cta/cardloan-inline-cta',
+            'soico-cta/cardloan-single-button',
+            'soico-cta/cardloan-comparison-table',
+            'soico-cta/cardloan-subtle-banner',
+        );
+        ?>
+        <div class="wrap soico-cta-admin soico-cardloan-admin">
+            <h1><?php esc_html_e( 'カードローンCTA 診断ツール', 'soico-securities-cta' ); ?></h1>
+
+            <!-- JavaScript読み込み状態 -->
+            <div class="soico-cta-diag-section">
+                <h2>📜 JavaScript読み込み状態</h2>
+                <p>この診断ツールが表示されている場合、管理画面のスクリプトは正常に読み込まれています。</p>
+                <table class="widefat">
+                    <tr>
+                        <th>項目</th>
+                        <th>状態</th>
+                    </tr>
+                    <tr>
+                        <td>soicoCTAAdmin オブジェクト</td>
+                        <td><span id="soico-diag-admin-obj">確認中...</span></td>
+                    </tr>
+                    <tr>
+                        <td>ajaxUrl</td>
+                        <td><span id="soico-diag-ajax-url">確認中...</span></td>
+                    </tr>
+                    <tr>
+                        <td>nonce</td>
+                        <td><span id="soico-diag-nonce">確認中...</span></td>
+                    </tr>
+                    <tr>
+                        <td>jQuery</td>
+                        <td><span id="soico-diag-jquery">確認中...</span></td>
+                    </tr>
+                    <tr>
+                        <td>jQuery UI Sortable</td>
+                        <td><span id="soico-diag-sortable">確認中...</span></td>
+                    </tr>
+                </table>
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    // jQuery check
+                    document.getElementById('soico-diag-jquery').innerHTML =
+                        typeof jQuery !== 'undefined' ? '✅ 読み込み済み' : '❌ 未読み込み';
+
+                    // jQuery UI Sortable check
+                    document.getElementById('soico-diag-sortable').innerHTML =
+                        typeof jQuery !== 'undefined' && typeof jQuery.fn.sortable === 'function'
+                            ? '✅ 読み込み済み' : '❌ 未読み込み';
+
+                    // soicoCTAAdmin check
+                    if (typeof window.soicoCTAAdmin !== 'undefined') {
+                        document.getElementById('soico-diag-admin-obj').innerHTML = '✅ 読み込み済み';
+                        document.getElementById('soico-diag-ajax-url').innerHTML =
+                            window.soicoCTAAdmin.ajaxUrl ? '✅ ' + window.soicoCTAAdmin.ajaxUrl : '❌ 未設定';
+                        document.getElementById('soico-diag-nonce').innerHTML =
+                            window.soicoCTAAdmin.nonce ? '✅ 設定済み' : '❌ 未設定';
+                    } else {
+                        document.getElementById('soico-diag-admin-obj').innerHTML = '❌ 未読み込み（admin.jsが読み込まれていません）';
+                        document.getElementById('soico-diag-ajax-url').innerHTML = '❌ 未設定';
+                        document.getElementById('soico-diag-nonce').innerHTML = '❌ 未設定';
+                    }
+                });
+                </script>
+            </div>
+
+            <!-- ブロック登録状態 -->
+            <div class="soico-cta-diag-section">
+                <h2>📦 カードローンブロック登録状態</h2>
+                <table class="widefat">
+                    <thead>
+                        <tr>
+                            <th>ブロック名</th>
+                            <th>登録済み</th>
+                            <th>render_callback</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ( $blocks as $block_name ) :
+                            $block_type = $registry->get_registered( $block_name );
+                            $is_registered = ! empty( $block_type );
+                            $has_callback = $is_registered && is_callable( $block_type->render_callback );
+                        ?>
+                        <tr>
+                            <td><code><?php echo esc_html( $block_name ); ?></code></td>
+                            <td><?php echo $is_registered ? '✅ 登録済み' : '❌ 未登録'; ?></td>
+                            <td><?php echo $has_callback ? '✅ 設定済み' : '❌ 未設定'; ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- カードローンデータ状態 -->
+            <div class="soico-cta-diag-section">
+                <h2>💰 カードローンデータ状態</h2>
+                <p>
+                    <strong>全カードローン:</strong> <?php echo count( $cardloans ); ?>件 |
+                    <strong>有効:</strong> <?php echo count( $enabled_cardloans ); ?>件
+                </p>
+                <table class="widefat">
+                    <thead>
+                        <tr>
+                            <th>スラッグ</th>
+                            <th>名前</th>
+                            <th>有効</th>
+                            <th>ThirstyLink ID</th>
+                            <th>affiliate_url</th>
+                            <th>金利</th>
+                            <th>限度額</th>
+                            <th>審査時間</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ( $cardloans as $slug => $data ) : ?>
+                        <tr style="<?php echo empty( $data['enabled'] ) ? 'opacity: 0.5;' : ''; ?>">
+                            <td><code><?php echo esc_html( $slug ); ?></code></td>
+                            <td><?php echo esc_html( $data['name'] ); ?></td>
+                            <td><?php echo ! empty( $data['enabled'] ) ? '✅' : '❌'; ?></td>
+                            <td><?php echo ! empty( $data['thirsty_link'] ) ? esc_html( $data['thirsty_link'] ) : '<em>未設定</em>'; ?></td>
+                            <td>
+                                <?php if ( ! empty( $data['affiliate_url'] ) ) : ?>
+                                    <a href="<?php echo esc_url( $data['affiliate_url'] ); ?>" target="_blank" style="word-break: break-all;">
+                                        <?php echo esc_html( mb_strimwidth( $data['affiliate_url'], 0, 40, '...' ) ); ?>
+                                    </a>
+                                <?php else : ?>
+                                    <span style="color: red;">❌ 未設定</span>
+                                <?php endif; ?>
+                            </td>
+                            <td><?php echo esc_html( $data['interest_rate'] ?? '-' ); ?></td>
+                            <td><?php echo esc_html( $data['limit_amount'] ?? '-' ); ?></td>
+                            <td><?php echo esc_html( $data['review_time'] ?? '-' ); ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ThirstyAffiliate状態 -->
+            <div class="soico-cta-diag-section">
+                <h2>🔗 ThirstyAffiliate連携状態</h2>
+                <p>
+                    <strong>ThirstyAffiliate:</strong>
+                    <?php echo $thirsty->is_thirsty_active() ? '✅ 有効' : '❌ 無効または未インストール'; ?>
+                </p>
+                <?php
+                $thirsty_links = $thirsty->get_all_links();
+                if ( ! empty( $thirsty_links ) ) :
+                ?>
+                <p><strong>登録リンク数:</strong> <?php echo count( $thirsty_links ); ?>件</p>
+                <details>
+                    <summary>リンク一覧を表示</summary>
+                    <table class="widefat" style="margin-top: 10px;">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>名前</th>
+                                <th>クローキングURL</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ( $thirsty_links as $link ) : ?>
+                            <tr>
+                                <td><?php echo esc_html( $link['id'] ); ?></td>
+                                <td><?php echo esc_html( $link['name'] ); ?></td>
+                                <td><a href="<?php echo esc_url( $link['url'] ); ?>" target="_blank"><?php echo esc_html( $link['url'] ); ?></a></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </details>
+                <?php endif; ?>
+            </div>
+
+            <!-- テストレンダリング -->
+            <div class="soico-cta-diag-section">
+                <h2>🧪 テストレンダリング</h2>
+                <p>以下は「カードローン結論ボックス」ブロックのテストレンダリングです。正常に表示されれば、ブロックの描画機能は動作しています。</p>
+
+                <?php
+                // 最初の有効なカードローンを取得
+                $test_cardloan = reset( $enabled_cardloans );
+                if ( $test_cardloan ) :
+                    $test_slug = $test_cardloan['slug'] ?? key( $enabled_cardloans );
+                ?>
+                <div style="background: #f9f9f9; padding: 20px; margin: 15px 0; border: 1px solid #ddd;">
+                    <p><strong>テスト対象:</strong> <?php echo esc_html( $test_cardloan['name'] ); ?> (<?php echo esc_html( $test_slug ); ?>)</p>
+                    <hr>
+                    <?php
+                    // フロントエンドCSSを読み込み
+                    wp_enqueue_style(
+                        'soico-cta-frontend-test',
+                        SOICO_CTA_PLUGIN_URL . 'assets/css/frontend.css',
+                        array(),
+                        SOICO_CTA_VERSION
+                    );
+
+                    // render_cardloan_conclusion_box を直接呼び出し
+                    $rendered = $block_register->render_cardloan_conclusion_box( array(
+                        'company' => $test_slug,
+                        'showFeatures' => true,
+                        'customTitle' => '',
+                    ) );
+
+                    if ( empty( $rendered ) || strpos( $rendered, '<!--' ) === 0 ) {
+                        echo '<div style="color: red; padding: 10px; background: #ffe0e0;">';
+                        echo '<strong>⚠️ レンダリング結果が空またはコメントのみです</strong>';
+                        if ( ! empty( $rendered ) ) {
+                            echo '<pre>' . esc_html( $rendered ) . '</pre>';
+                        }
+                        echo '<p>考えられる原因:</p>';
+                        echo '<ul>';
+                        echo '<li>カードローンデータが見つからない</li>';
+                        echo '<li>affiliate_url が設定されていない（ThirstyAffiliateリンクまたは直接URLが必要）</li>';
+                        echo '</ul>';
+                        echo '</div>';
+                    } else {
+                        echo '<div style="color: green; margin-bottom: 10px;">✅ レンダリング成功</div>';
+                        echo $rendered;
+                    }
+                    ?>
+                </div>
+                <?php else : ?>
+                <div style="color: orange; padding: 10px; background: #fff3cd;">
+                    ⚠️ 有効なカードローン会社がありません。「カードローン管理」でカードローン会社を有効にしてください。
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- テストショートコード -->
+            <div class="soico-cta-diag-section">
+                <h2>📝 テストショートコード</h2>
+                <p>以下のショートコードを投稿や固定ページに貼り付けて、カードローンCTAブロックの動作をテストできます。</p>
+                <table class="widefat">
+                    <tr>
+                        <td><code>[soico_cta_test type="cardloan-conclusion-box" company="aiful"]</code></td>
+                        <td>カードローン結論ボックスをテスト表示</td>
+                    </tr>
+                    <tr>
+                        <td><code>[soico_cta_test type="cardloan-comparison-table" limit="3"]</code></td>
+                        <td>カードローン比較表をテスト表示</td>
+                    </tr>
+                    <tr>
+                        <td><code>[soico_cta_test type="cardloan-single-button" company="aiful"]</code></td>
+                        <td>カードローンCTAボタンをテスト表示</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- デバッグ情報 -->
+            <div class="soico-cta-diag-section">
+                <h2>🔧 デバッグ情報</h2>
+                <table class="widefat">
+                    <tr>
+                        <th>項目</th>
+                        <th>値</th>
+                    </tr>
+                    <tr>
+                        <td>WordPress バージョン</td>
+                        <td><?php echo get_bloginfo( 'version' ); ?></td>
+                    </tr>
+                    <tr>
+                        <td>PHP バージョン</td>
+                        <td><?php echo phpversion(); ?></td>
+                    </tr>
+                    <tr>
+                        <td>プラグインバージョン</td>
+                        <td><?php echo SOICO_CTA_VERSION; ?></td>
+                    </tr>
+                    <tr>
+                        <td>WP_DEBUG</td>
+                        <td><?php echo defined( 'WP_DEBUG' ) && WP_DEBUG ? '有効' : '無効'; ?></td>
+                    </tr>
+                    <tr>
+                        <td>現在のページフック</td>
+                        <td><code><?php global $hook_suffix; echo esc_html( $hook_suffix ); ?></code></td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 操作テスト -->
+            <div class="soico-cta-diag-section">
+                <h2>🧪 操作テスト</h2>
+                <p>以下のボタンをクリックして、各機能が動作するかテストできます。</p>
+                <p>
+                    <button type="button" class="button" id="test-add-cardloan-btn" onclick="jQuery('#add-cardloan-modal').show(); alert('モーダルを表示しました。モーダルが見えない場合はCSSまたはHTMLの問題です。');">
+                        カードローン追加モーダルをテスト表示
+                    </button>
+                </p>
+                <p>
+                    <button type="button" class="button" onclick="console.log('Test:', window.soicoCTAAdmin); alert('コンソールにsoicoCTAAdminオブジェクトを出力しました。ブラウザの開発者ツールを確認してください。');">
+                        設定オブジェクトをコンソールに出力
+                    </button>
+                </p>
+            </div>
+        </div>
+
+        <style>
+            .soico-cardloan-admin .soico-cta-diag-section {
+                background: #fff;
+                padding: 20px 25px;
+                margin: 20px 0;
+                border: 1px solid #ccd0d4;
+                border-radius: 4px;
+            }
+            .soico-cardloan-admin .soico-cta-diag-section h2 {
+                margin-top: 0;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #4CAF50;
+            }
+            .soico-cardloan-admin .soico-cta-diag-section table {
+                margin-top: 10px;
+            }
+            .soico-cardloan-admin .soico-cta-diag-section code {
+                background: #f1f1f1;
+                padding: 2px 6px;
+                border-radius: 3px;
+            }
+        </style>
+        <?php
     }
 }

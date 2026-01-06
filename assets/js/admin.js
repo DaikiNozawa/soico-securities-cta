@@ -7,6 +7,23 @@
 (function($) {
     'use strict';
 
+    // デバッグモード（コンソールで window.SOICO_DEBUG = true で有効化）
+    var DEBUG = window.SOICO_DEBUG || false;
+
+    function log() {
+        if (DEBUG || window.SOICO_DEBUG) {
+            console.log.apply(console, ['[SOICO Admin]'].concat(Array.prototype.slice.call(arguments)));
+        }
+    }
+
+    function warn() {
+        console.warn.apply(console, ['[SOICO Admin]'].concat(Array.prototype.slice.call(arguments)));
+    }
+
+    function error() {
+        console.error.apply(console, ['[SOICO Admin]'].concat(Array.prototype.slice.call(arguments)));
+    }
+
     // 設定オブジェクト
     var config = window.soicoCTAAdmin || {};
 
@@ -15,6 +32,9 @@
      */
     function init() {
         console.log('SOICO CTA Admin: 初期化開始');
+        log('設定オブジェクト:', config);
+        log('現在のURL:', window.location.href);
+        log('jQuery バージョン:', $.fn.jquery);
 
         // 各機能を個別に初期化（エラーがあっても他の機能は動作するように）
         try {
@@ -60,6 +80,18 @@
         }
 
         console.log('SOICO CTA Admin: 初期化完了');
+
+        // DOM要素の存在確認（デバッグ用）
+        log('=== DOM要素確認 ===');
+        log('#securities-list:', $('#securities-list').length ? '存在' : '不在');
+        log('#cardloans-list:', $('#cardloans-list').length ? '存在' : '不在');
+        log('#soico-cta-securities-form:', $('#soico-cta-securities-form').length ? '存在' : '不在');
+        log('#soico-cardloan-form:', $('#soico-cardloan-form').length ? '存在' : '不在');
+        log('#add-security-btn:', $('#add-security-btn').length ? '存在' : '不在');
+        log('#add-cardloan-btn:', $('#add-cardloan-btn').length ? '存在' : '不在');
+        log('#add-security-modal:', $('#add-security-modal').length ? '存在' : '不在');
+        log('#add-cardloan-modal:', $('#add-cardloan-modal').length ? '存在' : '不在');
+        log('===================');
     }
 
     /**
@@ -268,12 +300,20 @@
      * 証券会社追加
      */
     function initAddSecurity() {
-        $('#add-security-btn').on('click', function() {
+        log('initAddSecurity: 初期化開始');
+
+        // 証券会社追加ボタン
+        var $securityBtn = $('#add-security-btn');
+        log('証券会社追加ボタン:', $securityBtn.length ? '発見' : '未発見');
+
+        $securityBtn.on('click', function() {
+            log('証券会社追加ボタン: クリック');
             $('#add-security-modal').show();
         });
 
         $('#add-security-form').on('submit', function(e) {
             e.preventDefault();
+            log('証券会社追加フォーム: 送信');
 
             var $form = $(this);
             var $submitBtn = $form.find('[type="submit"]');
@@ -290,6 +330,7 @@
                     name: $form.find('input[name="name"]').val()
                 },
                 success: function(response) {
+                    log('証券会社追加: 成功', response);
                     if (response.success) {
                         if (response.data && response.data.reload) {
                             location.reload();
@@ -301,7 +342,8 @@
                         showNotice(response.data && response.data.message ? response.data.message : 'エラーが発生しました', 'error');
                     }
                 },
-                error: function() {
+                error: function(xhr, status, err) {
+                    error('証券会社追加: エラー', status, err);
                     showNotice('エラーが発生しました', 'error');
                 },
                 complete: function() {
@@ -310,29 +352,43 @@
             });
         });
 
-        // カードローン追加
-        $('#add-cardloan-btn').on('click', function() {
-            $('#add-cardloan-modal').show();
+        // カードローン追加ボタン
+        var $cardloanBtn = $('#add-cardloan-btn');
+        log('カードローン追加ボタン:', $cardloanBtn.length ? '発見' : '未発見');
+
+        $cardloanBtn.on('click', function() {
+            log('カードローン追加ボタン: クリック');
+            var $modal = $('#add-cardloan-modal');
+            log('カードローンモーダル:', $modal.length ? '発見' : '未発見');
+            $modal.show();
         });
 
-        $('#add-cardloan-form').on('submit', function(e) {
+        var $cardloanForm = $('#add-cardloan-form');
+        log('カードローン追加フォーム:', $cardloanForm.length ? '発見' : '未発見');
+
+        $cardloanForm.on('submit', function(e) {
             e.preventDefault();
+            log('カードローン追加フォーム: 送信');
 
             var $form = $(this);
             var $submitBtn = $form.find('[type="submit"]');
+            var formData = {
+                action: 'soico_cta_add_cardloan',
+                nonce: config.nonce,
+                slug: $form.find('input[name="slug"]').val(),
+                name: $form.find('input[name="name"]').val()
+            };
+
+            log('カードローン追加: リクエストデータ', formData);
 
             $submitBtn.prop('disabled', true);
 
             $.ajax({
                 url: config.ajaxUrl,
                 type: 'POST',
-                data: {
-                    action: 'soico_cta_add_cardloan',
-                    nonce: config.nonce,
-                    slug: $form.find('input[name="slug"]').val(),
-                    name: $form.find('input[name="name"]').val()
-                },
+                data: formData,
                 success: function(response) {
+                    log('カードローン追加: 成功', response);
                     if (response.success) {
                         if (response.data && response.data.reload) {
                             location.reload();
@@ -344,7 +400,8 @@
                         showNotice(response.data && response.data.message ? response.data.message : 'エラーが発生しました', 'error');
                     }
                 },
-                error: function() {
+                error: function(xhr, status, err) {
+                    error('カードローン追加: エラー', status, err, xhr.responseText);
                     showNotice('エラーが発生しました', 'error');
                 },
                 complete: function() {
@@ -352,6 +409,8 @@
                 }
             });
         });
+
+        log('initAddSecurity: 初期化完了');
     }
 
     /**
