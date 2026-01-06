@@ -769,17 +769,35 @@
 
     log('=== ブロック再登録開始 ===');
 
+    // 利用可能なカテゴリをログ出力
+    if (wp.blocks && wp.blocks.getCategories) {
+        var availableCategories = wp.blocks.getCategories();
+        log('利用可能なカテゴリ:', availableCategories.map(function(c) { return c.slug; }));
+
+        // カードローンカテゴリの存在確認
+        var hasCardloanCategory = availableCategories.some(function(c) { return c.slug === 'soico-cardloan-cta'; });
+        var hasSecuritiesCategory = availableCategories.some(function(c) { return c.slug === 'soico-securities-cta'; });
+        log('カテゴリ存在確認:', {
+            'soico-securities-cta': hasSecuritiesCategory,
+            'soico-cardloan-cta': hasCardloanCategory
+        });
+    }
+
     /**
      * ブロックを再登録する
      * PHPで登録された設定を引き継ぎつつ、edit/save関数を追加
      */
     function reRegisterBlock(name, editFunc, blockConfig) {
+        log('ブロック登録開始: ' + name, blockConfig);
+
         var existingBlock = getBlockType(name);
+        log('既存ブロック確認: ' + name, existingBlock ? 'あり' : 'なし');
 
         if (existingBlock) {
             log('既存ブロックを解除: ' + name);
             try {
                 unregisterBlockType(name);
+                log('ブロック解除成功: ' + name);
             } catch (e) {
                 error('ブロック解除エラー: ' + name, e);
             }
@@ -787,6 +805,13 @@
 
         // カテゴリを決定（カードローンか証券か）
         var blockCategory = blockConfig.category || 'soico-securities-cta';
+        log('使用カテゴリ: ' + blockCategory);
+
+        // edit関数の確認
+        if (typeof editFunc !== 'function') {
+            error('edit関数が無効です: ' + name, typeof editFunc);
+            return false;
+        }
 
         // 新しい設定でブロックを登録
         var settings = {
@@ -802,12 +827,28 @@
             save: saveDynamic
         };
 
+        log('登録設定:', {
+            name: name,
+            title: settings.title,
+            icon: settings.icon,
+            category: settings.category,
+            hasEdit: typeof settings.edit === 'function',
+            hasSave: typeof settings.save === 'function',
+            attributeKeys: Object.keys(settings.attributes || {})
+        });
+
         try {
-            registerBlockType(name, settings);
-            log('ブロック登録完了: ' + name + ' (カテゴリ: ' + blockCategory + ')');
-            return true;
+            var result = registerBlockType(name, settings);
+            if (result) {
+                log('ブロック登録完了: ' + name + ' (カテゴリ: ' + blockCategory + ')');
+                return true;
+            } else {
+                error('ブロック登録失敗（結果がnull）: ' + name);
+                return false;
+            }
         } catch (e) {
             error('ブロック登録エラー: ' + name, e);
+            error('エラー詳細:', e.message, e.stack);
             return false;
         }
     }
@@ -947,11 +988,19 @@
     // 各ブロックを登録
     var registrationResults = { success: [], failed: [] };
 
-    blockDefinitions.forEach(function(block) {
-        var result = reRegisterBlock(block.name, block.edit, block);
-        if (result) {
-            registrationResults.success.push(block.name);
-        } else {
+    log('=== ブロック定義数: ' + blockDefinitions.length + ' ===');
+
+    blockDefinitions.forEach(function(block, index) {
+        log('--- ブロック ' + (index + 1) + '/' + blockDefinitions.length + ' ---');
+        try {
+            var result = reRegisterBlock(block.name, block.edit, block);
+            if (result) {
+                registrationResults.success.push(block.name);
+            } else {
+                registrationResults.failed.push(block.name);
+            }
+        } catch (e) {
+            error('ブロック登録中に例外: ' + block.name, e);
             registrationResults.failed.push(block.name);
         }
     });
@@ -962,15 +1011,68 @@
         warn('失敗: ' + registrationResults.failed.length + '件', registrationResults.failed);
     }
 
-    // ==========================================================================
-    // 利用可能なブロック情報
-    // ==========================================================================
-    log('=== 利用可能なブロック ===');
-    blockDefinitions.forEach(function(block) {
-        log('📦 ' + block.title + ' (' + block.name + ')');
-        log('   ' + block.description);
+    // 証券とカードローンの登録状況を個別にチェック
+    var securitiesBlocks = ['soico-cta/conclusion-box', 'soico-cta/inline-cta', 'soico-cta/single-button', 'soico-cta/comparison-table', 'soico-cta/subtle-banner'];
+    var cardloanBlocks = ['soico-cta/cardloan-conclusion-box', 'soico-cta/cardloan-inline-cta', 'soico-cta/cardloan-single-button', 'soico-cta/cardloan-comparison-table', 'soico-cta/cardloan-subtle-banner'];
+
+    log('=== 登録状況サマリー ===');
+    log('証券ブロック:');
+    securitiesBlocks.forEach(function(name) {
+        var registered = getBlockType(name);
+        log('  ' + (registered ? '✓' : '✗') + ' ' + name);
     });
 
+    log('カードローンブロック:');
+    cardloanBlocks.forEach(function(name) {
+        var registered = getBlockType(name);
+        log('  ' + (registered ? '✓' : '✗') + ' ' + name);
+    });
+
+    // ==========================================================================
+    // グローバル診断関数
+    // ==========================================================================
+    window.soicoCTADiagnostics = function() {
+        console.group('[SOICO CTA] 診断レポート');
+
+        console.log('=== データ状態 ===');
+        console.log('soicoCTAData:', window.soicoCTAData);
+        console.log('証券データ数:', (window.soicoCTAData && window.soicoCTAData.selectOptions) ? window.soicoCTAData.selectOptions.length : 0);
+        console.log('カードローンデータ数:', (window.soicoCTAData && window.soicoCTAData.cardloanSelectOptions) ? window.soicoCTAData.cardloanSelectOptions.length : 0);
+
+        console.log('=== カテゴリ状態 ===');
+        if (wp.blocks && wp.blocks.getCategories) {
+            var cats = wp.blocks.getCategories();
+            cats.forEach(function(cat) {
+                console.log('  - ' + cat.slug + ': ' + cat.title);
+            });
+        }
+
+        console.log('=== ブロック登録状態 ===');
+        var allBlocks = securitiesBlocks.concat(cardloanBlocks);
+        allBlocks.forEach(function(name) {
+            var block = getBlockType(name);
+            if (block) {
+                console.log('  ✓ ' + name + ' (カテゴリ: ' + block.category + ')');
+            } else {
+                console.log('  ✗ ' + name + ' (未登録)');
+            }
+        });
+
+        console.log('=== 全ブロック一覧（SOICO関連） ===');
+        if (wp.blocks && wp.blocks.getBlockTypes) {
+            var allRegistered = wp.blocks.getBlockTypes();
+            allRegistered.forEach(function(block) {
+                if (block.name.indexOf('soico-cta') === 0) {
+                    console.log('  ' + block.name + ' -> ' + block.category);
+                }
+            });
+        }
+
+        console.groupEnd();
+        return '診断完了。上記のログを確認してください。';
+    };
+
     log('=== SOICO CTA 初期化完了 ===');
+    log('診断コマンド: soicoCTADiagnostics() をコンソールで実行してください');
 
 })(window.wp);

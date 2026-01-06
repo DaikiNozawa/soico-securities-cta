@@ -3,7 +3,7 @@
  * Plugin Name: SOICO Securities CTA
  * Plugin URI: https://www.soico.jp/
  * Description: 証券アフィリエイト用Gutenbergブロック（結論ボックス、インラインCTA、比較表など）- ThirstyAffiliate連携対応
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: SOICO Inc.
  * Author URI: https://www.soico.jp/
  * License: GPL v2 or later
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // プラグイン定数
-define( 'SOICO_CTA_VERSION', '1.0.0' );
+define( 'SOICO_CTA_VERSION', '1.1.0' );
 define( 'SOICO_CTA_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SOICO_CTA_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'SOICO_CTA_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -112,23 +112,44 @@ final class Soico_Securities_CTA {
     
     /**
      * ブロックカテゴリ追加
+     * WordPress 5.8+: block_categories_all フィルタ（第2引数は WP_Block_Editor_Context）
+     *
+     * @param array $categories 既存のカテゴリ配列
+     * @param mixed $context WP_Block_Editor_Context または WP_Post（後方互換）
+     * @return array
      */
-    public function add_block_category( $categories, $post ) {
-        return array_merge(
+    public function add_block_category( $categories, $context = null ) {
+        // 新しいカテゴリを追加
+        $custom_categories = array(
             array(
-                array(
-                    'slug'  => 'soico-securities-cta',
-                    'title' => __( '証券CTA', 'soico-securities-cta' ),
-                    'icon'  => 'money-alt',
-                ),
-                array(
-                    'slug'  => 'soico-cardloan-cta',
-                    'title' => __( 'カードローンCTA', 'soico-securities-cta' ),
-                    'icon'  => 'money-alt',
-                ),
+                'slug'  => 'soico-securities-cta',
+                'title' => __( '証券CTA', 'soico-securities-cta' ),
+                'icon'  => 'money-alt',
             ),
-            $categories
+            array(
+                'slug'  => 'soico-cardloan-cta',
+                'title' => __( 'カードローンCTA', 'soico-securities-cta' ),
+                'icon'  => 'money-alt',
+            ),
         );
+
+        // デバッグログ
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            error_log( '[SOICO CTA] add_block_category called' );
+            error_log( '[SOICO CTA] Existing categories: ' . count( $categories ) );
+            error_log( '[SOICO CTA] Adding custom categories: ' . count( $custom_categories ) );
+        }
+
+        // カテゴリを先頭に追加
+        $result = array_merge( $custom_categories, $categories );
+
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            error_log( '[SOICO CTA] Total categories after merge: ' . count( $result ) );
+            $slugs = array_map( function( $cat ) { return $cat['slug']; }, array_slice( $result, 0, 10 ) );
+            error_log( '[SOICO CTA] First 10 category slugs: ' . implode( ', ', $slugs ) );
+        }
+
+        return $result;
     }
     
     /**
