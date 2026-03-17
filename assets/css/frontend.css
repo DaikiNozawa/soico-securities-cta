@@ -1153,43 +1153,24 @@ a.soico-cta-cardloan-button-primary,
     text-align: center;
 }
 
-/* 1位のハイライト */
-.soico-cta-cardloan-comparison-table .soico-cta-row-highlight {
-    background: #fff !important;
-    border-left: 4px solid var(--soico-cardloan-primary);
-}
-
-.soico-cta-cardloan-comparison-table .soico-cta-row-highlight:hover {
-    background: #E8F5E9 !important;
-}
-
 /* 会社名の強調 */
 .soico-cta-cardloan-comparison-table td.soico-cta-col-name strong {
     color: #1B5E20;
     font-size: 15px;
 }
 
-.soico-cta-cardloan-comparison-table .soico-cta-row-highlight td.soico-cta-col-name strong {
-    color: var(--soico-cardloan-primary);
-}
-
-/* カードローン用ランキングバッジ */
-.soico-cta-cardloan-rank-gold {
-    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-    color: #fff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.soico-cta-cardloan-rank-silver {
-    background: linear-gradient(135deg, #E8E8E8 0%, #A0A0A0 100%);
-    color: #fff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.soico-cta-cardloan-rank-bronze {
-    background: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%);
-    color: #fff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+/* カードローン用連番バッジ */
+.soico-cta-cardloan-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #E8E8E8;
+    color: #555;
+    font-weight: bold;
+    font-size: 13px;
 }
 
 /* 金利・限度額・審査時間のスタイル */
@@ -1234,12 +1215,6 @@ a.soico-cta-cardloan-table-button,
     color: #fff;
     text-decoration: none;
     background-color: var(--soico-cardloan-secondary);
-}
-
-/* 1位のボタン強調 */
-.soico-cta-cardloan-row-highlight .soico-cta-cardloan-table-button {
-    padding: 12px 24px;
-    font-size: 14px;
 }
 
 /* レガシー互換 */

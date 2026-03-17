@@ -711,8 +711,8 @@
             var rank = i + 1;
             var name = cardloanOptions[i] ? cardloanOptions[i].label : 'カードローン' + rank;
             sampleRows.push(
-                el('tr', { key: i, style: { background: rank === 1 ? '#e8f5e9' : '#fff' } },
-                    el('td', { style: { padding: '10px', textAlign: 'center', fontWeight: 'bold', color: rank === 1 ? '#4CAF50' : '#666' } }, rank),
+                el('tr', { key: i, style: { background: '#fff' } },
+                    el('td', { style: { padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#666' } }, rank),
                     el('td', { style: { padding: '10px' } }, name),
                     attributes.showInterestRate && el('td', { style: { padding: '10px' } }, '3.0%〜18.0%'),
                     attributes.showLimitAmount && el('td', { style: { padding: '10px' } }, '800万円'),
@@ -763,7 +763,7 @@
                 el('table', { style: { width: '100%', borderCollapse: 'collapse', border: '1px solid #c8e6c9', fontSize: '14px' } },
                     el('thead', null,
                         el('tr', { style: { background: '#e8f5e9' } },
-                            el('th', { style: { padding: '10px', borderBottom: '1px solid #c8e6c9' } }, '順位'),
+                            el('th', { style: { padding: '10px', borderBottom: '1px solid #c8e6c9' } }, 'No.'),
                             el('th', { style: { padding: '10px', borderBottom: '1px solid #c8e6c9' } }, '会社名'),
                             attributes.showInterestRate && el('th', { style: { padding: '10px', borderBottom: '1px solid #c8e6c9' } }, '金利'),
                             attributes.showLimitAmount && el('th', { style: { padding: '10px', borderBottom: '1px solid #c8e6c9' } }, '限度額'),
@@ -1336,7 +1336,7 @@
             title: 'カードローン比較表',
             icon: 'money-alt',
             category: 'soico-cardloan-cta',
-            description: '複数のカードローンを比較する表形式のCTA。ランキング記事に最適。',
+            description: '複数のカードローンを比較する表形式のCTA。比較記事に最適。',
             attributes: {
                 companies: { type: 'array', default: ['aiful', 'promise', 'acom'] },
                 limit: { type: 'number', default: 3 },

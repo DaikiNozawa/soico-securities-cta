@@ -1606,7 +1606,7 @@ data-cta-type="[CTAタイプ]"
 
                 <div class="soico-cta-guide-block cardloan">
                     <h3>4. カードローン比較表</h3>
-                    <p>複数のカードローンを比較する表形式のCTA。ランキング記事に最適。</p>
+                    <p>複数のカードローンを比較する表形式のCTA。比較記事に最適。</p>
                     <p><strong>表示項目:</strong> 金利、限度額、審査時間（個別にON/OFF可能）</p>
                 </div>
 

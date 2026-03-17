@@ -6,8 +6,8 @@
     "title": "カードローン比較表",
     "category": "soico-cardloan-cta",
     "icon": "money-alt",
-    "description": "複数のカードローンを比較する表形式のCTA。ランキング記事に最適。",
-    "keywords": ["cta", "比較", "カードローン", "cardloan", "table", "ランキング"],
+    "description": "複数のカードローンを比較する表形式のCTA。比較記事に最適。",
+    "keywords": ["cta", "比較", "カードローン", "cardloan", "table"],
     "textdomain": "soico-securities-cta",
     "attributes": {
         "companies": {

@@ -1360,7 +1360,7 @@ class Soico_CTA_Block_Register {
             <table class="soico-cta-cardloan-comparison-table">
                 <thead>
                     <tr>
-                        <th class="soico-cta-col-rank"><?php esc_html_e( '順位', 'soico-securities-cta' ); ?></th>
+                        <th class="soico-cta-col-rank"><?php esc_html_e( 'No.', 'soico-securities-cta' ); ?></th>
                         <th class="soico-cta-col-name"><?php esc_html_e( 'カードローン', 'soico-securities-cta' ); ?></th>
                         <?php if ( $show_interest_rate ) : ?>
                             <th class="soico-cta-col-interest"><?php esc_html_e( '金利', 'soico-securities-cta' ); ?></th>
@@ -1377,19 +1377,10 @@ class Soico_CTA_Block_Register {
                 <tbody>
                     <?php foreach ( $cardloans as $slug => $cardloan ) :
                         $tracking_attrs = $data->get_cardloan_tracking_attributes( $slug, 'comparison_table' );
-                        if ( $rank === 1 ) {
-                            $rank_class = 'soico-cta-rank-gold';
-                        } elseif ( $rank === 2 ) {
-                            $rank_class = 'soico-cta-rank-silver';
-                        } elseif ( $rank === 3 ) {
-                            $rank_class = 'soico-cta-rank-bronze';
-                        } else {
-                            $rank_class = 'soico-cta-rank-default';
-                        }
                     ?>
-                        <tr class="<?php echo $rank === 1 ? 'soico-cta-cardloan-row-highlight' : ''; ?>">
+                        <tr>
                             <td class="soico-cta-col-rank">
-                                <span class="soico-cta-rank <?php echo esc_attr( $rank_class ); ?>"><?php echo esc_html( $rank ); ?></span>
+                                <span class="soico-cta-cardloan-number"><?php echo esc_html( $rank ); ?></span>
                             </td>
                             <td class="soico-cta-col-name">
                                 <strong><?php echo esc_html( $cardloan['name'] ); ?></strong>
