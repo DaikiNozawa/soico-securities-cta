@@ -1,18 +1,18 @@
 {
     "$schema": "https://schemas.wp.org/trunk/block.json",
     "apiVersion": 3,
-    "name": "soico-cta/cardloan-single-button",
+    "name": "soico-cta/crypto-single-button",
     "version": "1.0.0",
-    "title": "カードローンCTAボタン",
-    "category": "soico-cardloan-cta",
-    "icon": "money-alt",
-    "description": "シンプルなカードローンCTAボタン。任意の場所に配置できます。",
-    "keywords": ["cta", "ボタン", "カードローン", "cardloan", "button"],
+    "title": "仮想通貨CTAボタン",
+    "category": "soico-crypto-cta",
+    "icon": "bitcoin",
+    "description": "シンプルな仮想通貨取引所CTAボタン。任意の場所に配置できます。",
+    "keywords": ["cta", "ボタン", "仮想通貨", "crypto", "button"],
     "textdomain": "soico-securities-cta",
     "attributes": {
-        "company": {
+        "exchange": {
             "type": "string",
-            "default": "aiful"
+            "default": "gmo_coin"
         },
         "buttonText": {
             "type": "string",
@@ -21,10 +21,6 @@
         "showPR": {
             "type": "boolean",
             "default": true
-        },
-        "buttonNote": {
-            "type": "string",
-            "default": ""
         }
     },
     "supports": {

@@ -131,6 +131,11 @@ final class Soico_Securities_CTA {
                 'title' => __( 'カードローンCTA', 'soico-securities-cta' ),
                 'icon'  => 'money-alt',
             ),
+            array(
+                'slug'  => 'soico-crypto-cta',
+                'title' => __( '仮想通貨CTA', 'soico-securities-cta' ),
+                'icon'  => 'money',
+            ),
         );
 
         // デバッグログ
@@ -170,8 +175,15 @@ final class Soico_Securities_CTA {
              has_block( 'soico-cta/cardloan-comparison-table' ) ||
              has_block( 'soico-cta/cardloan-subtle-banner' );
 
+        // 仮想通貨CTAブロック
+        $has_crypto_block = has_block( 'soico-cta/crypto-conclusion-box' ) ||
+             has_block( 'soico-cta/crypto-inline-cta' ) ||
+             has_block( 'soico-cta/crypto-single-button' ) ||
+             has_block( 'soico-cta/crypto-comparison-table' ) ||
+             has_block( 'soico-cta/crypto-subtle-banner' );
+
         // いずれかのCTAブロックが存在する場合のみ読み込み
-        if ( $has_securities_block || $has_cardloan_block ) {
+        if ( $has_securities_block || $has_cardloan_block || $has_crypto_block ) {
 
             wp_enqueue_style(
                 'soico-cta-frontend',
@@ -191,14 +203,14 @@ final class Soico_Securities_CTA {
             }
 
             // CSS変数を出力
-            $this->output_css_variables( $has_securities_block, $has_cardloan_block );
+            $this->output_css_variables( $has_securities_block, $has_cardloan_block, $has_crypto_block );
         }
     }
-    
+
     /**
      * CSS変数出力
      */
-    private function output_css_variables( $has_securities = true, $has_cardloan = false ) {
+    private function output_css_variables( $has_securities = true, $has_cardloan = false, $has_crypto = false ) {
         $css = '';
 
         // 証券用CSS変数
@@ -242,6 +254,28 @@ final class Soico_Securities_CTA {
                 esc_attr( $cardloan_primary ),
                 esc_attr( $cardloan_secondary ),
                 $cardloan_radius
+            );
+        }
+
+        // 仮想通貨用CSS変数
+        if ( $has_crypto ) {
+            $crypto_design = get_option( 'soico_cta_crypto_design_settings', array() );
+
+            $crypto_primary = isset( $crypto_design['primary_color'] ) ? $crypto_design['primary_color'] : '#F7931A';
+            $crypto_secondary = isset( $crypto_design['secondary_color'] ) ? $crypto_design['secondary_color'] : '#4A90A4';
+            $crypto_radius = isset( $crypto_design['border_radius'] ) ? intval( $crypto_design['border_radius'] ) : 8;
+
+            $css .= sprintf(
+                ':root {
+                    --soico-cta-crypto-primary: %s;
+                    --soico-cta-crypto-secondary: %s;
+                    --soico-cta-crypto-border-radius: %dpx;
+                    --soico-cta-crypto-gradient-start: #FFF8E1;
+                    --soico-cta-crypto-gradient-end: #FFFAF0;
+                }',
+                esc_attr( $crypto_primary ),
+                esc_attr( $crypto_secondary ),
+                $crypto_radius
             );
         }
 
@@ -490,9 +524,13 @@ final class Soico_Securities_CTA {
             add_option( 'soico_cta_cardloan_tracking_settings', $default_cardloan_tracking );
         }
 
+        // 仮想通貨デフォルトデータは class-securities-data.php の initialize_crypto_defaults で初期化
+        // ここでは必要に応じて初期化を呼び出すか、データクラスに委譲
+
         // キャッシュクリア
         delete_transient( 'soico_cta_securities_cache' );
         delete_transient( 'soico_cta_cardloan_cache' );
+        delete_transient( 'soico_cta_crypto_cache' );
 
         // リライトルール更新フラグ
         set_transient( 'soico_cta_flush_rewrite', true, 60 );
@@ -505,6 +543,7 @@ final class Soico_Securities_CTA {
         // キャッシュクリア
         delete_transient( 'soico_cta_securities_cache' );
         delete_transient( 'soico_cta_cardloan_cache' );
+        delete_transient( 'soico_cta_crypto_cache' );
         delete_transient( 'soico_cta_thirsty_links_cache' );
     }
 

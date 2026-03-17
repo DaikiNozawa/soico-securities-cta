@@ -1,0 +1,38 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "soico-cta/crypto-comparison-table",
+    "version": "1.0.0",
+    "title": "仮想通貨比較表",
+    "category": "soico-crypto-cta",
+    "icon": "bitcoin",
+    "description": "複数の仮想通貨取引所を比較する表形式のCTA。ランキング記事に最適。",
+    "keywords": ["cta", "比較", "仮想通貨", "crypto", "table", "ランキング"],
+    "textdomain": "soico-securities-cta",
+    "attributes": {
+        "exchanges": {
+            "type": "array",
+            "default": ["gmo_coin", "coincheck", "sbi_vc"]
+        },
+        "limit": {
+            "type": "number",
+            "default": 3
+        },
+        "showFees": {
+            "type": "boolean",
+            "default": true
+        },
+        "showCoins": {
+            "type": "boolean",
+            "default": true
+        },
+        "showFeatures": {
+            "type": "boolean",
+            "default": true
+        }
+    },
+    "supports": {
+        "html": false,
+        "className": true
+    }
+}

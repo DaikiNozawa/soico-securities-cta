@@ -21,6 +21,10 @@
         "featureText": {
             "type": "string",
             "default": ""
+        },
+        "buttonText": {
+            "type": "string",
+            "default": ""
         }
     },
     "supports": {

@@ -30,6 +30,11 @@ class Soico_CTA_Securities_Data {
     const CARDLOAN_CACHE_KEY = 'soico_cta_cardloan_cache';
 
     /**
+     * キャッシュキー（仮想通貨）
+     */
+    const CRYPTO_CACHE_KEY = 'soico_cta_crypto_cache';
+
+    /**
      * キャッシュ有効期限（秒）
      */
     const CACHE_EXPIRATION = 3600;
@@ -51,6 +56,7 @@ class Soico_CTA_Securities_Data {
         // データ更新時にキャッシュクリア
         add_action( 'update_option_soico_cta_securities_data', array( $this, 'clear_cache' ) );
         add_action( 'update_option_soico_cta_cardloan_data', array( $this, 'clear_cardloan_cache' ) );
+        add_action( 'update_option_soico_cta_crypto_data', array( $this, 'clear_crypto_cache' ) );
     }
     
     /**
@@ -556,12 +562,37 @@ class Soico_CTA_Securities_Data {
         foreach ( $data as $slug => $item ) {
             $slug = sanitize_key( $slug );
 
-            // featuresを適切に配列に変換
-            $features = $item['features'] ?? array();
-            if ( is_string( $features ) ) {
-                $features = array_filter( array_map( 'trim', explode( "\n", $features ) ) );
+            // featuresを配列に変換（常に文字列として処理）
+            $features_str = $item['features'] ?? '';
+            if ( is_array( $features_str ) ) {
+                $features_str = implode( "\n", $features_str );
             }
-            $features = array_map( 'sanitize_text_field', (array) $features );
+            $features_lines = explode( "\n", (string) $features_str );
+
+            // feature_annotationsを配列に変換（常に文字列として処理）
+            $annotations_str = $item['feature_annotations'] ?? '';
+            if ( is_array( $annotations_str ) ) {
+                $annotations_str = implode( "\n", $annotations_str );
+            }
+            $annotations_lines = explode( "\n", (string) $annotations_str );
+
+            // 両配列を同じ長さに揃える（注釈が少ない場合は空文字で埋める）
+            $max_count = max( count( $features_lines ), count( $annotations_lines ) );
+            while ( count( $annotations_lines ) < $max_count ) {
+                $annotations_lines[] = '';
+            }
+
+            // featuresと注釈を同期させる（空のfeatureは注釈と一緒に除外）
+            $features = array();
+            $feature_annotations = array();
+            for ( $i = 0; $i < count( $features_lines ); $i++ ) {
+                $f = trim( $features_lines[ $i ] );
+                if ( ! empty( $f ) ) {
+                    $features[] = sanitize_text_field( $f );
+                    $annotation = isset( $annotations_lines[ $i ] ) ? trim( $annotations_lines[ $i ] ) : '';
+                    $feature_annotations[] = wp_kses_post( $annotation );
+                }
+            }
 
             $sanitized[ $slug ] = array(
                 'name'          => sanitize_text_field( $item['name'] ?? '' ),
@@ -571,6 +602,7 @@ class Soico_CTA_Securities_Data {
                 'thirsty_link'  => absint( $item['thirsty_link'] ?? 0 ),
                 'direct_url'    => esc_url_raw( $item['direct_url'] ?? '' ),
                 'features'      => $features,
+                'feature_annotations' => $feature_annotations,
                 'interest_rate' => sanitize_text_field( $item['interest_rate'] ?? '' ),
                 'limit_amount'  => sanitize_text_field( $item['limit_amount'] ?? '' ),
                 'review_time'   => sanitize_text_field( $item['review_time'] ?? '' ),
@@ -578,6 +610,8 @@ class Soico_CTA_Securities_Data {
                 'badge_color'   => sanitize_hex_color( $item['badge_color'] ?? '' ),
                 'button_text'   => sanitize_text_field( $item['button_text'] ?? '' ),
                 'button_color'  => sanitize_hex_color( $item['button_color'] ?? '#00A95F' ),
+                'button_note'   => wp_kses_post( $item['button_note'] ?? '' ),
+                'button_note_size' => absint( $item['button_note_size'] ?? 11 ),
             );
         }
 
@@ -721,5 +755,366 @@ class Soico_CTA_Securities_Data {
         }
 
         return $options;
+    }
+
+    // ========================================================================
+    // 仮想通貨関連メソッド
+    // ========================================================================
+
+    /**
+     * 全仮想通貨取引所データ取得
+     *
+     * @param bool $use_cache キャッシュを使用するか
+     * @return array
+     */
+    public function get_all_cryptos( $use_cache = true ) {
+        $this->debug_log( 'get_all_cryptos called', array( 'use_cache' => $use_cache ) );
+
+        // キャッシュチェック
+        if ( $use_cache ) {
+            $cached = get_transient( self::CRYPTO_CACHE_KEY );
+            if ( false !== $cached ) {
+                $this->debug_log( 'Returning cached crypto data', array( 'count' => count( $cached ) ) );
+                return $cached;
+            }
+        }
+
+        // データ取得
+        $cryptos = get_option( 'soico_cta_crypto_data', array() );
+
+        // データが空の場合はデフォルトデータを初期化
+        if ( empty( $cryptos ) ) {
+            $this->debug_log( 'No crypto data found, initializing defaults' );
+            $this->initialize_crypto_defaults();
+            $cryptos = get_option( 'soico_cta_crypto_data', array() );
+        }
+        $this->debug_log( 'Raw crypto data from option', array(
+            'count' => count( $cryptos ),
+            'slugs' => array_keys( $cryptos ),
+        ) );
+
+        // ThirstyAffiliateリンクを解決
+        $cryptos = $this->resolve_thirsty_links( $cryptos );
+
+        // 優先順位でソート
+        uasort( $cryptos, function( $a, $b ) {
+            return ( $a['priority'] ?? 99 ) - ( $b['priority'] ?? 99 );
+        } );
+
+        // キャッシュ保存
+        set_transient( self::CRYPTO_CACHE_KEY, $cryptos, self::CACHE_EXPIRATION );
+        $this->debug_log( 'Crypto data cached', array( 'count' => count( $cryptos ) ) );
+
+        return $cryptos;
+    }
+
+    /**
+     * 有効な仮想通貨取引所のみ取得
+     *
+     * @param int $limit 取得件数（0=無制限）
+     * @return array
+     */
+    public function get_enabled_cryptos( $limit = 0 ) {
+        $cryptos = $this->get_all_cryptos();
+
+        // 有効なもののみフィルタ
+        $enabled = array_filter( $cryptos, function( $item ) {
+            return ! empty( $item['enabled'] );
+        } );
+
+        // 件数制限
+        if ( $limit > 0 ) {
+            $enabled = array_slice( $enabled, 0, $limit, true );
+        }
+
+        return $enabled;
+    }
+
+    /**
+     * 単一の仮想通貨取引所データ取得
+     *
+     * @param string $slug 取引所スラッグ
+     * @return array|null
+     */
+    public function get_crypto( $slug ) {
+        $cryptos = $this->get_all_cryptos();
+        return isset( $cryptos[ $slug ] ) ? $cryptos[ $slug ] : null;
+    }
+
+    /**
+     * 優先順位1位の仮想通貨取引所取得
+     *
+     * @return array|null
+     */
+    public function get_top_crypto() {
+        $enabled = $this->get_enabled_cryptos( 1 );
+        return ! empty( $enabled ) ? reset( $enabled ) : null;
+    }
+
+    /**
+     * 仮想通貨取引所データ保存
+     *
+     * @param array $data
+     * @return bool
+     */
+    public function save_cryptos( $data ) {
+        $this->debug_log( 'save_cryptos called', array( 'data_count' => count( $data ) ) );
+
+        // バリデーション
+        $sanitized = $this->sanitize_crypto_data( $data );
+
+        $this->debug_log( 'Sanitized crypto data', array(
+            'slugs' => array_keys( $sanitized ),
+            'count' => count( $sanitized ),
+        ) );
+
+        // 保存
+        $current = get_option( 'soico_cta_crypto_data', array() );
+        $result = update_option( 'soico_cta_crypto_data', $sanitized );
+
+        // データが同じ場合は成功とみなす
+        if ( ! $result && $current === $sanitized ) {
+            $this->debug_log( 'Crypto data unchanged, treating as success' );
+            $result = true;
+        }
+
+        $this->debug_log( 'Crypto save result', array( 'result' => $result ) );
+
+        // キャッシュクリア
+        $this->clear_crypto_cache();
+
+        return $result;
+    }
+
+    /**
+     * 仮想通貨取引所データのサニタイズ
+     *
+     * @param array $data
+     * @return array
+     */
+    private function sanitize_crypto_data( $data ) {
+        $sanitized = array();
+
+        foreach ( $data as $slug => $item ) {
+            $slug = sanitize_key( $slug );
+
+            // featuresを適切に配列に変換
+            $features = $item['features'] ?? array();
+            if ( is_string( $features ) ) {
+                $features = array_filter( array_map( 'trim', explode( "\n", $features ) ) );
+            }
+            $features = array_map( 'sanitize_text_field', (array) $features );
+
+            $sanitized[ $slug ] = array(
+                'name'          => sanitize_text_field( $item['name'] ?? '' ),
+                'slug'          => $slug,
+                'priority'      => absint( $item['priority'] ?? 99 ),
+                'enabled'       => ! empty( $item['enabled'] ),
+                'thirsty_link'  => absint( $item['thirsty_link'] ?? 0 ),
+                'direct_url'    => esc_url_raw( $item['direct_url'] ?? '' ),
+                'features'      => $features,
+                'trading_fee'   => sanitize_text_field( $item['trading_fee'] ?? '' ),
+                'coins_count'   => sanitize_text_field( $item['coins_count'] ?? '' ),
+                'min_amount'    => sanitize_text_field( $item['min_amount'] ?? '' ),
+                'badge'         => sanitize_text_field( $item['badge'] ?? '' ),
+                'badge_color'   => sanitize_hex_color( $item['badge_color'] ?? '' ),
+                'button_text'   => sanitize_text_field( $item['button_text'] ?? '' ),
+                'button_color'  => sanitize_hex_color( $item['button_color'] ?? '#F7931A' ),
+            );
+        }
+
+        return $sanitized;
+    }
+
+    /**
+     * 新しい仮想通貨取引所を追加
+     *
+     * @param array $data
+     * @return bool
+     */
+    public function add_crypto( $data ) {
+        $cryptos = get_option( 'soico_cta_crypto_data', array() );
+
+        $slug = sanitize_key( $data['slug'] ?? '' );
+        if ( empty( $slug ) ) {
+            return false;
+        }
+
+        // 既存チェック
+        if ( isset( $cryptos[ $slug ] ) ) {
+            return false;
+        }
+
+        // 優先順位を最後に設定
+        $max_priority = 0;
+        foreach ( $cryptos as $item ) {
+            $max_priority = max( $max_priority, $item['priority'] ?? 0 );
+        }
+        $data['priority'] = $max_priority + 1;
+
+        $cryptos[ $slug ] = $data;
+
+        return $this->save_cryptos( $cryptos );
+    }
+
+    /**
+     * 仮想通貨取引所を削除
+     *
+     * @param string $slug
+     * @return bool
+     */
+    public function delete_crypto( $slug ) {
+        $cryptos = get_option( 'soico_cta_crypto_data', array() );
+
+        if ( ! isset( $cryptos[ $slug ] ) ) {
+            return false;
+        }
+
+        unset( $cryptos[ $slug ] );
+
+        return $this->save_cryptos( $cryptos );
+    }
+
+    /**
+     * 仮想通貨キャッシュクリア
+     */
+    public function clear_crypto_cache() {
+        delete_transient( self::CRYPTO_CACHE_KEY );
+        $this->debug_log( 'Crypto cache cleared' );
+    }
+
+    /**
+     * 仮想通貨デザイン設定取得
+     *
+     * @return array
+     */
+    public function get_crypto_design_settings() {
+        $defaults = array(
+            'primary_color'   => '#F7931A',
+            'secondary_color' => '#4A90A4',
+            'border_radius'   => 8,
+        );
+
+        $settings = get_option( 'soico_cta_crypto_design_settings', array() );
+
+        return wp_parse_args( $settings, $defaults );
+    }
+
+    /**
+     * 仮想通貨トラッキング設定取得
+     *
+     * @return array
+     */
+    public function get_crypto_tracking_settings() {
+        $defaults = array(
+            'gtm_enabled'     => true,
+            'event_category'  => 'CTA Click',
+            'event_action'    => 'crypto_affiliate',
+        );
+
+        $settings = get_option( 'soico_cta_crypto_tracking_settings', array() );
+
+        return wp_parse_args( $settings, $defaults );
+    }
+
+    /**
+     * 仮想通貨トラッキング用データ属性を生成
+     *
+     * @param string $exchange_slug
+     * @param string $cta_type
+     * @return string
+     */
+    public function get_crypto_tracking_attributes( $exchange_slug, $cta_type = 'button' ) {
+        $tracking = $this->get_crypto_tracking_settings();
+
+        if ( empty( $tracking['gtm_enabled'] ) ) {
+            return '';
+        }
+
+        $attrs = array(
+            'data-gtm-category' => esc_attr( $tracking['event_category'] ),
+            'data-gtm-action'   => esc_attr( $tracking['event_action'] ),
+            'data-gtm-label'    => esc_attr( $exchange_slug ),
+            'data-cta-type'     => esc_attr( $cta_type ),
+        );
+
+        $output = '';
+        foreach ( $attrs as $key => $value ) {
+            $output .= sprintf( ' %s="%s"', $key, $value );
+        }
+
+        return $output;
+    }
+
+    /**
+     * ブロックエディタ用の仮想通貨セレクトオプション
+     *
+     * @return array
+     */
+    public function get_crypto_select_options() {
+        $cryptos = $this->get_enabled_cryptos();
+        $options = array();
+
+        foreach ( $cryptos as $slug => $data ) {
+            $options[] = array(
+                'value' => $slug,
+                'label' => $data['name'],
+            );
+        }
+
+        return $options;
+    }
+
+    /**
+     * 仮想通貨デフォルトデータを初期化
+     *
+     * @return bool
+     */
+    public function initialize_crypto_defaults() {
+        $existing = get_option( 'soico_cta_crypto_data', array() );
+        if ( ! empty( $existing ) ) {
+            return false;
+        }
+
+        $defaults = array(
+            'gmo_coin' => array(
+                'name'         => 'GMOコイン',
+                'slug'         => 'gmo_coin',
+                'priority'     => 1,
+                'enabled'      => true,
+                'features'     => array( '取引手数料無料', 'スマホアプリが使いやすい', '最短10分で口座開設' ),
+                'trading_fee'  => '無料',
+                'coins_count'  => '26種類',
+                'min_amount'   => '500円',
+                'button_text'  => '無料で口座開設',
+                'button_color' => '#F7931A',
+            ),
+            'coincheck' => array(
+                'name'         => 'コインチェック',
+                'slug'         => 'coincheck',
+                'priority'     => 2,
+                'enabled'      => true,
+                'features'     => array( '国内最大級の取扱通貨数', 'アプリDL数No.1', '500円から購入可能' ),
+                'trading_fee'  => '無料',
+                'coins_count'  => '29種類',
+                'min_amount'   => '500円',
+                'button_text'  => '無料で口座開設',
+                'button_color' => '#4A90A4',
+            ),
+            'sbi_vc' => array(
+                'name'         => 'SBI VCトレード',
+                'slug'         => 'sbi_vc',
+                'priority'     => 3,
+                'enabled'      => true,
+                'features'     => array( 'SBIグループの安心感', '各種手数料が無料', 'ステーキング対応' ),
+                'trading_fee'  => '無料',
+                'coins_count'  => '23種類',
+                'min_amount'   => '500円',
+                'button_text'  => '無料で口座開設',
+                'button_color' => '#0066CC',
+            ),
+        );
+
+        return update_option( 'soico_cta_crypto_data', $defaults );
     }
 }

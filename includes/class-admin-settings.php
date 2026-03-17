@@ -51,6 +51,11 @@ class Soico_CTA_Admin_Settings {
         add_action( 'wp_ajax_soico_cta_save_cardloans', array( $this, 'ajax_save_cardloans' ) );
         add_action( 'wp_ajax_soico_cta_add_cardloan', array( $this, 'ajax_add_cardloan' ) );
         add_action( 'wp_ajax_soico_cta_delete_cardloan', array( $this, 'ajax_delete_cardloan' ) );
+
+        // 仮想通貨用AJAX
+        add_action( 'wp_ajax_soico_cta_save_cryptos', array( $this, 'ajax_save_cryptos' ) );
+        add_action( 'wp_ajax_soico_cta_add_crypto', array( $this, 'ajax_add_crypto' ) );
+        add_action( 'wp_ajax_soico_cta_delete_crypto', array( $this, 'ajax_delete_crypto' ) );
     }
     
     /**
@@ -167,8 +172,64 @@ class Soico_CTA_Admin_Settings {
             'soico-cardloan-diagnostics',
             array( $this, 'render_cardloan_diagnostics_page' )
         );
+
+        // 仮想通貨CTAメニュー
+        add_menu_page(
+            __( '仮想通貨CTA設定', 'soico-securities-cta' ),
+            __( '仮想通貨CTA', 'soico-securities-cta' ),
+            'manage_options',
+            'soico-crypto-settings',
+            array( $this, 'render_crypto_settings_page' ),
+            'dashicons-bitcoin',
+            82
+        );
+
+        add_submenu_page(
+            'soico-crypto-settings',
+            __( '取引所管理', 'soico-securities-cta' ),
+            __( '取引所管理', 'soico-securities-cta' ),
+            'manage_options',
+            'soico-crypto-settings',
+            array( $this, 'render_crypto_settings_page' )
+        );
+
+        add_submenu_page(
+            'soico-crypto-settings',
+            __( 'デザイン設定', 'soico-securities-cta' ),
+            __( 'デザイン設定', 'soico-securities-cta' ),
+            'manage_options',
+            'soico-crypto-design',
+            array( $this, 'render_crypto_design_page' )
+        );
+
+        add_submenu_page(
+            'soico-crypto-settings',
+            __( 'トラッキング設定', 'soico-securities-cta' ),
+            __( 'トラッキング設定', 'soico-securities-cta' ),
+            'manage_options',
+            'soico-crypto-tracking',
+            array( $this, 'render_crypto_tracking_page' )
+        );
+
+        add_submenu_page(
+            'soico-crypto-settings',
+            __( '使い方ガイド', 'soico-securities-cta' ),
+            __( '使い方ガイド', 'soico-securities-cta' ),
+            'manage_options',
+            'soico-crypto-guide',
+            array( $this, 'render_crypto_guide_page' )
+        );
+
+        add_submenu_page(
+            'soico-crypto-settings',
+            __( '診断ツール', 'soico-securities-cta' ),
+            __( '診断ツール', 'soico-securities-cta' ),
+            'manage_options',
+            'soico-crypto-diagnostics',
+            array( $this, 'render_crypto_diagnostics_page' )
+        );
     }
-    
+
     /**
      * 設定登録
      */
@@ -192,14 +253,24 @@ class Soico_CTA_Admin_Settings {
         register_setting( 'soico_cardloan_tracking_group', 'soico_cardloan_tracking_settings', array(
             'sanitize_callback' => array( $this, 'sanitize_cardloan_tracking_settings' ),
         ) );
+
+        // 仮想通貨デザイン設定
+        register_setting( 'soico_crypto_design_group', 'soico_crypto_design_settings', array(
+            'sanitize_callback' => array( $this, 'sanitize_crypto_design_settings' ),
+        ) );
+
+        // 仮想通貨トラッキング設定
+        register_setting( 'soico_crypto_tracking_group', 'soico_crypto_tracking_settings', array(
+            'sanitize_callback' => array( $this, 'sanitize_crypto_tracking_settings' ),
+        ) );
     }
     
     /**
      * 管理画面アセット読み込み
      */
     public function enqueue_admin_assets( $hook ) {
-        // 設定ページのみ（証券CTA + カードローンCTA）
-        $is_soico_page = strpos( $hook, 'soico-cta' ) !== false || strpos( $hook, 'soico-cardloan' ) !== false;
+        // 設定ページのみ（証券CTA + カードローンCTA + 仮想通貨CTA）
+        $is_soico_page = strpos( $hook, 'soico-cta' ) !== false || strpos( $hook, 'soico-cardloan' ) !== false || strpos( $hook, 'soico-crypto' ) !== false;
         if ( ! $is_soico_page ) {
             return;
         }
@@ -228,11 +299,23 @@ class Soico_CTA_Admin_Settings {
             'i18n'    => array(
                 'confirmDelete'         => __( 'この証券会社を削除しますか？', 'soico-securities-cta' ),
                 'confirmDeleteCardloan' => __( 'このカードローン会社を削除しますか？', 'soico-securities-cta' ),
+                'confirmDeleteCrypto'   => __( 'この仮想通貨取引所を削除しますか？', 'soico-securities-cta' ),
                 'saving'                => __( '保存中...', 'soico-securities-cta' ),
                 'saved'                 => __( '保存しました', 'soico-securities-cta' ),
                 'error'                 => __( 'エラーが発生しました', 'soico-securities-cta' ),
             ),
         ) );
+
+        // 診断ページではフロントエンドCSSも読み込む（テストレンダリング用）
+        $is_diagnostics_page = strpos( $hook, 'diagnostics' ) !== false;
+        if ( $is_diagnostics_page ) {
+            wp_enqueue_style(
+                'soico-cta-frontend',
+                SOICO_CTA_PLUGIN_URL . 'assets/css/frontend.css',
+                array(),
+                SOICO_CTA_VERSION
+            );
+        }
     }
     
     /**
@@ -429,13 +512,80 @@ class Soico_CTA_Admin_Settings {
                         </td>
                     </tr>
                 </table>
-                
+
+                <h2><?php esc_html_e( '比較表CTA 注釈設定', 'soico-securities-cta' ); ?></h2>
+                <p class="description" style="margin-bottom: 15px;"><?php esc_html_e( '各商材（証券会社）ごとに注釈を設定できます。比較表の下部に「**商材名注釈** - 注釈1 - 注釈2」の形式で表示されます。', 'soico-securities-cta' ); ?></p>
+
+                <?php
+                $data = Soico_CTA_Securities_Data::get_instance();
+                $securities = $data->get_all_securities();
+                $table_notes_by_company = isset( $settings['table_notes_by_company'] ) ? (array) $settings['table_notes_by_company'] : array();
+                ?>
+
+                <div id="securities-table-notes-by-company">
+                    <?php foreach ( $securities as $slug => $security ) :
+                        $company_notes = isset( $table_notes_by_company[ $slug ] ) ? (array) $table_notes_by_company[ $slug ] : array();
+                        if ( empty( $company_notes ) ) {
+                            $company_notes = array( '' );
+                        }
+                    ?>
+                    <div class="soico-company-notes-section" data-company="<?php echo esc_attr( $slug ); ?>" style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
+                        <h4 style="margin: 0 0 10px 0; font-weight: bold;"><?php echo esc_html( $security['name'] ); ?>注釈</h4>
+                        <div class="soico-company-notes-container">
+                            <?php foreach ( $company_notes as $note ) : ?>
+                            <div class="soico-table-note-row" style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <span style="margin-right: 8px;">•</span>
+                                <input type="text" name="soico_cta_design_settings[table_notes_by_company][<?php echo esc_attr( $slug ); ?>][]" value="<?php echo esc_attr( $note ); ?>" style="flex: 1; margin-right: 8px;" placeholder="注釈を入力..." />
+                                <button type="button" class="button soico-remove-note" style="color: #a00;">×</button>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <button type="button" class="button soico-add-company-note" data-company="<?php echo esc_attr( $slug ); ?>">+ 行を追加</button>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php esc_html_e( '注釈の文字サイズ', 'soico-securities-cta' ); ?></th>
+                        <td>
+                            <input type="number" name="soico_cta_design_settings[table_notes_size]" value="<?php echo esc_attr( $settings['table_notes_size'] ?? 11 ); ?>" min="8" max="14" /> px
+                            <p class="description"><?php esc_html_e( '8〜14px（デフォルト: 11px）', 'soico-securities-cta' ); ?></p>
+                        </td>
+                    </tr>
+                </table>
+
+                <script>
+                jQuery(document).ready(function($) {
+                    // 商材別注釈の行追加
+                    $(document).on('click', '.soico-add-company-note', function() {
+                        var company = $(this).data('company');
+                        var newRow = '<div class="soico-table-note-row" style="display: flex; align-items: center; margin-bottom: 8px;">' +
+                            '<span style="margin-right: 8px;">•</span>' +
+                            '<input type="text" name="soico_cta_design_settings[table_notes_by_company][' + company + '][]" value="" style="flex: 1; margin-right: 8px;" placeholder="注釈を入力..." />' +
+                            '<button type="button" class="button soico-remove-note" style="color: #a00;">×</button>' +
+                            '</div>';
+                        $(this).siblings('.soico-company-notes-container').append(newRow);
+                    });
+
+                    // 行削除
+                    $(document).on('click', '.soico-remove-note', function() {
+                        var container = $(this).closest('.soico-company-notes-container');
+                        if (container.find('.soico-table-note-row').length > 1) {
+                            $(this).closest('.soico-table-note-row').remove();
+                        } else {
+                            $(this).siblings('input').val('');
+                        }
+                    });
+                });
+                </script>
+
                 <?php submit_button(); ?>
             </form>
         </div>
         <?php
     }
-    
+
     /**
      * トラッキング設定ページ描画
      */
@@ -494,10 +644,32 @@ data-cta-type="[CTAタイプ]"
      * デザイン設定サニタイズ
      */
     public function sanitize_design_settings( $input ) {
+        // 商材別注釈をサニタイズ（空の項目は除外）
+        $table_notes_by_company = array();
+        if ( isset( $input['table_notes_by_company'] ) && is_array( $input['table_notes_by_company'] ) ) {
+            foreach ( $input['table_notes_by_company'] as $company_slug => $notes ) {
+                $sanitized_slug = sanitize_key( $company_slug );
+                $company_notes = array();
+                if ( is_array( $notes ) ) {
+                    foreach ( $notes as $note ) {
+                        $sanitized = wp_kses_post( trim( $note ) );
+                        if ( ! empty( $sanitized ) ) {
+                            $company_notes[] = $sanitized;
+                        }
+                    }
+                }
+                if ( ! empty( $company_notes ) ) {
+                    $table_notes_by_company[ $sanitized_slug ] = $company_notes;
+                }
+            }
+        }
+
         return array(
-            'primary_color'   => sanitize_hex_color( $input['primary_color'] ?? '#FF6B35' ),
-            'secondary_color' => sanitize_hex_color( $input['secondary_color'] ?? '#1E88E5' ),
-            'border_radius'   => absint( $input['border_radius'] ?? 8 ),
+            'primary_color'           => sanitize_hex_color( $input['primary_color'] ?? '#FF6B35' ),
+            'secondary_color'         => sanitize_hex_color( $input['secondary_color'] ?? '#1E88E5' ),
+            'border_radius'           => absint( $input['border_radius'] ?? 8 ),
+            'table_notes_by_company'  => $table_notes_by_company,
+            'table_notes_size'        => absint( $input['table_notes_size'] ?? 11 ),
         );
     }
     
@@ -1179,6 +1351,12 @@ data-cta-type="[CTAタイプ]"
                     <textarea name="cardloans[<?php echo esc_attr( $slug ); ?>][features]" rows="3"><?php echo esc_textarea( implode( "\n", (array) ( $data['features'] ?? array() ) ) ); ?></textarea>
                 </div>
 
+                <div class="soico-cta-field">
+                    <label><?php esc_html_e( '特徴注釈（1行ずつ入力 ※特徴と同じ行に対応）', 'soico-securities-cta' ); ?></label>
+                    <textarea name="cardloans[<?php echo esc_attr( $slug ); ?>][feature_annotations]" rows="3" placeholder="1つ目の特徴の注釈&#10;2つ目の特徴の注釈&#10;3つ目の特徴の注釈"><?php echo esc_textarea( implode( "\n", (array) ( $data['feature_annotations'] ?? array() ) ) ); ?></textarea>
+                    <p class="description"><?php esc_html_e( '各特徴の下に小文字で表示される注釈。特徴と同じ行番号に対応する注釈を入力してください。注釈不要の場合は空行にしてください。', 'soico-securities-cta' ); ?></p>
+                </div>
+
                 <div class="soico-cta-field-row">
                     <div class="soico-cta-field">
                         <label><?php esc_html_e( 'バッジテキスト', 'soico-securities-cta' ); ?></label>
@@ -1200,6 +1378,19 @@ data-cta-type="[CTAタイプ]"
                     <div class="soico-cta-field">
                         <label><?php esc_html_e( 'ボタン色', 'soico-securities-cta' ); ?></label>
                         <input type="text" class="color-picker" name="cardloans[<?php echo esc_attr( $slug ); ?>][button_color]" value="<?php echo esc_attr( $data['button_color'] ?? '#4CAF50' ); ?>" />
+                    </div>
+                </div>
+
+                <div class="soico-cta-field-row">
+                    <div class="soico-cta-field" style="flex: 3;">
+                        <label><?php esc_html_e( 'ボタン下注釈', 'soico-securities-cta' ); ?></label>
+                        <textarea name="cardloans[<?php echo esc_attr( $slug ); ?>][button_note]" rows="2" placeholder="例: ※20歳以上の方が対象です" style="width: 100%;"><?php echo esc_textarea( $data['button_note'] ?? '' ); ?></textarea>
+                        <p class="description"><?php esc_html_e( '改行は&lt;br&gt;タグを使用。基本的なHTMLタグが使用可能です。', 'soico-securities-cta' ); ?></p>
+                    </div>
+                    <div class="soico-cta-field" style="flex: 1;">
+                        <label><?php esc_html_e( '注釈文字サイズ', 'soico-securities-cta' ); ?></label>
+                        <input type="number" name="cardloans[<?php echo esc_attr( $slug ); ?>][button_note_size]" value="<?php echo esc_attr( $data['button_note_size'] ?? 11 ); ?>" min="8" max="16" style="width: 80px;" /> px
+                        <p class="description"><?php esc_html_e( '8〜16px', 'soico-securities-cta' ); ?></p>
                     </div>
                 </div>
 
@@ -1247,6 +1438,73 @@ data-cta-type="[CTAタイプ]"
                         </td>
                     </tr>
                 </table>
+
+                <h2><?php esc_html_e( '比較表CTA 注釈設定', 'soico-securities-cta' ); ?></h2>
+                <p class="description" style="margin-bottom: 15px;"><?php esc_html_e( '各商材（カードローン）ごとに注釈を設定できます。比較表の下部に「**商材名注釈** - 注釈1 - 注釈2」の形式で表示されます。', 'soico-securities-cta' ); ?></p>
+
+                <?php
+                $data = Soico_CTA_Securities_Data::get_instance();
+                $cardloans = $data->get_all_cardloans();
+                $table_notes_by_company = isset( $settings['table_notes_by_company'] ) ? (array) $settings['table_notes_by_company'] : array();
+                ?>
+
+                <div id="cardloan-table-notes-by-company">
+                    <?php foreach ( $cardloans as $slug => $cardloan ) :
+                        $company_notes = isset( $table_notes_by_company[ $slug ] ) ? (array) $table_notes_by_company[ $slug ] : array();
+                        if ( empty( $company_notes ) ) {
+                            $company_notes = array( '' );
+                        }
+                    ?>
+                    <div class="soico-company-notes-section" data-company="<?php echo esc_attr( $slug ); ?>" style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
+                        <h4 style="margin: 0 0 10px 0; font-weight: bold;"><?php echo esc_html( $cardloan['name'] ); ?>注釈</h4>
+                        <div class="soico-company-notes-container">
+                            <?php foreach ( $company_notes as $note ) : ?>
+                            <div class="soico-table-note-row" style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <span style="margin-right: 8px;">•</span>
+                                <input type="text" name="soico_cardloan_design_settings[table_notes_by_company][<?php echo esc_attr( $slug ); ?>][]" value="<?php echo esc_attr( $note ); ?>" style="flex: 1; margin-right: 8px;" placeholder="注釈を入力..." />
+                                <button type="button" class="button soico-remove-note" style="color: #a00;">×</button>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <button type="button" class="button soico-add-company-note" data-company="<?php echo esc_attr( $slug ); ?>">+ 行を追加</button>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php esc_html_e( '注釈の文字サイズ', 'soico-securities-cta' ); ?></th>
+                        <td>
+                            <input type="number" name="soico_cardloan_design_settings[table_notes_size]" value="<?php echo esc_attr( $settings['table_notes_size'] ?? 11 ); ?>" min="8" max="14" /> px
+                            <p class="description"><?php esc_html_e( '8〜14px（デフォルト: 11px）', 'soico-securities-cta' ); ?></p>
+                        </td>
+                    </tr>
+                </table>
+
+                <script>
+                jQuery(document).ready(function($) {
+                    // 商材別注釈の行追加
+                    $(document).on('click', '.soico-add-company-note', function() {
+                        var company = $(this).data('company');
+                        var newRow = '<div class="soico-table-note-row" style="display: flex; align-items: center; margin-bottom: 8px;">' +
+                            '<span style="margin-right: 8px;">•</span>' +
+                            '<input type="text" name="soico_cardloan_design_settings[table_notes_by_company][' + company + '][]" value="" style="flex: 1; margin-right: 8px;" placeholder="注釈を入力..." />' +
+                            '<button type="button" class="button soico-remove-note" style="color: #a00;">×</button>' +
+                            '</div>';
+                        $(this).siblings('.soico-company-notes-container').append(newRow);
+                    });
+
+                    // 行削除
+                    $(document).on('click', '.soico-remove-note', function() {
+                        var container = $(this).closest('.soico-company-notes-container');
+                        if (container.find('.soico-table-note-row').length > 1) {
+                            $(this).closest('.soico-table-note-row').remove();
+                        } else {
+                            $(this).siblings('input').val('');
+                        }
+                    });
+                });
+                </script>
 
                 <?php submit_button(); ?>
             </form>
@@ -1388,10 +1646,32 @@ data-cta-type="[CTAタイプ]"
      * カードローンデザイン設定サニタイズ
      */
     public function sanitize_cardloan_design_settings( $input ) {
+        // 商材別注釈をサニタイズ（空の項目は除外）
+        $table_notes_by_company = array();
+        if ( isset( $input['table_notes_by_company'] ) && is_array( $input['table_notes_by_company'] ) ) {
+            foreach ( $input['table_notes_by_company'] as $company_slug => $notes ) {
+                $sanitized_slug = sanitize_key( $company_slug );
+                $company_notes = array();
+                if ( is_array( $notes ) ) {
+                    foreach ( $notes as $note ) {
+                        $sanitized = wp_kses_post( trim( $note ) );
+                        if ( ! empty( $sanitized ) ) {
+                            $company_notes[] = $sanitized;
+                        }
+                    }
+                }
+                if ( ! empty( $company_notes ) ) {
+                    $table_notes_by_company[ $sanitized_slug ] = $company_notes;
+                }
+            }
+        }
+
         return array(
-            'primary_color'   => sanitize_hex_color( $input['primary_color'] ?? '#4CAF50' ),
-            'secondary_color' => sanitize_hex_color( $input['secondary_color'] ?? '#2E7D32' ),
-            'border_radius'   => absint( $input['border_radius'] ?? 8 ),
+            'primary_color'           => sanitize_hex_color( $input['primary_color'] ?? '#4CAF50' ),
+            'secondary_color'         => sanitize_hex_color( $input['secondary_color'] ?? '#2E7D32' ),
+            'border_radius'           => absint( $input['border_radius'] ?? 8 ),
+            'table_notes_by_company'  => $table_notes_by_company,
+            'table_notes_size'        => absint( $input['table_notes_size'] ?? 11 ),
         );
     }
 
@@ -1841,5 +2121,907 @@ data-cta-type="[CTAタイプ]"
             }
         </style>
         <?php
+    }
+
+    // ========================================================================
+    // 仮想通貨CTA関連メソッド
+    // ========================================================================
+
+    /**
+     * 仮想通貨設定ページ描画
+     */
+    public function render_crypto_settings_page() {
+        $securities_data = Soico_CTA_Securities_Data::get_instance();
+        $thirsty = Soico_CTA_Thirsty_Integration::get_instance();
+
+        // デフォルトデータを初期化
+        $securities_data->initialize_crypto_defaults();
+
+        // POSTフォールバック処理（JavaScriptが動作しない場合）
+        $save_message = '';
+        if ( isset( $_POST['soico_crypto_form_submit'] ) && check_admin_referer( 'soico_cta_admin_nonce', 'soico_cta_nonce' ) ) {
+            if ( current_user_can( 'manage_options' ) && isset( $_POST['cryptos'] ) ) {
+                $cryptos = $_POST['cryptos'];
+                // features を配列に変換
+                foreach ( $cryptos as $slug => &$data ) {
+                    if ( isset( $data['features'] ) && is_string( $data['features'] ) ) {
+                        $data['features'] = array_filter( array_map( 'trim', explode( "\n", $data['features'] ) ) );
+                    }
+                }
+                $result = $securities_data->save_cryptos( $cryptos );
+                // リダイレクトしてPOSTデータをクリア
+                $redirect_url = admin_url( 'admin.php?page=soico-crypto-settings&saved=' . ( $result ? '1' : '0' ) );
+                wp_redirect( $redirect_url );
+                exit;
+            }
+        }
+        // 保存メッセージ表示
+        if ( isset( $_GET['saved'] ) ) {
+            if ( $_GET['saved'] === '1' ) {
+                $save_message = '<div class="notice notice-success"><p>' . esc_html__( '保存しました', 'soico-securities-cta' ) . '</p></div>';
+            } else {
+                $save_message = '<div class="notice notice-error"><p>' . esc_html__( '保存に失敗しました', 'soico-securities-cta' ) . '</p></div>';
+            }
+        }
+
+        $cryptos = $securities_data->get_all_cryptos( false );
+        $thirsty_links = $thirsty->get_all_links();
+        ?>
+        <div class="wrap soico-cta-admin soico-crypto-admin">
+            <h1><?php esc_html_e( '仮想通貨取引所管理', 'soico-securities-cta' ); ?></h1>
+
+            <?php echo $save_message; ?>
+            <?php echo $thirsty->get_not_installed_message(); ?>
+
+            <div class="soico-cta-admin-content">
+                <form id="soico-crypto-form" method="post" action="">
+                    <?php wp_nonce_field( 'soico_cta_admin_nonce', 'soico_cta_nonce' ); ?>
+                    <input type="hidden" name="soico_crypto_form_submit" value="1" />
+
+                    <div class="soico-cta-securities-list" id="cryptos-list">
+                        <?php foreach ( $cryptos as $slug => $data ) : ?>
+                            <?php $this->render_crypto_row( $slug, $data, $thirsty_links ); ?>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <div class="soico-cta-actions">
+                        <button type="button" class="button" id="add-crypto-btn">
+                            <?php esc_html_e( '＋ 取引所を追加', 'soico-securities-cta' ); ?>
+                        </button>
+                        <button type="submit" class="button button-primary">
+                            <?php esc_html_e( '変更を保存', 'soico-securities-cta' ); ?>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 新規追加モーダル -->
+            <div id="add-crypto-modal" class="soico-cta-modal" style="display:none;">
+                <div class="soico-cta-modal-content">
+                    <h2><?php esc_html_e( '仮想通貨取引所を追加', 'soico-securities-cta' ); ?></h2>
+                    <form id="add-crypto-form">
+                        <p>
+                            <label><?php esc_html_e( 'スラッグ（英数字）', 'soico-securities-cta' ); ?></label>
+                            <input type="text" name="slug" required pattern="[a-z0-9_-]+" />
+                        </p>
+                        <p>
+                            <label><?php esc_html_e( '取引所名', 'soico-securities-cta' ); ?></label>
+                            <input type="text" name="name" required />
+                        </p>
+                        <p class="soico-cta-modal-actions">
+                            <button type="button" class="button" id="cancel-add-crypto">
+                                <?php esc_html_e( 'キャンセル', 'soico-securities-cta' ); ?>
+                            </button>
+                            <button type="submit" class="button button-primary">
+                                <?php esc_html_e( '追加', 'soico-securities-cta' ); ?>
+                            </button>
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * 仮想通貨行を描画
+     */
+    private function render_crypto_row( $slug, $data, $thirsty_links ) {
+        ?>
+        <div class="soico-cta-security-row soico-crypto-row" data-slug="<?php echo esc_attr( $slug ); ?>">
+            <div class="soico-cta-security-header">
+                <span class="dashicons dashicons-move soico-cta-drag-handle"></span>
+                <span class="soico-cta-security-name"><?php echo esc_html( $data['name'] ); ?></span>
+                <span class="soico-cta-security-priority">
+                    <?php printf( __( '優先順位: %d', 'soico-securities-cta' ), $data['priority'] ); ?>
+                </span>
+                <button type="button" class="button-link soico-cta-toggle-details">
+                    <?php esc_html_e( '詳細', 'soico-securities-cta' ); ?>
+                </button>
+            </div>
+
+            <div class="soico-cta-security-details" style="display:none;">
+                <input type="hidden" name="cryptos[<?php echo esc_attr( $slug ); ?>][slug]" value="<?php echo esc_attr( $slug ); ?>" />
+                <input type="hidden" name="cryptos[<?php echo esc_attr( $slug ); ?>][priority]" class="priority-input" value="<?php echo esc_attr( $data['priority'] ); ?>" />
+
+                <div class="soico-cta-field-row">
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( '有効', 'soico-securities-cta' ); ?></label>
+                        <input type="checkbox" name="cryptos[<?php echo esc_attr( $slug ); ?>][enabled]" value="1" <?php checked( ! empty( $data['enabled'] ) ); ?> />
+                    </div>
+
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( '取引所名', 'soico-securities-cta' ); ?></label>
+                        <input type="text" name="cryptos[<?php echo esc_attr( $slug ); ?>][name]" value="<?php echo esc_attr( $data['name'] ); ?>" />
+                    </div>
+                </div>
+
+                <div class="soico-cta-field-row">
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( 'ThirstyAffiliateリンク', 'soico-securities-cta' ); ?></label>
+                        <select name="cryptos[<?php echo esc_attr( $slug ); ?>][thirsty_link]">
+                            <option value=""><?php esc_html_e( '-- 選択 --', 'soico-securities-cta' ); ?></option>
+                            <?php foreach ( $thirsty_links as $link ) : ?>
+                                <option value="<?php echo esc_attr( $link['id'] ); ?>" <?php selected( $data['thirsty_link'] ?? '', $link['id'] ); ?>>
+                                    <?php echo esc_html( $link['name'] ); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( '直接URL（ThirstyAffiliate未使用時）', 'soico-securities-cta' ); ?></label>
+                        <input type="url" name="cryptos[<?php echo esc_attr( $slug ); ?>][direct_url]" value="<?php echo esc_attr( $data['direct_url'] ?? '' ); ?>" />
+                    </div>
+                </div>
+
+                <!-- 仮想通貨固有フィールド -->
+                <div class="soico-cta-field-row soico-crypto-specific">
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( '取引手数料', 'soico-securities-cta' ); ?></label>
+                        <input type="text" name="cryptos[<?php echo esc_attr( $slug ); ?>][trading_fee]" value="<?php echo esc_attr( $data['trading_fee'] ?? '' ); ?>" placeholder="例: 無料" />
+                    </div>
+
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( '取扱通貨数', 'soico-securities-cta' ); ?></label>
+                        <input type="text" name="cryptos[<?php echo esc_attr( $slug ); ?>][coins_count]" value="<?php echo esc_attr( $data['coins_count'] ?? '' ); ?>" placeholder="例: 26種類" />
+                    </div>
+
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( '最低購入額', 'soico-securities-cta' ); ?></label>
+                        <input type="text" name="cryptos[<?php echo esc_attr( $slug ); ?>][min_amount]" value="<?php echo esc_attr( $data['min_amount'] ?? '' ); ?>" placeholder="例: 500円" />
+                    </div>
+                </div>
+
+                <div class="soico-cta-field">
+                    <label><?php esc_html_e( '特徴（1行ずつ入力）', 'soico-securities-cta' ); ?></label>
+                    <textarea name="cryptos[<?php echo esc_attr( $slug ); ?>][features]" rows="3"><?php echo esc_textarea( implode( "\n", (array) ( $data['features'] ?? array() ) ) ); ?></textarea>
+                </div>
+
+                <div class="soico-cta-field-row">
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( 'バッジテキスト', 'soico-securities-cta' ); ?></label>
+                        <input type="text" name="cryptos[<?php echo esc_attr( $slug ); ?>][badge]" value="<?php echo esc_attr( $data['badge'] ?? '' ); ?>" placeholder="例: おすすめ" />
+                    </div>
+
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( 'バッジ色', 'soico-securities-cta' ); ?></label>
+                        <input type="text" class="color-picker" name="cryptos[<?php echo esc_attr( $slug ); ?>][badge_color]" value="<?php echo esc_attr( $data['badge_color'] ?? '#F7931A' ); ?>" />
+                    </div>
+                </div>
+
+                <div class="soico-cta-field-row">
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( 'ボタンテキスト', 'soico-securities-cta' ); ?></label>
+                        <input type="text" name="cryptos[<?php echo esc_attr( $slug ); ?>][button_text]" value="<?php echo esc_attr( $data['button_text'] ?? '' ); ?>" />
+                    </div>
+
+                    <div class="soico-cta-field">
+                        <label><?php esc_html_e( 'ボタン色', 'soico-securities-cta' ); ?></label>
+                        <input type="text" class="color-picker" name="cryptos[<?php echo esc_attr( $slug ); ?>][button_color]" value="<?php echo esc_attr( $data['button_color'] ?? '#F7931A' ); ?>" />
+                    </div>
+                </div>
+
+                <div class="soico-cta-field-actions">
+                    <button type="button" class="button-link button-link-delete soico-cta-delete-crypto">
+                        <?php esc_html_e( '削除', 'soico-securities-cta' ); ?>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * 仮想通貨デザイン設定ページ描画
+     */
+    public function render_crypto_design_page() {
+        $settings = get_option( 'soico_crypto_design_settings', array() );
+        ?>
+        <div class="wrap soico-cta-admin soico-crypto-admin">
+            <h1><?php esc_html_e( '仮想通貨CTA デザイン設定', 'soico-securities-cta' ); ?></h1>
+
+            <form method="post" action="options.php">
+                <?php settings_fields( 'soico_crypto_design_group' ); ?>
+
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php esc_html_e( 'メインカラー（ボタン）', 'soico-securities-cta' ); ?></th>
+                        <td>
+                            <input type="text" class="color-picker" name="soico_crypto_design_settings[primary_color]" value="<?php echo esc_attr( $settings['primary_color'] ?? '#F7931A' ); ?>" />
+                            <p class="description"><?php esc_html_e( 'CTAボタンのメインカラー（ビットコインオレンジ推奨）', 'soico-securities-cta' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e( 'セカンダリカラー', 'soico-securities-cta' ); ?></th>
+                        <td>
+                            <input type="text" class="color-picker" name="soico_crypto_design_settings[secondary_color]" value="<?php echo esc_attr( $settings['secondary_color'] ?? '#4A90A4' ); ?>" />
+                            <p class="description"><?php esc_html_e( 'ボーダーやアクセントに使用', 'soico-securities-cta' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e( '角丸の半径', 'soico-securities-cta' ); ?></th>
+                        <td>
+                            <input type="number" name="soico_crypto_design_settings[border_radius]" value="<?php echo esc_attr( $settings['border_radius'] ?? 8 ); ?>" min="0" max="30" /> px
+                        </td>
+                    </tr>
+                </table>
+
+                <h2><?php esc_html_e( '比較表CTA 注釈設定', 'soico-securities-cta' ); ?></h2>
+                <p class="description" style="margin-bottom: 15px;"><?php esc_html_e( '各商材（取引所）ごとに注釈を設定できます。比較表の下部に「**商材名注釈** - 注釈1 - 注釈2」の形式で表示されます。', 'soico-securities-cta' ); ?></p>
+
+                <?php
+                $data = Soico_CTA_Securities_Data::get_instance();
+                $cryptos = $data->get_all_cryptos();
+                $table_notes_by_company = isset( $settings['table_notes_by_company'] ) ? (array) $settings['table_notes_by_company'] : array();
+                ?>
+
+                <div id="crypto-table-notes-by-company">
+                    <?php foreach ( $cryptos as $slug => $crypto ) :
+                        $company_notes = isset( $table_notes_by_company[ $slug ] ) ? (array) $table_notes_by_company[ $slug ] : array();
+                        if ( empty( $company_notes ) ) {
+                            $company_notes = array( '' );
+                        }
+                    ?>
+                    <div class="soico-company-notes-section" data-company="<?php echo esc_attr( $slug ); ?>" style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
+                        <h4 style="margin: 0 0 10px 0; font-weight: bold;"><?php echo esc_html( $crypto['name'] ); ?>注釈</h4>
+                        <div class="soico-company-notes-container">
+                            <?php foreach ( $company_notes as $note ) : ?>
+                            <div class="soico-table-note-row" style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <span style="margin-right: 8px;">•</span>
+                                <input type="text" name="soico_crypto_design_settings[table_notes_by_company][<?php echo esc_attr( $slug ); ?>][]" value="<?php echo esc_attr( $note ); ?>" style="flex: 1; margin-right: 8px;" placeholder="注釈を入力..." />
+                                <button type="button" class="button soico-remove-note" style="color: #a00;">×</button>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <button type="button" class="button soico-add-company-note" data-company="<?php echo esc_attr( $slug ); ?>">+ 行を追加</button>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php esc_html_e( '注釈の文字サイズ', 'soico-securities-cta' ); ?></th>
+                        <td>
+                            <input type="number" name="soico_crypto_design_settings[table_notes_size]" value="<?php echo esc_attr( $settings['table_notes_size'] ?? 11 ); ?>" min="8" max="14" /> px
+                            <p class="description"><?php esc_html_e( '8〜14px（デフォルト: 11px）', 'soico-securities-cta' ); ?></p>
+                        </td>
+                    </tr>
+                </table>
+
+                <script>
+                jQuery(document).ready(function($) {
+                    // 商材別注釈の行追加
+                    $(document).on('click', '.soico-add-company-note', function() {
+                        var company = $(this).data('company');
+                        var newRow = '<div class="soico-table-note-row" style="display: flex; align-items: center; margin-bottom: 8px;">' +
+                            '<span style="margin-right: 8px;">•</span>' +
+                            '<input type="text" name="soico_crypto_design_settings[table_notes_by_company][' + company + '][]" value="" style="flex: 1; margin-right: 8px;" placeholder="注釈を入力..." />' +
+                            '<button type="button" class="button soico-remove-note" style="color: #a00;">×</button>' +
+                            '</div>';
+                        $(this).siblings('.soico-company-notes-container').append(newRow);
+                    });
+
+                    // 行削除
+                    $(document).on('click', '.soico-remove-note', function() {
+                        var container = $(this).closest('.soico-company-notes-container');
+                        if (container.find('.soico-table-note-row').length > 1) {
+                            $(this).closest('.soico-table-note-row').remove();
+                        } else {
+                            $(this).siblings('input').val('');
+                        }
+                    });
+                });
+                </script>
+
+                <?php submit_button(); ?>
+            </form>
+        </div>
+        <?php
+    }
+
+    /**
+     * 仮想通貨トラッキング設定ページ描画
+     */
+    public function render_crypto_tracking_page() {
+        $settings = get_option( 'soico_crypto_tracking_settings', array() );
+        ?>
+        <div class="wrap soico-cta-admin soico-crypto-admin">
+            <h1><?php esc_html_e( '仮想通貨CTA トラッキング設定', 'soico-securities-cta' ); ?></h1>
+
+            <form method="post" action="options.php">
+                <?php settings_fields( 'soico_crypto_tracking_group' ); ?>
+
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php esc_html_e( 'GTMトラッキング', 'soico-securities-cta' ); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="soico_crypto_tracking_settings[gtm_enabled]" value="1" <?php checked( ! empty( $settings['gtm_enabled'] ) ); ?> />
+                                <?php esc_html_e( 'GTMデータ属性を出力する', 'soico-securities-cta' ); ?>
+                            </label>
+                            <p class="description"><?php esc_html_e( 'CTAボタンにGTM用のdata属性を付与します', 'soico-securities-cta' ); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e( 'イベントカテゴリ', 'soico-securities-cta' ); ?></th>
+                        <td>
+                            <input type="text" name="soico_crypto_tracking_settings[event_category]" value="<?php echo esc_attr( $settings['event_category'] ?? 'CTA Click' ); ?>" class="regular-text" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e( 'イベントアクション', 'soico-securities-cta' ); ?></th>
+                        <td>
+                            <input type="text" name="soico_crypto_tracking_settings[event_action]" value="<?php echo esc_attr( $settings['event_action'] ?? 'crypto_affiliate' ); ?>" class="regular-text" />
+                        </td>
+                    </tr>
+                </table>
+
+                <?php submit_button(); ?>
+            </form>
+
+            <div class="soico-cta-gtm-guide">
+                <h3><?php esc_html_e( 'GTM設定ガイド', 'soico-securities-cta' ); ?></h3>
+                <p><?php esc_html_e( '以下のデータ属性がCTAボタンに出力されます：', 'soico-securities-cta' ); ?></p>
+                <pre>
+data-gtm-category="<?php echo esc_html( $settings['event_category'] ?? 'CTA Click' ); ?>"
+data-gtm-action="<?php echo esc_html( $settings['event_action'] ?? 'crypto_affiliate' ); ?>"
+data-gtm-label="[取引所スラッグ]"
+data-cta-type="[CTAタイプ]"
+                </pre>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * 仮想通貨使い方ガイドページ描画
+     */
+    public function render_crypto_guide_page() {
+        ?>
+        <div class="wrap soico-cta-admin soico-cta-guide soico-crypto-admin">
+            <h1><?php esc_html_e( '仮想通貨CTA 使い方ガイド', 'soico-securities-cta' ); ?></h1>
+
+            <div class="soico-cta-guide-section">
+                <h2>🚀 クイックスタート</h2>
+                <ol>
+                    <li><strong>取引所を設定</strong> - 「取引所管理」で取引所情報とアフィリエイトリンクを設定します</li>
+                    <li><strong>記事でブロックを挿入</strong> - 投稿編集画面で「/」を入力し、「仮想通貨」と検索してブロックを追加します</li>
+                    <li><strong>サイドバーで設定</strong> - ブロックを選択し、右サイドバーで取引所やオプションを選択します</li>
+                </ol>
+            </div>
+
+            <div class="soico-cta-guide-section">
+                <h2>📦 利用可能なブロック</h2>
+
+                <div class="soico-cta-guide-block crypto">
+                    <h3>1. 仮想通貨結論ボックス</h3>
+                    <p>記事冒頭に最適。おすすめの取引所と特徴リスト、CTAボタンを表示します。</p>
+                    <p><strong>使用例:</strong> 「〇〇がおすすめ」という結論を最初に提示したい場合</p>
+                </div>
+
+                <div class="soico-cta-guide-block crypto">
+                    <h3>2. 仮想通貨インラインCTA</h3>
+                    <p>記事の途中に自然に挿入できる控えめなCTA。流れを邪魔しません。</p>
+                    <p><strong>使用例:</strong> 記事中で取引所に言及したタイミングで挿入</p>
+                </div>
+
+                <div class="soico-cta-guide-block crypto">
+                    <h3>3. 仮想通貨CTAボタン</h3>
+                    <p>シンプルなボタンのみ。任意の場所に配置できます。</p>
+                    <p><strong>使用例:</strong> 記事末尾やセクション終わりに</p>
+                </div>
+
+                <div class="soico-cta-guide-block crypto">
+                    <h3>4. 仮想通貨比較表</h3>
+                    <p>複数の取引所を比較する表形式のCTA。ランキング記事に最適。</p>
+                    <p><strong>使用例:</strong> 「おすすめ仮想通貨取引所ランキング」記事</p>
+                </div>
+
+                <div class="soico-cta-guide-block crypto">
+                    <h3>5. 仮想通貨控えめバナー</h3>
+                    <p>テキストリンク形式の最も控えめなCTA。読者の邪魔をしません。</p>
+                    <p><strong>使用例:</strong> 記事内の補足情報として</p>
+                </div>
+            </div>
+
+            <div class="soico-cta-guide-section">
+                <h2>⚙️ 設定項目の説明</h2>
+
+                <h3>取引所管理</h3>
+                <table class="widefat">
+                    <tr><th>項目</th><th>説明</th></tr>
+                    <tr><td>有効</td><td>チェックを外すと、その取引所はブロックで選択できなくなります</td></tr>
+                    <tr><td>ThirstyAffiliateリンク</td><td>ThirstyAffiliatesプラグインで作成したリンクを選択（推奨）</td></tr>
+                    <tr><td>直接URL</td><td>ThirstyAffiliates未使用時に直接アフィリエイトURLを入力</td></tr>
+                    <tr><td>取引手数料</td><td>比較表で表示される手数料情報</td></tr>
+                    <tr><td>取扱通貨数</td><td>比較表で表示される取扱通貨数</td></tr>
+                    <tr><td>最低購入額</td><td>比較表で表示される最低購入額</td></tr>
+                    <tr><td>特徴</td><td>1行ずつ入力。結論ボックスや比較表で表示されます</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <style>
+            .soico-cta-guide { max-width: 900px; }
+            .soico-cta-guide-section { background: #fff; padding: 20px 25px; margin: 20px 0; border: 1px solid #ccd0d4; border-radius: 4px; }
+            .soico-cta-guide-section h2 { margin-top: 0; padding-bottom: 10px; border-bottom: 2px solid #F7931A; }
+            .soico-cta-guide-block.crypto { background: #FFF8E1; padding: 15px; margin: 15px 0; border-left: 4px solid #F7931A; }
+            .soico-cta-guide-block h3 { margin-top: 0; color: #23282d; }
+            .soico-cta-guide table { margin: 15px 0; }
+            .soico-cta-guide table th { background: #f1f1f1; text-align: left; }
+        </style>
+        <?php
+    }
+
+    /**
+     * 仮想通貨診断ページ描画
+     */
+    public function render_crypto_diagnostics_page() {
+        $securities_data = Soico_CTA_Securities_Data::get_instance();
+        $thirsty = Soico_CTA_Thirsty_Integration::get_instance();
+        $block_register = Soico_CTA_Block_Register::get_instance();
+
+        $cryptos = $securities_data->get_all_cryptos( false );
+        $enabled_cryptos = $securities_data->get_enabled_cryptos();
+        $registry = WP_Block_Type_Registry::get_instance();
+
+        $blocks = array(
+            'soico-cta/crypto-conclusion-box',
+            'soico-cta/crypto-inline-cta',
+            'soico-cta/crypto-single-button',
+            'soico-cta/crypto-comparison-table',
+            'soico-cta/crypto-subtle-banner',
+        );
+        ?>
+        <div class="wrap soico-cta-admin soico-crypto-admin">
+            <h1><?php esc_html_e( '仮想通貨CTA 診断ツール', 'soico-securities-cta' ); ?></h1>
+
+            <!-- JavaScript読み込み状態 -->
+            <div class="soico-cta-diag-section">
+                <h2>📜 JavaScript読み込み状態</h2>
+                <p>この診断ツールが表示されている場合、管理画面のスクリプトは正常に読み込まれています。</p>
+                <table class="widefat">
+                    <tr>
+                        <th>項目</th>
+                        <th>状態</th>
+                    </tr>
+                    <tr>
+                        <td>soicoCTAAdmin オブジェクト</td>
+                        <td><span id="soico-diag-admin-obj">確認中...</span></td>
+                    </tr>
+                    <tr>
+                        <td>ajaxUrl</td>
+                        <td><span id="soico-diag-ajax-url">確認中...</span></td>
+                    </tr>
+                    <tr>
+                        <td>nonce</td>
+                        <td><span id="soico-diag-nonce">確認中...</span></td>
+                    </tr>
+                    <tr>
+                        <td>jQuery</td>
+                        <td><span id="soico-diag-jquery">確認中...</span></td>
+                    </tr>
+                    <tr>
+                        <td>jQuery UI Sortable</td>
+                        <td><span id="soico-diag-sortable">確認中...</span></td>
+                    </tr>
+                </table>
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    // jQuery check
+                    document.getElementById('soico-diag-jquery').innerHTML =
+                        typeof jQuery !== 'undefined' ? '✅ 読み込み済み' : '❌ 未読み込み';
+
+                    // jQuery UI Sortable check
+                    document.getElementById('soico-diag-sortable').innerHTML =
+                        typeof jQuery !== 'undefined' && typeof jQuery.fn.sortable === 'function'
+                            ? '✅ 読み込み済み' : '❌ 未読み込み';
+
+                    // soicoCTAAdmin check
+                    if (typeof window.soicoCTAAdmin !== 'undefined') {
+                        document.getElementById('soico-diag-admin-obj').innerHTML = '✅ 読み込み済み';
+                        document.getElementById('soico-diag-ajax-url').innerHTML =
+                            window.soicoCTAAdmin.ajaxUrl ? '✅ ' + window.soicoCTAAdmin.ajaxUrl : '❌ 未設定';
+                        document.getElementById('soico-diag-nonce').innerHTML =
+                            window.soicoCTAAdmin.nonce ? '✅ 設定済み' : '❌ 未設定';
+                    } else {
+                        document.getElementById('soico-diag-admin-obj').innerHTML = '❌ 未読み込み（admin.jsが読み込まれていません）';
+                        document.getElementById('soico-diag-ajax-url').innerHTML = '❌ 未設定';
+                        document.getElementById('soico-diag-nonce').innerHTML = '❌ 未設定';
+                    }
+                });
+                </script>
+            </div>
+
+            <!-- ブロック登録状態 -->
+            <div class="soico-cta-diag-section">
+                <h2>📦 仮想通貨ブロック登録状態</h2>
+                <table class="widefat">
+                    <thead>
+                        <tr>
+                            <th>ブロック名</th>
+                            <th>登録済み</th>
+                            <th>render_callback</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ( $blocks as $block_name ) :
+                            $block_type = $registry->get_registered( $block_name );
+                            $is_registered = ! empty( $block_type );
+                            $has_callback = $is_registered && is_callable( $block_type->render_callback );
+                        ?>
+                        <tr>
+                            <td><code><?php echo esc_html( $block_name ); ?></code></td>
+                            <td><?php echo $is_registered ? '✅ 登録済み' : '❌ 未登録'; ?></td>
+                            <td><?php echo $has_callback ? '✅ 設定済み' : '❌ 未設定'; ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 仮想通貨データ状態 -->
+            <div class="soico-cta-diag-section">
+                <h2>₿ 仮想通貨取引所データ状態</h2>
+                <p>
+                    <strong>全取引所:</strong> <?php echo count( $cryptos ); ?>件 |
+                    <strong>有効:</strong> <?php echo count( $enabled_cryptos ); ?>件
+                </p>
+                <table class="widefat">
+                    <thead>
+                        <tr>
+                            <th>スラッグ</th>
+                            <th>名前</th>
+                            <th>有効</th>
+                            <th>ThirstyLink ID</th>
+                            <th>affiliate_url</th>
+                            <th>取引手数料</th>
+                            <th>通貨数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ( $cryptos as $slug => $data ) : ?>
+                        <tr style="<?php echo empty( $data['enabled'] ) ? 'opacity: 0.5;' : ''; ?>">
+                            <td><code><?php echo esc_html( $slug ); ?></code></td>
+                            <td><?php echo esc_html( $data['name'] ); ?></td>
+                            <td><?php echo ! empty( $data['enabled'] ) ? '✅' : '❌'; ?></td>
+                            <td><?php echo ! empty( $data['thirsty_link'] ) ? esc_html( $data['thirsty_link'] ) : '<em>未設定</em>'; ?></td>
+                            <td>
+                                <?php if ( ! empty( $data['affiliate_url'] ) ) : ?>
+                                    <a href="<?php echo esc_url( $data['affiliate_url'] ); ?>" target="_blank" style="word-break: break-all;">
+                                        <?php echo esc_html( mb_strimwidth( $data['affiliate_url'], 0, 40, '...' ) ); ?>
+                                    </a>
+                                <?php else : ?>
+                                    <span style="color: red;">❌ 未設定</span>
+                                <?php endif; ?>
+                            </td>
+                            <td><?php echo esc_html( $data['trading_fee'] ?? '-' ); ?></td>
+                            <td><?php echo esc_html( $data['coins_count'] ?? '-' ); ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ThirstyAffiliate状態 -->
+            <div class="soico-cta-diag-section">
+                <h2>🔗 ThirstyAffiliate連携状態</h2>
+                <p>
+                    <strong>ThirstyAffiliate:</strong>
+                    <?php echo $thirsty->is_thirsty_active() ? '✅ 有効' : '❌ 無効または未インストール'; ?>
+                </p>
+                <?php
+                $thirsty_links = $thirsty->get_all_links();
+                if ( ! empty( $thirsty_links ) ) :
+                ?>
+                <p><strong>登録リンク数:</strong> <?php echo count( $thirsty_links ); ?>件</p>
+                <details>
+                    <summary>リンク一覧を表示</summary>
+                    <table class="widefat" style="margin-top: 10px;">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>名前</th>
+                                <th>クローキングURL</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ( $thirsty_links as $link ) : ?>
+                            <tr>
+                                <td><?php echo esc_html( $link['id'] ); ?></td>
+                                <td><?php echo esc_html( $link['name'] ); ?></td>
+                                <td><a href="<?php echo esc_url( $link['url'] ); ?>" target="_blank"><?php echo esc_html( $link['url'] ); ?></a></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </details>
+                <?php endif; ?>
+            </div>
+
+            <!-- テストレンダリング -->
+            <div class="soico-cta-diag-section">
+                <h2>🧪 テストレンダリング</h2>
+                <p>以下は「仮想通貨結論ボックス」ブロックのテストレンダリングです。正常に表示されれば、ブロックの描画機能は動作しています。</p>
+
+                <?php
+                // 最初の有効な仮想通貨取引所を取得
+                $test_crypto = reset( $enabled_cryptos );
+                if ( $test_crypto ) :
+                    $test_slug = $test_crypto['slug'] ?? key( $enabled_cryptos );
+                ?>
+                <div style="background: #f9f9f9; padding: 20px; margin: 15px 0; border: 1px solid #ddd;">
+                    <p><strong>テスト対象:</strong> <?php echo esc_html( $test_crypto['name'] ); ?> (<?php echo esc_html( $test_slug ); ?>)</p>
+                    <hr>
+                    <?php
+                    // render_crypto_conclusion_box を直接呼び出し
+                    $rendered = $block_register->render_crypto_conclusion_box( array(
+                        'exchange' => $test_slug,
+                        'showFeatures' => true,
+                        'customTitle' => '',
+                    ) );
+
+                    if ( empty( $rendered ) || strpos( $rendered, '<!--' ) === 0 ) {
+                        echo '<div style="color: red; padding: 10px; background: #ffe0e0;">';
+                        echo '<strong>⚠️ レンダリング結果が空またはコメントのみです</strong>';
+                        if ( ! empty( $rendered ) ) {
+                            echo '<pre>' . esc_html( $rendered ) . '</pre>';
+                        }
+                        echo '<p>考えられる原因:</p>';
+                        echo '<ul>';
+                        echo '<li>仮想通貨取引所データが見つからない</li>';
+                        echo '<li>affiliate_url が設定されていない（ThirstyAffiliateリンクまたは直接URLが必要）</li>';
+                        echo '</ul>';
+                        echo '</div>';
+                    } else {
+                        echo '<div style="color: green; margin-bottom: 10px;">✅ レンダリング成功</div>';
+                        echo $rendered;
+                    }
+                    ?>
+                </div>
+                <?php else : ?>
+                <div style="color: orange; padding: 10px; background: #fff3cd;">
+                    ⚠️ 有効な仮想通貨取引所がありません。「取引所管理」で取引所を有効にしてください。
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- デバッグ情報 -->
+            <div class="soico-cta-diag-section">
+                <h2>🔧 デバッグ情報</h2>
+                <table class="widefat">
+                    <tr>
+                        <th>項目</th>
+                        <th>値</th>
+                    </tr>
+                    <tr>
+                        <td>WordPress バージョン</td>
+                        <td><?php echo get_bloginfo( 'version' ); ?></td>
+                    </tr>
+                    <tr>
+                        <td>PHP バージョン</td>
+                        <td><?php echo phpversion(); ?></td>
+                    </tr>
+                    <tr>
+                        <td>プラグインバージョン</td>
+                        <td><?php echo SOICO_CTA_VERSION; ?></td>
+                    </tr>
+                    <tr>
+                        <td>WP_DEBUG</td>
+                        <td><?php echo defined( 'WP_DEBUG' ) && WP_DEBUG ? '有効' : '無効'; ?></td>
+                    </tr>
+                    <tr>
+                        <td>現在のページフック</td>
+                        <td><code><?php global $hook_suffix; echo esc_html( $hook_suffix ); ?></code></td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 操作テスト -->
+            <div class="soico-cta-diag-section">
+                <h2>🧪 操作テスト</h2>
+                <p>以下のボタンをクリックして、各機能が動作するかテストできます。</p>
+                <p>
+                    <button type="button" class="button" id="test-add-crypto-btn" onclick="jQuery('#add-crypto-modal').show(); alert('モーダルを表示しました。モーダルが見えない場合はCSSまたはHTMLの問題です。');">
+                        取引所追加モーダルをテスト表示
+                    </button>
+                </p>
+                <p>
+                    <button type="button" class="button" onclick="console.log('Test:', window.soicoCTAAdmin); alert('コンソールにsoicoCTAAdminオブジェクトを出力しました。ブラウザの開発者ツールを確認してください。');">
+                        設定オブジェクトをコンソールに出力
+                    </button>
+                </p>
+            </div>
+        </div>
+
+        <style>
+            .soico-crypto-admin .soico-cta-diag-section {
+                background: #fff;
+                padding: 20px 25px;
+                margin: 20px 0;
+                border: 1px solid #ccd0d4;
+                border-radius: 4px;
+            }
+            .soico-crypto-admin .soico-cta-diag-section h2 {
+                margin-top: 0;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #F7931A;
+            }
+            .soico-crypto-admin .soico-cta-diag-section table {
+                margin-top: 10px;
+            }
+            .soico-crypto-admin .soico-cta-diag-section code {
+                background: #f1f1f1;
+                padding: 2px 6px;
+                border-radius: 3px;
+            }
+        </style>
+        <?php
+    }
+
+    /**
+     * 仮想通貨デザイン設定サニタイズ
+     */
+    public function sanitize_crypto_design_settings( $input ) {
+        // 商材別注釈をサニタイズ（空の項目は除外）
+        $table_notes_by_company = array();
+        if ( isset( $input['table_notes_by_company'] ) && is_array( $input['table_notes_by_company'] ) ) {
+            foreach ( $input['table_notes_by_company'] as $company_slug => $notes ) {
+                $sanitized_slug = sanitize_key( $company_slug );
+                $company_notes = array();
+                if ( is_array( $notes ) ) {
+                    foreach ( $notes as $note ) {
+                        $sanitized = wp_kses_post( trim( $note ) );
+                        if ( ! empty( $sanitized ) ) {
+                            $company_notes[] = $sanitized;
+                        }
+                    }
+                }
+                if ( ! empty( $company_notes ) ) {
+                    $table_notes_by_company[ $sanitized_slug ] = $company_notes;
+                }
+            }
+        }
+
+        return array(
+            'primary_color'           => sanitize_hex_color( $input['primary_color'] ?? '#F7931A' ),
+            'secondary_color'         => sanitize_hex_color( $input['secondary_color'] ?? '#4A90A4' ),
+            'border_radius'           => absint( $input['border_radius'] ?? 8 ),
+            'table_notes_by_company'  => $table_notes_by_company,
+            'table_notes_size'        => absint( $input['table_notes_size'] ?? 11 ),
+        );
+    }
+
+    /**
+     * 仮想通貨トラッキング設定サニタイズ
+     */
+    public function sanitize_crypto_tracking_settings( $input ) {
+        return array(
+            'gtm_enabled'    => ! empty( $input['gtm_enabled'] ),
+            'event_category' => sanitize_text_field( $input['event_category'] ?? 'CTA Click' ),
+            'event_action'   => sanitize_text_field( $input['event_action'] ?? 'crypto_affiliate' ),
+        );
+    }
+
+    /**
+     * AJAX: 仮想通貨保存
+     */
+    public function ajax_save_cryptos() {
+        $this->debug_log( 'ajax_save_cryptos called' );
+
+        // Nonce検証
+        if ( ! check_ajax_referer( 'soico_cta_admin_nonce', 'nonce', false ) ) {
+            $this->debug_log( 'Nonce verification failed' );
+            wp_send_json_error( array( 'message' => 'セキュリティ検証に失敗しました' ) );
+        }
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            $this->debug_log( 'Permission denied' );
+            wp_send_json_error( array( 'message' => '権限がありません' ) );
+        }
+
+        $cryptos = isset( $_POST['cryptos'] ) ? $_POST['cryptos'] : array();
+        $this->debug_log( 'Received cryptos', array( 'count' => count( $cryptos ), 'slugs' => array_keys( $cryptos ) ) );
+
+        if ( empty( $cryptos ) ) {
+            $this->debug_log( 'No crypto data received' );
+            wp_send_json_error( array( 'message' => 'データが送信されていません' ) );
+        }
+
+        // features を配列に変換
+        foreach ( $cryptos as $slug => &$data ) {
+            if ( isset( $data['features'] ) && is_string( $data['features'] ) ) {
+                $data['features'] = array_filter( array_map( 'trim', explode( "\n", $data['features'] ) ) );
+            }
+        }
+
+        $securities_data = Soico_CTA_Securities_Data::get_instance();
+        $result = $securities_data->save_cryptos( $cryptos );
+
+        $this->debug_log( 'Save result', array( 'result' => $result ) );
+
+        if ( $result ) {
+            wp_send_json_success( array( 'message' => '保存しました' ) );
+        } else {
+            wp_send_json_error( array( 'message' => '保存に失敗しました' ) );
+        }
+    }
+
+    /**
+     * AJAX: 仮想通貨追加
+     */
+    public function ajax_add_crypto() {
+        check_ajax_referer( 'soico_cta_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => '権限がありません' ) );
+        }
+
+        $slug = isset( $_POST['slug'] ) ? sanitize_key( $_POST['slug'] ) : '';
+        $name = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
+
+        if ( empty( $slug ) || empty( $name ) ) {
+            wp_send_json_error( array( 'message' => 'スラッグと名前は必須です' ) );
+        }
+
+        $securities_data = Soico_CTA_Securities_Data::get_instance();
+        $result = $securities_data->add_crypto( array(
+            'slug'    => $slug,
+            'name'    => $name,
+            'enabled' => true,
+        ) );
+
+        if ( $result ) {
+            wp_send_json_success( array( 'message' => '追加しました', 'reload' => true ) );
+        } else {
+            wp_send_json_error( array( 'message' => '既に存在するスラッグか、追加に失敗しました' ) );
+        }
+    }
+
+    /**
+     * AJAX: 仮想通貨削除
+     */
+    public function ajax_delete_crypto() {
+        check_ajax_referer( 'soico_cta_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => '権限がありません' ) );
+        }
+
+        $slug = isset( $_POST['slug'] ) ? sanitize_key( $_POST['slug'] ) : '';
+
+        if ( empty( $slug ) ) {
+            wp_send_json_error( array( 'message' => 'スラッグが必要です' ) );
+        }
+
+        $securities_data = Soico_CTA_Securities_Data::get_instance();
+        $result = $securities_data->delete_crypto( $slug );
+
+        if ( $result ) {
+            wp_send_json_success( array( 'message' => '削除しました' ) );
+        } else {
+            wp_send_json_error( array( 'message' => '削除に失敗しました' ) );
+        }
     }
 }

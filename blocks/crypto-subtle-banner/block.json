@@ -1,0 +1,26 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "soico-cta/crypto-subtle-banner",
+    "version": "1.0.0",
+    "title": "仮想通貨控えめバナー",
+    "category": "soico-crypto-cta",
+    "icon": "bitcoin",
+    "description": "テキストリンク形式の最も控えめな仮想通貨取引所CTA。読者の邪魔をしません。",
+    "keywords": ["cta", "バナー", "仮想通貨", "crypto", "banner"],
+    "textdomain": "soico-securities-cta",
+    "attributes": {
+        "exchange": {
+            "type": "string",
+            "default": "gmo_coin"
+        },
+        "message": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "supports": {
+        "html": false,
+        "className": true
+    }
+}

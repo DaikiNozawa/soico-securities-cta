@@ -85,12 +85,16 @@
         log('=== DOM要素確認 ===');
         log('#securities-list:', $('#securities-list').length ? '存在' : '不在');
         log('#cardloans-list:', $('#cardloans-list').length ? '存在' : '不在');
+        log('#cryptos-list:', $('#cryptos-list').length ? '存在' : '不在');
         log('#soico-cta-securities-form:', $('#soico-cta-securities-form').length ? '存在' : '不在');
         log('#soico-cardloan-form:', $('#soico-cardloan-form').length ? '存在' : '不在');
+        log('#soico-crypto-form:', $('#soico-crypto-form').length ? '存在' : '不在');
         log('#add-security-btn:', $('#add-security-btn').length ? '存在' : '不在');
         log('#add-cardloan-btn:', $('#add-cardloan-btn').length ? '存在' : '不在');
+        log('#add-crypto-btn:', $('#add-crypto-btn').length ? '存在' : '不在');
         log('#add-security-modal:', $('#add-security-modal').length ? '存在' : '不在');
         log('#add-cardloan-modal:', $('#add-cardloan-modal').length ? '存在' : '不在');
+        log('#add-crypto-modal:', $('#add-crypto-modal').length ? '存在' : '不在');
         log('===================');
     }
 
@@ -125,6 +129,15 @@
                     updatePriorities('#cardloans-list');
                 }
             });
+
+            // 仮想通貨リスト
+            $('#cryptos-list').sortable({
+                handle: '.soico-cta-drag-handle',
+                placeholder: 'soico-cta-sortable-placeholder',
+                update: function(event, ui) {
+                    updatePriorities('#cryptos-list');
+                }
+            });
         }
     }
 
@@ -132,7 +145,7 @@
      * 優先順位更新
      */
     function updatePriorities(listSelector) {
-        var selector = listSelector || '#securities-list, #cardloans-list';
+        var selector = listSelector || '#securities-list, #cardloans-list, #cryptos-list';
         $(selector).find('.soico-cta-security-row').each(function(index) {
             $(this).find('.priority-input').val(index + 1);
             $(this).find('.soico-cta-security-priority').text('優先順位: ' + (index + 1));
@@ -252,6 +265,57 @@
                 }
             });
         });
+
+        // 仮想通貨フォーム
+        var $cryptoForm = $('#soico-crypto-form');
+        log('仮想通貨フォーム初期化:', $cryptoForm.length ? '発見' : '未発見');
+
+        $cryptoForm.on('submit', function(e) {
+            log('仮想通貨フォーム送信イベント発火');
+            e.preventDefault();
+            e.stopPropagation();
+
+            var $form = $(this);
+            var $submitBtn = $form.find('[type="submit"]');
+            var originalText = $submitBtn.text();
+
+            $submitBtn.prop('disabled', true).text(config.i18n && config.i18n.saving ? config.i18n.saving : '保存中...');
+
+            var formData = getFormData($form, 'cryptos');
+            console.log('[SOICO CTA Admin] Saving cryptos:', formData);
+            log('送信データ件数:', Object.keys(formData).length);
+
+            $.ajax({
+                url: config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'soico_cta_save_cryptos',
+                    nonce: config.nonce,
+                    cryptos: formData
+                },
+                success: function(response) {
+                    console.log('[SOICO CTA Admin] Crypto save response:', response);
+                    if (response.success) {
+                        showNotice(config.i18n && config.i18n.saved ? config.i18n.saved : '保存しました', 'success');
+                        // ページをリロードしてThirstyAffiliateリンクを反映
+                        setTimeout(function() {
+                            location.reload();
+                        }, 500);
+                    } else {
+                        showNotice(response.data && response.data.message ? response.data.message : 'エラーが発生しました', 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('[SOICO CTA Admin] Crypto save error:', status, error, xhr.responseText);
+                    showNotice(config.i18n && config.i18n.error ? config.i18n.error : 'エラーが発生しました', 'error');
+                },
+                complete: function() {
+                    $submitBtn.prop('disabled', false).text(originalText);
+                }
+            });
+
+            return false; // 追加のフォーム送信防止
+        });
     }
 
     /**
@@ -288,6 +352,16 @@
                 rowData.interest_rate = $row.find('input[name$="[interest_rate]"]').val();
                 rowData.limit_amount = $row.find('input[name$="[limit_amount]"]').val();
                 rowData.review_time = $row.find('input[name$="[review_time]"]').val();
+                rowData.button_note = $row.find('textarea[name$="[button_note]"]').val();
+                rowData.button_note_size = $row.find('input[name$="[button_note_size]"]').val();
+                rowData.feature_annotations = $row.find('textarea[name$="[feature_annotations]"]').val();
+            }
+
+            // 仮想通貨固有フィールド
+            if (type === 'cryptos') {
+                rowData.trading_fee = $row.find('input[name$="[trading_fee]"]').val();
+                rowData.coins_count = $row.find('input[name$="[coins_count]"]').val();
+                rowData.min_amount = $row.find('input[name$="[min_amount]"]').val();
             }
 
             data[slug] = rowData;
@@ -410,6 +484,64 @@
             });
         });
 
+        // 仮想通貨追加ボタン
+        var $cryptoBtn = $('#add-crypto-btn');
+        log('仮想通貨追加ボタン:', $cryptoBtn.length ? '発見' : '未発見');
+
+        $cryptoBtn.on('click', function() {
+            log('仮想通貨追加ボタン: クリック');
+            var $modal = $('#add-crypto-modal');
+            log('仮想通貨モーダル:', $modal.length ? '発見' : '未発見');
+            $modal.show();
+        });
+
+        var $cryptoForm = $('#add-crypto-form');
+        log('仮想通貨追加フォーム:', $cryptoForm.length ? '発見' : '未発見');
+
+        $cryptoForm.on('submit', function(e) {
+            e.preventDefault();
+            log('仮想通貨追加フォーム: 送信');
+
+            var $form = $(this);
+            var $submitBtn = $form.find('[type="submit"]');
+            var formData = {
+                action: 'soico_cta_add_crypto',
+                nonce: config.nonce,
+                slug: $form.find('input[name="slug"]').val(),
+                name: $form.find('input[name="name"]').val()
+            };
+
+            log('仮想通貨追加: リクエストデータ', formData);
+
+            $submitBtn.prop('disabled', true);
+
+            $.ajax({
+                url: config.ajaxUrl,
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    log('仮想通貨追加: 成功', response);
+                    if (response.success) {
+                        if (response.data && response.data.reload) {
+                            location.reload();
+                        } else {
+                            showNotice(response.data && response.data.message ? response.data.message : '追加しました', 'success');
+                            closeModal();
+                        }
+                    } else {
+                        showNotice(response.data && response.data.message ? response.data.message : 'エラーが発生しました', 'error');
+                    }
+                },
+                error: function(xhr, status, err) {
+                    error('仮想通貨追加: エラー', status, err, xhr.responseText);
+                    showNotice('エラーが発生しました', 'error');
+                },
+                complete: function() {
+                    $submitBtn.prop('disabled', false);
+                }
+            });
+        });
+
         log('initAddSecurity: 初期化完了');
     }
 
@@ -489,6 +621,43 @@
                 }
             });
         });
+
+        // 仮想通貨削除
+        $(document).on('click', '.soico-cta-delete-crypto', function(e) {
+            e.preventDefault();
+
+            var confirmMsg = config.i18n && config.i18n.confirmDeleteCrypto ? config.i18n.confirmDeleteCrypto : 'この仮想通貨取引所を削除しますか？';
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+
+            var $row = $(this).closest('.soico-cta-security-row');
+            var slug = $row.data('slug');
+
+            $.ajax({
+                url: config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'soico_cta_delete_crypto',
+                    nonce: config.nonce,
+                    slug: slug
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $row.slideUp(200, function() {
+                            $(this).remove();
+                            updatePriorities('#cryptos-list');
+                        });
+                        showNotice(response.data && response.data.message ? response.data.message : '削除しました', 'success');
+                    } else {
+                        showNotice(response.data && response.data.message ? response.data.message : 'エラーが発生しました', 'error');
+                    }
+                },
+                error: function() {
+                    showNotice('エラーが発生しました', 'error');
+                }
+            });
+        });
     }
 
     /**
@@ -497,6 +666,7 @@
     function initModal() {
         $('#cancel-add-security').on('click', closeModal);
         $('#cancel-add-cardloan').on('click', closeModal);
+        $('#cancel-add-crypto').on('click', closeModal);
 
         $(document).on('click', '.soico-cta-modal', function(e) {
             if ($(e.target).hasClass('soico-cta-modal')) {
@@ -515,7 +685,7 @@
      * モーダルを閉じる
      */
     function closeModal() {
-        $('#add-security-modal, #add-cardloan-modal').hide();
+        $('#add-security-modal, #add-cardloan-modal, #add-crypto-modal').hide();
         var securityForm = document.getElementById('add-security-form');
         if (securityForm) {
             securityForm.reset();
@@ -523,6 +693,10 @@
         var cardloanForm = document.getElementById('add-cardloan-form');
         if (cardloanForm) {
             cardloanForm.reset();
+        }
+        var cryptoForm = document.getElementById('add-crypto-form');
+        if (cryptoForm) {
+            cryptoForm.reset();
         }
     }
 

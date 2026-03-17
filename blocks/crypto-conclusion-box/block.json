@@ -1,18 +1,18 @@
 {
     "$schema": "https://schemas.wp.org/trunk/block.json",
     "apiVersion": 3,
-    "name": "soico-cta/cardloan-conclusion-box",
+    "name": "soico-cta/crypto-conclusion-box",
     "version": "1.0.0",
-    "title": "カードローン結論ボックス",
-    "category": "soico-cardloan-cta",
-    "icon": "money-alt",
-    "description": "カードローンをおすすめする結論ボックス。特徴リストとCTAボタン付き。",
-    "keywords": ["cta", "結論", "カードローン", "cardloan", "conclusion"],
+    "title": "仮想通貨結論ボックス",
+    "category": "soico-crypto-cta",
+    "icon": "bitcoin",
+    "description": "仮想通貨取引所をおすすめする結論ボックス。特徴リストとCTAボタン付き。",
+    "keywords": ["cta", "結論", "仮想通貨", "crypto", "ビットコイン", "conclusion"],
     "textdomain": "soico-securities-cta",
     "attributes": {
-        "company": {
+        "exchange": {
             "type": "string",
-            "default": "aiful"
+            "default": "gmo_coin"
         },
         "showFeatures": {
             "type": "boolean",
@@ -23,10 +23,6 @@
             "default": ""
         },
         "customFeatures": {
-            "type": "string",
-            "default": ""
-        },
-        "buttonNote": {
             "type": "string",
             "default": ""
         }
