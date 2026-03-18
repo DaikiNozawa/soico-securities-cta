@@ -1593,11 +1593,11 @@ table.soico-cta-crypto-comparison-table {
 }
 
 /* 列幅の明示指定 */
-.soico-cta-crypto-comparison-table .soico-cta-col-rank-w  { width: 10%; }
-.soico-cta-crypto-comparison-table .soico-cta-col-name-w  { width: 28%; }
-.soico-cta-crypto-comparison-table .soico-cta-col-fee-w   { width: 22%; }
-.soico-cta-crypto-comparison-table .soico-cta-col-coins-w { width: 15%; }
-.soico-cta-crypto-comparison-table .soico-cta-col-action-w { width: 25%; }
+.soico-cta-crypto-comparison-table .soico-cta-col-rank-w  { width: 8%; }
+.soico-cta-crypto-comparison-table .soico-cta-col-name-w  { width: 24%; }
+.soico-cta-crypto-comparison-table .soico-cta-col-fee-w   { width: 20%; }
+.soico-cta-crypto-comparison-table .soico-cta-col-coins-w { width: 14%; }
+.soico-cta-crypto-comparison-table .soico-cta-col-action-w { width: 34%; }
 
 /* ヘッダー — ダークネイビー */
 .soico-cta-crypto-comparison-table thead tr {
@@ -1730,7 +1730,7 @@ a.soico-cta-crypto-table-button,
 .soico-cta-crypto-table-button:link,
 .soico-cta-crypto-table-button:visited {
     display: inline-block !important;
-    padding: 10px 20px !important;
+    padding: 10px 18px !important;
     border-radius: 6px !important;
     background: linear-gradient(135deg, #1A3C6E 0%, #2B5EA7 100%) !important;
     color: #fff !important;
@@ -1742,6 +1742,8 @@ a.soico-cta-crypto-table-button,
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     white-space: nowrap;
     border: none !important;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .soico-cta-crypto-table-button:hover {
@@ -1758,7 +1760,7 @@ a.soico-cta-crypto-table-button,
 
 /* 1位ボタン強調 */
 .soico-cta-crypto-comparison-table tbody tr.soico-cta-row-highlight .soico-cta-crypto-table-button {
-    padding: 12px 24px !important;
+    padding: 11px 20px !important;
     font-size: 14px !important;
     background: linear-gradient(135deg, #0D2B52 0%, #1E4D8C 100%) !important;
     box-shadow: 0 3px 12px rgba(26, 60, 110, 0.25);
