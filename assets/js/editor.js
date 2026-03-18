@@ -1022,14 +1022,13 @@
             var rank = i + 1;
             var name = cryptoOptions[i] ? cryptoOptions[i].label : '取引所' + rank;
             sampleRows.push(
-                el('tr', { key: i, style: { background: rank === 1 ? '#FFF8E1' : '#fff' } },
-                    el('td', { style: { padding: '10px', textAlign: 'center', fontWeight: 'bold', color: rank === 1 ? '#F7931A' : '#666' } }, rank),
-                    el('td', { style: { padding: '10px' } }, name),
-                    attributes.showFees && el('td', { style: { padding: '10px' } }, '無料'),
-                    attributes.showCoins && el('td', { style: { padding: '10px' } }, '20種類以上'),
-                    attributes.showFeatures && el('td', { style: { padding: '10px', color: '#666' } }, '特徴1 / 特徴2'),
-                    el('td', { style: { padding: '10px' } },
-                        el('span', { style: { background: '#F7931A', color: '#fff', padding: '4px 10px', borderRadius: '4px', fontSize: '12px' } }, '詳細')
+                el('tr', { key: i, style: { background: rank === 1 ? '#EDF2FA' : (i % 2 === 1 ? '#F7F9FC' : '#fff') } },
+                    el('td', { style: { padding: '12px 10px', textAlign: 'center', fontWeight: 'bold', color: rank === 1 ? '#1A3C6E' : '#666' } }, rank),
+                    el('td', { style: { padding: '12px 10px', fontWeight: '700', color: '#1A3C6E' } }, name),
+                    attributes.showFees && el('td', { style: { padding: '12px 10px', textAlign: 'center', color: '#1A6B3D', fontWeight: '700' } }, '無料'),
+                    attributes.showCoins && el('td', { style: { padding: '12px 10px', textAlign: 'center', color: '#1A3C6E', fontWeight: '700' } }, '20種類以上'),
+                    el('td', { style: { padding: '12px 10px', textAlign: 'center' } },
+                        el('span', { style: { background: 'linear-gradient(135deg, #1A3C6E, #2B5EA7)', color: '#fff', padding: '6px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: '700', display: 'inline-block' } }, rank === 1 ? '無料で口座開設' : '詳細を見る')
                     )
                 )
             );
@@ -1060,26 +1059,18 @@
                         onChange: function(value) {
                             setAttributes({ showCoins: value });
                         }
-                    }),
-                    el(ToggleControl, {
-                        label: '特徴を表示',
-                        checked: attributes.showFeatures,
-                        onChange: function(value) {
-                            setAttributes({ showFeatures: value });
-                        }
                     })
                 )
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview soico-crypto-preview' },
-                el('table', { style: { width: '100%', borderCollapse: 'collapse', border: '1px solid #FFE082', fontSize: '14px' } },
+                el('table', { style: { width: '100%', borderCollapse: 'collapse', border: '1px solid #D0D9E6', fontSize: '14px', borderRadius: '8px', overflow: 'hidden' } },
                     el('thead', null,
-                        el('tr', { style: { background: '#FFF8E1' } },
-                            el('th', { style: { padding: '10px', borderBottom: '1px solid #FFE082' } }, '順位'),
-                            el('th', { style: { padding: '10px', borderBottom: '1px solid #FFE082' } }, '取引所'),
-                            attributes.showFees && el('th', { style: { padding: '10px', borderBottom: '1px solid #FFE082' } }, '手数料'),
-                            attributes.showCoins && el('th', { style: { padding: '10px', borderBottom: '1px solid #FFE082' } }, '通貨数'),
-                            attributes.showFeatures && el('th', { style: { padding: '10px', borderBottom: '1px solid #FFE082' } }, '特徴'),
-                            el('th', { style: { padding: '10px', borderBottom: '1px solid #FFE082' } }, '口座開設')
+                        el('tr', { style: { background: 'linear-gradient(135deg, #1A3C6E, #1E4D8C)', color: '#fff' } },
+                            el('th', { style: { padding: '12px 10px', borderBottom: '3px solid #D4A530', fontWeight: '600', fontSize: '13px' } }, '順位'),
+                            el('th', { style: { padding: '12px 10px', borderBottom: '3px solid #D4A530', fontWeight: '600', fontSize: '13px' } }, '取引所'),
+                            attributes.showFees && el('th', { style: { padding: '12px 10px', borderBottom: '3px solid #D4A530', fontWeight: '600', fontSize: '13px', textAlign: 'center' } }, '手数料'),
+                            attributes.showCoins && el('th', { style: { padding: '12px 10px', borderBottom: '3px solid #D4A530', fontWeight: '600', fontSize: '13px', textAlign: 'center' } }, '通貨数'),
+                            el('th', { style: { padding: '12px 10px', borderBottom: '3px solid #D4A530', fontWeight: '600', fontSize: '13px', textAlign: 'center' } }, '口座開設')
                         )
                     ),
                     el('tbody', null, sampleRows)
@@ -1404,13 +1395,12 @@
             title: '仮想通貨比較表',
             icon: 'money',
             category: 'soico-crypto-cta',
-            description: '複数の仮想通貨取引所を比較する表形式のCTA。ランキング記事に最適。',
+            description: '複数の仮想通貨取引所を比較する表形式のCTA。比較記事に最適。',
             attributes: {
                 exchanges: { type: 'array', default: ['gmo_coin', 'coincheck', 'sbi_vc'] },
                 limit: { type: 'number', default: 3 },
                 showFees: { type: 'boolean', default: true },
-                showCoins: { type: 'boolean', default: true },
-                showFeatures: { type: 'boolean', default: true }
+                showCoins: { type: 'boolean', default: true }
             },
             edit: EditCryptoComparisonTable
         },

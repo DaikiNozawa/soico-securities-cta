@@ -1668,7 +1668,6 @@ class Soico_CTA_Block_Register {
         $limit = $attributes['limit'] ?? 3;
         $show_fees = $attributes['showFees'] ?? true;
         $show_coins = $attributes['showCoins'] ?? true;
-        $show_features = $attributes['showFeatures'] ?? true;
 
         // デザイン設定から商材別注釈を取得
         $design_settings = get_option( 'soico_crypto_design_settings', array() );
@@ -1692,6 +1691,13 @@ class Soico_CTA_Block_Register {
         ?>
         <div class="soico-cta-crypto-comparison-wrapper">
             <table class="soico-cta-crypto-comparison-table">
+                <colgroup>
+                    <col class="soico-cta-col-rank-w">
+                    <col class="soico-cta-col-name-w">
+                    <?php if ( $show_fees ) : ?><col class="soico-cta-col-fee-w"><?php endif; ?>
+                    <?php if ( $show_coins ) : ?><col class="soico-cta-col-coins-w"><?php endif; ?>
+                    <col class="soico-cta-col-action-w">
+                </colgroup>
                 <thead>
                     <tr>
                         <th class="soico-cta-col-rank"><?php esc_html_e( '順位', 'soico-securities-cta' ); ?></th>
@@ -1701,9 +1707,6 @@ class Soico_CTA_Block_Register {
                         <?php endif; ?>
                         <?php if ( $show_coins ) : ?>
                             <th class="soico-cta-col-coins"><?php esc_html_e( '通貨数', 'soico-securities-cta' ); ?></th>
-                        <?php endif; ?>
-                        <?php if ( $show_features ) : ?>
-                            <th class="soico-cta-col-features"><?php esc_html_e( '特徴', 'soico-securities-cta' ); ?></th>
                         <?php endif; ?>
                         <th class="soico-cta-col-action"><?php esc_html_e( '口座開設', 'soico-securities-cta' ); ?></th>
                     </tr>
@@ -1730,7 +1733,7 @@ class Soico_CTA_Block_Register {
                         <td class="soico-cta-col-name">
                             <?php if ( ! empty( $crypto['affiliate_url'] ) ) : ?>
                                 <a href="<?php echo esc_url( $crypto['affiliate_url'] ); ?>"
-                                   class="soico-cta-name-link"
+                                   class="soico-cta-crypto-name-link"
                                    target="_blank" rel="noopener noreferrer sponsored"
                                    <?php echo $tracking_attrs; ?>>
                                     <strong><?php echo esc_html( $crypto['name'] ); ?></strong>
@@ -1739,7 +1742,7 @@ class Soico_CTA_Block_Register {
                                 <strong><?php echo esc_html( $crypto['name'] ); ?></strong>
                             <?php endif; ?>
                             <?php if ( ! empty( $crypto['badge'] ) ) : ?>
-                                <span class="soico-cta-badge" style="background: <?php echo esc_attr( $crypto['badge_color'] ?? '#F7931A' ); ?>"><?php echo esc_html( $crypto['badge'] ); ?></span>
+                                <span class="soico-cta-badge" style="background: <?php echo esc_attr( $crypto['badge_color'] ?? '#1A5276' ); ?>"><?php echo esc_html( $crypto['badge'] ); ?></span>
                             <?php endif; ?>
                         </td>
                         <?php if ( $show_fees ) : ?>
@@ -1752,24 +1755,12 @@ class Soico_CTA_Block_Register {
                                 <span class="soico-cta-crypto-coins"><?php echo esc_html( $crypto['coins_count'] ?? '-' ); ?></span>
                             </td>
                         <?php endif; ?>
-                        <?php if ( $show_features ) : ?>
-                            <td class="soico-cta-col-features">
-                                <?php if ( ! empty( $crypto['features'] ) ) : ?>
-                                    <ul class="soico-cta-features-list">
-                                        <?php foreach ( array_slice( (array) $crypto['features'], 0, 2 ) as $feature ) : ?>
-                                            <li><?php echo esc_html( $feature ); ?></li>
-                                        <?php endforeach; ?>
-                                    </ul>
-                                <?php endif; ?>
-                            </td>
-                        <?php endif; ?>
                         <td class="soico-cta-col-action">
                             <a href="<?php echo esc_url( $crypto['affiliate_url'] ); ?>"
-                               class="soico-cta-table-button"
-                               style="background-color: <?php echo esc_attr( $crypto['button_color'] ?? '#F7931A' ); ?>"
+                               class="soico-cta-crypto-table-button"
                                target="_blank" rel="noopener noreferrer sponsored"
                                <?php echo $tracking_attrs; ?>>
-                                <?php echo esc_html( $rank === 1 ? '口座開設' : '詳細を見る' ); ?>
+                                <?php echo esc_html( $rank === 1 ? '無料で口座開設' : '詳細を見る' ); ?>
                             </a>
                         </td>
                     </tr>
@@ -1778,7 +1769,7 @@ class Soico_CTA_Block_Register {
                     endforeach; ?>
                 </tbody>
             </table>
-            <p class="soico-cta-table-note">PR | <?php printf( esc_html__( '情報は%s時点', 'soico-securities-cta' ), date_i18n( 'Y年n月' ) ); ?></p>
+            <p class="soico-cta-crypto-table-note">PR | <?php printf( esc_html__( '情報は%s時点', 'soico-securities-cta' ), date_i18n( 'Y年n月' ) ); ?></p>
             <?php if ( ! empty( $table_notes_by_company ) ) : ?>
             <div class="soico-cta-crypto-table-notes-by-company" style="font-size: <?php echo esc_attr( $table_notes_size ); ?>px;">
                 <?php foreach ( $table_notes_by_company as $company_slug => $notes ) :

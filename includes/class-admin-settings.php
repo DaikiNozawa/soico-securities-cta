@@ -2534,8 +2534,8 @@ data-cta-type="[CTAタイプ]"
 
                 <div class="soico-cta-guide-block crypto">
                     <h3>4. 仮想通貨比較表</h3>
-                    <p>複数の取引所を比較する表形式のCTA。ランキング記事に最適。</p>
-                    <p><strong>使用例:</strong> 「おすすめ仮想通貨取引所ランキング」記事</p>
+                    <p>複数の取引所を比較する表形式のCTA。比較記事に最適。</p>
+                    <p><strong>使用例:</strong> 「おすすめ仮想通貨取引所比較」記事</p>
                 </div>
 
                 <div class="soico-cta-guide-block crypto">
