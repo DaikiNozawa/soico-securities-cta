@@ -1581,14 +1581,15 @@ a.soico-cta-crypto-button-primary,
     background: #fff;
 }
 
-.soico-cta-crypto-comparison-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
+table.soico-cta-crypto-comparison-table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
     font-size: 14px;
     line-height: 1.6;
-    background: #fff;
-    table-layout: fixed;
+    background: #fff !important;
+    table-layout: fixed !important;
+    border: none !important;
 }
 
 /* 列幅の明示指定 */
@@ -1600,58 +1601,62 @@ a.soico-cta-crypto-button-primary,
 
 /* ヘッダー — ダークネイビー */
 .soico-cta-crypto-comparison-table thead tr {
-    background: linear-gradient(135deg, #1A3C6E 0%, #1E4D8C 100%);
-    color: #fff;
+    background: linear-gradient(135deg, #1A3C6E 0%, #1E4D8C 100%) !important;
 }
 
-.soico-cta-crypto-comparison-table th {
-    padding: 14px 16px;
+.soico-cta-crypto-comparison-table thead th {
+    padding: 14px 16px !important;
     text-align: left;
-    font-weight: 600;
-    font-size: 13px;
+    font-weight: 600 !important;
+    font-size: 13px !important;
     letter-spacing: 0.5px;
-    border-bottom: 3px solid var(--soico-crypto-accent);
+    color: #fff !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 3px solid var(--soico-crypto-accent) !important;
     white-space: nowrap;
 }
 
-.soico-cta-crypto-comparison-table th:first-child {
+.soico-cta-crypto-comparison-table thead th:first-child {
     border-radius: 11px 0 0 0;
 }
 
-.soico-cta-crypto-comparison-table th:last-child {
+.soico-cta-crypto-comparison-table thead th:last-child {
     border-radius: 0 11px 0 0;
 }
 
-.soico-cta-crypto-comparison-table th.soico-cta-col-rank,
-.soico-cta-crypto-comparison-table th.soico-cta-col-fee,
-.soico-cta-crypto-comparison-table th.soico-cta-col-coins,
-.soico-cta-crypto-comparison-table th.soico-cta-col-action {
+.soico-cta-crypto-comparison-table thead th.soico-cta-col-rank,
+.soico-cta-crypto-comparison-table thead th.soico-cta-col-fee,
+.soico-cta-crypto-comparison-table thead th.soico-cta-col-coins,
+.soico-cta-crypto-comparison-table thead th.soico-cta-col-action {
     text-align: center;
 }
 
 /* ボディ行 */
 .soico-cta-crypto-comparison-table tbody tr {
-    background: #fff;
+    background: #fff !important;
     transition: background 0.2s ease;
 }
 
 .soico-cta-crypto-comparison-table tbody tr:nth-child(even) {
-    background: #F7F9FC;
+    background: #F7F9FC !important;
 }
 
 .soico-cta-crypto-comparison-table tbody tr:hover {
-    background: #EDF2FA;
+    background: #EDF2FA !important;
 }
 
-.soico-cta-crypto-comparison-table td {
-    padding: 18px 16px;
-    border-bottom: 1px solid #E4EAF2;
+.soico-cta-crypto-comparison-table tbody td {
+    padding: 18px 16px !important;
+    border: none !important;
+    border-bottom: 1px solid #E4EAF2 !important;
     vertical-align: middle;
     word-break: break-all;
+    background: transparent !important;
 }
 
 .soico-cta-crypto-comparison-table tbody tr:last-child td {
-    border-bottom: none;
+    border-bottom: none !important;
 }
 
 .soico-cta-crypto-comparison-table tbody tr:last-child td:first-child {
@@ -1662,44 +1667,44 @@ a.soico-cta-crypto-button-primary,
     border-radius: 0 0 11px 0;
 }
 
-.soico-cta-crypto-comparison-table td.soico-cta-col-rank,
-.soico-cta-crypto-comparison-table td.soico-cta-col-fee,
-.soico-cta-crypto-comparison-table td.soico-cta-col-coins,
-.soico-cta-crypto-comparison-table td.soico-cta-col-action {
+.soico-cta-crypto-comparison-table tbody td.soico-cta-col-rank,
+.soico-cta-crypto-comparison-table tbody td.soico-cta-col-fee,
+.soico-cta-crypto-comparison-table tbody td.soico-cta-col-coins,
+.soico-cta-crypto-comparison-table tbody td.soico-cta-col-action {
     text-align: center;
 }
 
 /* 1位のハイライト */
-.soico-cta-crypto-comparison-table .soico-cta-row-highlight {
+.soico-cta-crypto-comparison-table tbody tr.soico-cta-row-highlight {
     background: linear-gradient(90deg, #EDF2FA 0%, #fff 100%) !important;
 }
 
-.soico-cta-crypto-comparison-table .soico-cta-row-highlight td:first-child {
-    border-left: 4px solid var(--soico-crypto-accent);
+.soico-cta-crypto-comparison-table tbody tr.soico-cta-row-highlight td:first-child {
+    border-left: 4px solid var(--soico-crypto-accent) !important;
 }
 
-.soico-cta-crypto-comparison-table .soico-cta-row-highlight:hover {
+.soico-cta-crypto-comparison-table tbody tr.soico-cta-row-highlight:hover {
     background: linear-gradient(90deg, #E3EAF5 0%, #FAFBFD 100%) !important;
 }
 
 /* 取引所名 */
-.soico-cta-crypto-comparison-table td.soico-cta-col-name {
+.soico-cta-crypto-comparison-table tbody td.soico-cta-col-name {
     white-space: nowrap;
 }
 
-.soico-cta-crypto-comparison-table td.soico-cta-col-name strong {
+.soico-cta-crypto-comparison-table tbody td.soico-cta-col-name strong {
     color: #1A3C6E;
     font-size: 15px;
     font-weight: 700;
 }
 
-.soico-cta-crypto-comparison-table .soico-cta-row-highlight td.soico-cta-col-name strong {
+.soico-cta-crypto-comparison-table tbody tr.soico-cta-row-highlight td.soico-cta-col-name strong {
     color: #0D2B52;
 }
 
 .soico-cta-crypto-name-link {
-    text-decoration: none;
-    color: inherit;
+    text-decoration: none !important;
+    color: inherit !important;
 }
 
 .soico-cta-crypto-name-link:hover strong {
@@ -1724,25 +1729,26 @@ a.soico-cta-crypto-button-primary,
 a.soico-cta-crypto-table-button,
 .soico-cta-crypto-table-button:link,
 .soico-cta-crypto-table-button:visited {
-    display: inline-block;
-    padding: 10px 20px;
-    border-radius: 6px;
-    background: linear-gradient(135deg, #1A3C6E 0%, #2B5EA7 100%);
+    display: inline-block !important;
+    padding: 10px 20px !important;
+    border-radius: 6px !important;
+    background: linear-gradient(135deg, #1A3C6E 0%, #2B5EA7 100%) !important;
     color: #fff !important;
-    text-decoration: none;
-    font-size: 13px;
+    text-decoration: none !important;
+    font-size: 13px !important;
     font-weight: 700;
     letter-spacing: 0.3px;
     box-shadow: 0 2px 8px rgba(26, 60, 110, 0.18);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     white-space: nowrap;
+    border: none !important;
 }
 
 .soico-cta-crypto-table-button:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(26, 60, 110, 0.28);
     color: #fff !important;
-    text-decoration: none;
+    text-decoration: none !important;
 }
 
 .soico-cta-crypto-table-button:active {
@@ -1751,10 +1757,10 @@ a.soico-cta-crypto-table-button,
 }
 
 /* 1位ボタン強調 */
-.soico-cta-crypto-comparison-table .soico-cta-row-highlight .soico-cta-crypto-table-button {
-    padding: 12px 24px;
-    font-size: 14px;
-    background: linear-gradient(135deg, #0D2B52 0%, #1E4D8C 100%);
+.soico-cta-crypto-comparison-table tbody tr.soico-cta-row-highlight .soico-cta-crypto-table-button {
+    padding: 12px 24px !important;
+    font-size: 14px !important;
+    background: linear-gradient(135deg, #0D2B52 0%, #1E4D8C 100%) !important;
     box-shadow: 0 3px 12px rgba(26, 60, 110, 0.25);
 }
 
@@ -1831,99 +1837,126 @@ a.soico-cta-crypto-table-button,
         overflow-x: auto;
     }
 
-    .soico-cta-crypto-comparison-table {
-        font-size: 13px;
-        table-layout: auto;
+    table.soico-cta-crypto-comparison-table {
+        font-size: 13px !important;
+        table-layout: auto !important;
         min-width: 480px;
     }
 
-    .soico-cta-crypto-comparison-table th,
-    .soico-cta-crypto-comparison-table td {
-        padding: 12px 10px;
+    .soico-cta-crypto-comparison-table thead th {
+        padding: 12px 10px !important;
     }
 
-    .soico-cta-crypto-comparison-table th:first-child {
+    .soico-cta-crypto-comparison-table tbody td {
+        padding: 12px 10px !important;
+    }
+
+    .soico-cta-crypto-comparison-table thead th:first-child {
         border-radius: 7px 0 0 0;
     }
 
-    .soico-cta-crypto-comparison-table th:last-child {
+    .soico-cta-crypto-comparison-table thead th:last-child {
         border-radius: 0 7px 0 0;
     }
 
     .soico-cta-crypto-table-button,
     a.soico-cta-crypto-table-button {
-        padding: 8px 14px;
-        font-size: 12px;
+        padding: 8px 14px !important;
+        font-size: 12px !important;
     }
 
-    .soico-cta-crypto-comparison-table .soico-cta-row-highlight .soico-cta-crypto-table-button {
-        padding: 10px 18px;
-        font-size: 13px;
+    .soico-cta-crypto-comparison-table tbody tr.soico-cta-row-highlight .soico-cta-crypto-table-button {
+        padding: 10px 18px !important;
+        font-size: 13px !important;
     }
 }
 
 /* --------------------------------------------------------------------------
-   SWELL テーマ 仮想通貨互換性
+   仮想通貨比較表 テーマ干渉対策
+   no1-soico: .editor-content table th/td, tr:nth-of-type(1) を上書き
+   SWELL:     .post_content table th/td を上書き
    -------------------------------------------------------------------------- */
-.post_content .soico-cta-crypto-comparison-table,
-.post_content table.soico-cta-crypto-comparison-table,
-body .soico-cta-crypto-comparison-table {
+.editor-content table.soico-cta-crypto-comparison-table,
+.post_content table.soico-cta-crypto-comparison-table {
     background: #fff !important;
     border-collapse: separate !important;
     border-spacing: 0 !important;
+    table-layout: fixed !important;
+    border: none !important;
 }
 
-.post_content .soico-cta-crypto-comparison-table thead tr,
-.post_content table.soico-cta-crypto-comparison-table thead tr,
-body .soico-cta-crypto-comparison-table thead tr {
+/* thead — テーマの th 背景をリセット */
+.editor-content table.soico-cta-crypto-comparison-table thead tr,
+.post_content table.soico-cta-crypto-comparison-table thead tr {
     background: linear-gradient(135deg, #1A3C6E 0%, #1E4D8C 100%) !important;
-    color: #fff !important;
 }
 
-.post_content .soico-cta-crypto-comparison-table th,
-.post_content table.soico-cta-crypto-comparison-table th,
-body .soico-cta-crypto-comparison-table th {
+.editor-content table.soico-cta-crypto-comparison-table thead th,
+.post_content table.soico-cta-crypto-comparison-table thead th {
+    background: transparent !important;
     color: #fff !important;
-    border-color: var(--soico-crypto-accent) !important;
+    border: none !important;
+    border-bottom: 3px solid var(--soico-crypto-accent) !important;
+    padding: 14px 16px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
 }
 
-.post_content .soico-cta-crypto-comparison-table tbody tr,
-.post_content table.soico-cta-crypto-comparison-table tbody tr,
-body .soico-cta-crypto-comparison-table tbody tr {
+/* tbody — テーマの nth-of-type(1) 背景着色をリセット */
+.editor-content table.soico-cta-crypto-comparison-table tbody tr,
+.post_content table.soico-cta-crypto-comparison-table tbody tr {
     background: #fff !important;
 }
 
-.post_content .soico-cta-crypto-comparison-table tbody tr:nth-child(even),
-.post_content table.soico-cta-crypto-comparison-table tbody tr:nth-child(even),
-body .soico-cta-crypto-comparison-table tbody tr:nth-child(even) {
+.editor-content table.soico-cta-crypto-comparison-table tbody tr:nth-of-type(1) td,
+.editor-content table.soico-cta-crypto-comparison-table tbody tr:nth-of-type(1) th,
+.post_content table.soico-cta-crypto-comparison-table tbody tr:nth-of-type(1) td {
+    background: transparent !important;
+}
+
+.editor-content table.soico-cta-crypto-comparison-table tbody tr:nth-child(even),
+.post_content table.soico-cta-crypto-comparison-table tbody tr:nth-child(even) {
     background: #F7F9FC !important;
 }
 
-.post_content .soico-cta-crypto-comparison-table tbody tr:hover,
-.post_content table.soico-cta-crypto-comparison-table tbody tr:hover,
-body .soico-cta-crypto-comparison-table tbody tr:hover {
+.editor-content table.soico-cta-crypto-comparison-table tbody tr:hover,
+.post_content table.soico-cta-crypto-comparison-table tbody tr:hover {
     background: #EDF2FA !important;
 }
 
-.post_content .soico-cta-crypto-comparison-table tbody tr.soico-cta-row-highlight,
-.post_content table.soico-cta-crypto-comparison-table tbody tr.soico-cta-row-highlight,
-body .soico-cta-crypto-comparison-table tbody tr.soico-cta-row-highlight {
+.editor-content table.soico-cta-crypto-comparison-table tbody tr.soico-cta-row-highlight,
+.post_content table.soico-cta-crypto-comparison-table tbody tr.soico-cta-row-highlight {
     background: linear-gradient(90deg, #EDF2FA 0%, #fff 100%) !important;
 }
 
-.post_content .soico-cta-crypto-comparison-table tbody tr.soico-cta-row-highlight:hover,
-.post_content table.soico-cta-crypto-comparison-table tbody tr.soico-cta-row-highlight:hover,
-body .soico-cta-crypto-comparison-table tbody tr.soico-cta-row-highlight:hover {
+.editor-content table.soico-cta-crypto-comparison-table tbody tr.soico-cta-row-highlight:hover,
+.post_content table.soico-cta-crypto-comparison-table tbody tr.soico-cta-row-highlight:hover {
     background: linear-gradient(90deg, #E3EAF5 0%, #FAFBFD 100%) !important;
 }
 
-/* SWELL ボタン干渉防止 */
+/* td — テーマのボーダー・パディングをリセット */
+.editor-content table.soico-cta-crypto-comparison-table tbody td,
+.post_content table.soico-cta-crypto-comparison-table tbody td {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid #E4EAF2 !important;
+    padding: 18px 16px !important;
+}
+
+.editor-content table.soico-cta-crypto-comparison-table tbody tr:last-child td,
+.post_content table.soico-cta-crypto-comparison-table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+
+/* ボタン — テーマの a タグスタイル干渉を防止 */
+.editor-content .soico-cta-crypto-table-button,
+.editor-content a.soico-cta-crypto-table-button,
 .post_content .soico-cta-crypto-table-button,
-.post_content a.soico-cta-crypto-table-button,
-body .soico-cta-crypto-table-button {
+.post_content a.soico-cta-crypto-table-button {
     background: linear-gradient(135deg, #1A3C6E 0%, #2B5EA7 100%) !important;
     color: #fff !important;
     text-decoration: none !important;
+    border: none !important;
 }
 
 /* 仮想通貨 比較表下部注釈リスト（商材別） */
