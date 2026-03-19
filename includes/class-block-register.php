@@ -1559,9 +1559,6 @@ class Soico_CTA_Block_Register {
                    <?php echo $tracking_attrs; ?>>
                     <?php echo esc_html( $crypto['button_text'] ?? $crypto['name'] . 'で口座開設' ); ?>
                 </a>
-                <p class="soico-cta-crypto-conclusion-note">
-                    <?php esc_html_e( '※最短10分で口座開設 ※取引手数料無料', 'soico-securities-cta' ); ?>
-                </p>
             </div>
         </div>
         <?php
