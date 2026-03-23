@@ -25,6 +25,10 @@
         "buttonText": {
             "type": "string",
             "default": ""
+        },
+        "customAffiliateUrl": {
+            "type": "string",
+            "default": ""
         }
     },
     "supports": {

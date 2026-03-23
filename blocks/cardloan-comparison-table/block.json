@@ -29,6 +29,10 @@
         "showReviewTime": {
             "type": "boolean",
             "default": true
+        },
+        "customAffiliateUrls": {
+            "type": "object",
+            "default": {}
         }
     },
     "supports": {

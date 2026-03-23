@@ -551,6 +551,19 @@
                         },
                         help: '空欄の場合は管理画面の商材設定で登録した注釈を表示'
                     })
+                ),
+                el(PanelBody, {
+                    title: 'アフィリエイトURL上書き',
+                    initialOpen: false
+                },
+                    el(TextControl, {
+                        label: 'カスタムアフィリエイトURL',
+                        value: attributes.customAffiliateUrl,
+                        onChange: function(value) {
+                            setAttributes({ customAffiliateUrl: value });
+                        },
+                        help: '空欄の場合は管理画面で設定したURLを使用。この記事だけ別のURLを使いたい場合に入力してください。'
+                    })
                 )
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview soico-cardloan-preview' },
@@ -558,6 +571,7 @@
                     el('div', { style: { marginBottom: '10px' } },
                         el('span', { style: { background: '#4CAF50', color: '#fff', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' } }, '結論')
                     ),
+                    attributes.customAffiliateUrl && el('p', { style: { fontSize: '11px', color: '#E65100', margin: '0 0 8px 0', fontWeight: 'bold' } }, '⚠ カスタムURL設定中'),
                     el('h3', { style: { margin: '10px 0', fontSize: '18px' } },
                         attributes.customTitle || 'カードローンなら' + companyName + 'がおすすめ'
                     ),
@@ -626,9 +640,23 @@
                         },
                         help: '空欄の場合は「詳細はこちら」を表示'
                     })
+                ),
+                el(PanelBody, {
+                    title: 'アフィリエイトURL上書き',
+                    initialOpen: false
+                },
+                    el(TextControl, {
+                        label: 'カスタムアフィリエイトURL',
+                        value: attributes.customAffiliateUrl,
+                        onChange: function(value) {
+                            setAttributes({ customAffiliateUrl: value });
+                        },
+                        help: '空欄の場合は管理画面で設定したURLを使用。この記事だけ別のURLを使いたい場合に入力してください。'
+                    })
                 )
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview soico-cardloan-preview' },
+                attributes.customAffiliateUrl && el('p', { style: { fontSize: '11px', color: '#E65100', margin: '0 0 5px 0', fontWeight: 'bold' } }, '⚠ カスタムURL設定中'),
                 el('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: attributes.style === 'subtle' ? '#f5f5f5' : '#e8f5e9', borderRadius: '6px', border: '1px solid #c8e6c9' } },
                     el('div', null,
                         el('strong', null, companyName),
@@ -685,9 +713,23 @@
                         },
                         help: '空欄の場合は管理画面の商材設定で登録した注釈を表示'
                     })
+                ),
+                el(PanelBody, {
+                    title: 'アフィリエイトURL上書き',
+                    initialOpen: false
+                },
+                    el(TextControl, {
+                        label: 'カスタムアフィリエイトURL',
+                        value: attributes.customAffiliateUrl,
+                        onChange: function(value) {
+                            setAttributes({ customAffiliateUrl: value });
+                        },
+                        help: '空欄の場合は管理画面で設定したURLを使用。この記事だけ別のURLを使いたい場合に入力してください。'
+                    })
                 )
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview soico-cardloan-preview', style: { textAlign: 'center' } },
+                attributes.customAffiliateUrl && el('p', { style: { fontSize: '11px', color: '#E65100', margin: '0 0 5px 0', fontWeight: 'bold' } }, '⚠ カスタムURL設定中'),
                 el('span', { style: { background: '#4CAF50', color: '#fff', padding: '14px 28px', borderRadius: '6px', display: 'inline-block', fontSize: '16px', fontWeight: 'bold' } },
                     buttonText
                 ),
@@ -756,6 +798,32 @@
                         onChange: function(value) {
                             setAttributes({ showReviewTime: value });
                         }
+                    })
+                ),
+                el(PanelBody, {
+                    title: 'アフィリエイトURL上書き',
+                    initialOpen: false
+                },
+                    el('p', { style: { fontSize: '12px', color: '#666', marginBottom: '12px' } },
+                        'この記事だけ別のURLを使いたい場合に入力してください。空欄の場合は管理画面で設定したURLを使用します。'
+                    ),
+                    cardloanOptions.map(function(opt) {
+                        var currentUrls = attributes.customAffiliateUrls || {};
+                        return el(TextControl, {
+                            key: opt.value,
+                            label: opt.label,
+                            value: currentUrls[opt.value] || '',
+                            onChange: function(value) {
+                                var newUrls = Object.assign({}, currentUrls);
+                                if (value) {
+                                    newUrls[opt.value] = value;
+                                } else {
+                                    delete newUrls[opt.value];
+                                }
+                                setAttributes({ customAffiliateUrls: newUrls });
+                            },
+                            placeholder: 'https://'
+                        });
                     })
                 )
             ),
@@ -1290,7 +1358,8 @@
                 showFeatures: { type: 'boolean', default: true },
                 customTitle: { type: 'string', default: '' },
                 customFeatures: { type: 'string', default: '' },
-                buttonNote: { type: 'string', default: '' }
+                buttonNote: { type: 'string', default: '' },
+                customAffiliateUrl: { type: 'string', default: '' }
             },
             edit: EditCardloanConclusionBox
         },
@@ -1304,7 +1373,8 @@
                 company: { type: 'string', default: 'aiful' },
                 style: { type: 'string', default: 'default' },
                 featureText: { type: 'string', default: '' },
-                buttonText: { type: 'string', default: '' }
+                buttonText: { type: 'string', default: '' },
+                customAffiliateUrl: { type: 'string', default: '' }
             },
             edit: EditCardloanInlineCTA
         },
@@ -1318,7 +1388,8 @@
                 company: { type: 'string', default: 'aiful' },
                 buttonText: { type: 'string', default: '' },
                 showPR: { type: 'boolean', default: true },
-                buttonNote: { type: 'string', default: '' }
+                buttonNote: { type: 'string', default: '' },
+                customAffiliateUrl: { type: 'string', default: '' }
             },
             edit: EditCardloanSingleButton
         },
@@ -1333,7 +1404,8 @@
                 limit: { type: 'number', default: 3 },
                 showInterestRate: { type: 'boolean', default: true },
                 showLimitAmount: { type: 'boolean', default: true },
-                showReviewTime: { type: 'boolean', default: true }
+                showReviewTime: { type: 'boolean', default: true },
+                customAffiliateUrls: { type: 'object', default: {} }
             },
             edit: EditCardloanComparisonTable
         },

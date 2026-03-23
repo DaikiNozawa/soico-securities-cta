@@ -1145,6 +1145,12 @@ class Soico_CTA_Block_Register {
             return $this->debug_comment( 'Cardloan not found: ' . $company_slug );
         }
 
+        // カスタムアフィリエイトURLがあれば上書き
+        $custom_url = ! empty( $attributes['customAffiliateUrl'] ) ? $attributes['customAffiliateUrl'] : '';
+        if ( $custom_url ) {
+            $cardloan['affiliate_url'] = $custom_url;
+        }
+
         if ( empty( $cardloan['affiliate_url'] ) ) {
             return $this->debug_comment( 'No affiliate_url for cardloan: ' . $company_slug );
         }
@@ -1232,6 +1238,12 @@ class Soico_CTA_Block_Register {
             return $this->debug_comment( 'Cardloan not found: ' . $company_slug );
         }
 
+        // カスタムアフィリエイトURLがあれば上書き
+        $custom_url = ! empty( $attributes['customAffiliateUrl'] ) ? $attributes['customAffiliateUrl'] : '';
+        if ( $custom_url ) {
+            $cardloan['affiliate_url'] = $custom_url;
+        }
+
         if ( empty( $cardloan['affiliate_url'] ) ) {
             return $this->debug_comment( 'No affiliate_url for cardloan inline: ' . $company_slug );
         }
@@ -1281,6 +1293,12 @@ class Soico_CTA_Block_Register {
 
         if ( ! $cardloan ) {
             return $this->debug_comment( 'Cardloan not found: ' . $company_slug );
+        }
+
+        // カスタムアフィリエイトURLがあれば上書き
+        $custom_url = ! empty( $attributes['customAffiliateUrl'] ) ? $attributes['customAffiliateUrl'] : '';
+        if ( $custom_url ) {
+            $cardloan['affiliate_url'] = $custom_url;
         }
 
         if ( empty( $cardloan['affiliate_url'] ) ) {
@@ -1351,6 +1369,14 @@ class Soico_CTA_Block_Register {
 
         if ( empty( $cardloans ) ) {
             return $this->debug_comment( 'No enabled cardloans found for comparison_table' );
+        }
+
+        // カスタムアフィリエイトURLがあれば上書き
+        $custom_urls = ! empty( $attributes['customAffiliateUrls'] ) ? (array) $attributes['customAffiliateUrls'] : array();
+        foreach ( $custom_urls as $slug => $url ) {
+            if ( ! empty( $url ) && isset( $cardloans[ $slug ] ) ) {
+                $cardloans[ $slug ]['affiliate_url'] = $url;
+            }
         }
 
         $rank = 1;

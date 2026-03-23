@@ -25,6 +25,10 @@
         "buttonNote": {
             "type": "string",
             "default": ""
+        },
+        "customAffiliateUrl": {
+            "type": "string",
+            "default": ""
         }
     },
     "supports": {
