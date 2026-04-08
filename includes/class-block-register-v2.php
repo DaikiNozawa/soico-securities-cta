@@ -108,6 +108,12 @@ class Soico_CTA_Block_Register_V2 {
             return '<!-- SOICO CTA: company not found -->';
         }
 
+        // URLオーバーライド判定（直接URL → ThirstyAffiliates → デフォルト）
+        $url_override = $this->resolve_url_override($attributes);
+        if ($url_override) {
+            $company['affiliate_url'] = $url_override;
+        }
+
         $context = $this->build_context($block_type, $attributes, $company, $category);
 
         // フルカスタムモード
@@ -153,6 +159,15 @@ class Soico_CTA_Block_Register_V2 {
         if (empty($companies)) {
             return '<!-- SOICO CTA: no companies found -->';
         }
+
+        // 会社ごとのURLオーバーライドを適用
+        foreach ($companies as $cmp_slug => &$cmp_data) {
+            $url_override = $this->resolve_url_override_for($attributes, $cmp_slug);
+            if ($url_override) {
+                $cmp_data['affiliate_url'] = $url_override;
+            }
+        }
+        unset($cmp_data);
 
         // 各会社のカードデータを構築
         $cards = [];
@@ -423,5 +438,63 @@ class Soico_CTA_Block_Register_V2 {
             case 3: return 'soico-v2__rank--bronze';
             default: return 'soico-v2__rank--default';
         }
+    }
+
+    /**
+     * ブロック属性のURL差し替えを解決する（単一会社用）
+     *
+     * 優先順位:
+     *   1. customAffiliateUrl  （任意URL直接入力）
+     *   2. customThirstyLinkId （ThirstyAffiliatesリンクID）
+     *   3. null               （呼び出し元で従来のデータ層URLを使う）
+     *
+     * @param array $attributes ブロック属性
+     * @return string|null
+     */
+    private function resolve_url_override(array $attributes): ?string {
+        if (!empty($attributes['customAffiliateUrl'])) {
+            $url = esc_url_raw($attributes['customAffiliateUrl']);
+            if ($url) {
+                return $url;
+            }
+        }
+
+        if (!empty($attributes['customThirstyLinkId']) && intval($attributes['customThirstyLinkId']) > 0) {
+            $thirsty = Soico_CTA_Thirsty_Integration::get_instance();
+            $url = $thirsty->get_affiliate_url(intval($attributes['customThirstyLinkId']));
+            if ($url) {
+                return $url;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * 比較表用: 会社ごとのURL差し替えを解決する
+     *
+     * @param array  $attributes ブロック属性
+     * @param string $slug       会社/取引所スラッグ
+     * @return string|null
+     */
+    private function resolve_url_override_for(array $attributes, string $slug): ?string {
+        $custom_urls = !empty($attributes['customAffiliateUrls']) ? (array) $attributes['customAffiliateUrls'] : [];
+        if (!empty($custom_urls[$slug])) {
+            $url = esc_url_raw($custom_urls[$slug]);
+            if ($url) {
+                return $url;
+            }
+        }
+
+        $custom_ids = !empty($attributes['customThirstyLinkIds']) ? (array) $attributes['customThirstyLinkIds'] : [];
+        if (!empty($custom_ids[$slug]) && intval($custom_ids[$slug]) > 0) {
+            $thirsty = Soico_CTA_Thirsty_Integration::get_instance();
+            $url = $thirsty->get_affiliate_url(intval($custom_ids[$slug]));
+            if ($url) {
+                return $url;
+            }
+        }
+
+        return null;
     }
 }
