@@ -1,0 +1,540 @@
+/**
+ * SOICO CTA v2 - Frontend Styles
+ * soico.jpのデザイントーンに統一
+ *
+ * カラーパレット:
+ *   --soico-v2-primary:   #164C95 (コーポレートブルー)
+ *   --soico-v2-text:      #2B2B2B
+ *   --soico-v2-bg:        #ffffff
+ *   --soico-v2-bg-subtle: #F8FAFB
+ *   --soico-v2-border:    #E2E8F0
+ *   --soico-v2-accent:    #D5B155 (ゴールドアクセント)
+ */
+
+/* ==========================================================================
+   CSS Variables
+   ========================================================================== */
+
+:root {
+    --soico-v2-primary: #164C95;
+    --soico-v2-primary-light: #1E5FB3;
+    --soico-v2-primary-bg: #EFF4FA;
+    --soico-v2-text: #2B2B2B;
+    --soico-v2-text-sub: #64748B;
+    --soico-v2-bg: #ffffff;
+    --soico-v2-bg-subtle: #F8FAFB;
+    --soico-v2-border: #E2E8F0;
+    --soico-v2-border-accent: #164C95;
+    --soico-v2-radius: 4px;
+    --soico-v2-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    --soico-v2-shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --soico-v2-gold: #D5B155;
+    --soico-v2-silver: #94A3B8;
+    --soico-v2-bronze: #B87333;
+    --soico-v2-transition: 0.15s ease;
+}
+
+/* カードローン用のカラー上書き */
+.soico-cta-v2[data-category="cardloan"] {
+    --soico-v2-primary: #00855A;
+    --soico-v2-primary-light: #00A870;
+    --soico-v2-primary-bg: #EEF9F4;
+    --soico-v2-border-accent: #00855A;
+}
+
+/* ==========================================================================
+   共通要素
+   ========================================================================== */
+
+.soico-cta-v2 {
+    font-family: inherit;
+    color: var(--soico-v2-text);
+    line-height: 1.7;
+    margin: 2em 0;
+}
+
+.soico-cta-v2 * {
+    box-sizing: border-box;
+}
+
+/* ボタン */
+.soico-v2__button {
+    display: inline-block;
+    background-color: var(--soico-v2-primary);
+    color: #fff !important;
+    text-decoration: none !important;
+    padding: 12px 32px;
+    border-radius: var(--soico-v2-radius);
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    transition: opacity var(--soico-v2-transition);
+    border: none;
+    cursor: pointer;
+}
+
+.soico-v2__button:hover {
+    opacity: 0.85;
+    color: #fff !important;
+    text-decoration: none !important;
+}
+
+/* バッジ */
+.soico-v2__badge {
+    display: inline-block;
+    background-color: var(--soico-v2-primary);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 2px;
+    letter-spacing: 0.02em;
+    vertical-align: middle;
+}
+
+/* PR表記 */
+.soico-v2__pr {
+    display: inline-block;
+    font-size: 10px;
+    color: var(--soico-v2-text-sub);
+    margin-top: 4px;
+}
+
+/* フッター */
+.soico-v2__footer {
+    font-size: 11px;
+    color: var(--soico-v2-text-sub);
+    margin-top: 12px;
+    text-align: right;
+}
+
+/* 順位 */
+.soico-v2__rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    background-color: var(--soico-v2-silver);
+    flex-shrink: 0;
+}
+
+.soico-v2__rank--gold .soico-v2__rank {
+    background-color: var(--soico-v2-gold);
+}
+
+.soico-v2__rank--silver .soico-v2__rank {
+    background-color: var(--soico-v2-silver);
+}
+
+.soico-v2__rank--bronze .soico-v2__rank {
+    background-color: var(--soico-v2-bronze);
+}
+
+.soico-v2__rank--default .soico-v2__rank {
+    background-color: var(--soico-v2-border);
+    color: var(--soico-v2-text-sub);
+}
+
+/* ==========================================================================
+   Conclusion Box
+   ========================================================================== */
+
+.soico-cta-v2-conclusion-box {
+    background: var(--soico-v2-bg);
+    border-left: 3px solid var(--soico-v2-border-accent);
+    border-radius: var(--soico-v2-radius);
+    padding: 24px 28px;
+    box-shadow: var(--soico-v2-shadow);
+}
+
+.soico-v2-conclusion__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.soico-v2-conclusion__label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--soico-v2-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.soico-v2-conclusion__title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--soico-v2-text);
+    margin: 0 0 16px 0;
+    padding: 0;
+    border: none;
+    line-height: 1.5;
+}
+
+.soico-v2-conclusion__features {
+    list-style: none;
+    margin: 0 0 20px 0;
+    padding: 0;
+}
+
+.soico-v2-conclusion__features li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 6px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--soico-v2-text);
+}
+
+.soico-v2-conclusion__features li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--soico-v2-primary);
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.soico-v2-conclusion__action {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.soico-v2-conclusion__action .soico-v2__button {
+    min-width: 240px;
+}
+
+.soico-v2-conclusion__note {
+    font-size: 11px;
+    color: var(--soico-v2-text-sub);
+    margin-top: 8px;
+}
+
+/* ==========================================================================
+   Inline CTA
+   ========================================================================== */
+
+.soico-cta-v2-inline-cta {
+    background: var(--soico-v2-primary-bg);
+    border-left: 3px solid var(--soico-v2-border-accent);
+    border-radius: var(--soico-v2-radius);
+    padding: 14px 20px;
+}
+
+.soico-v2-inline__content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.soico-v2-inline__info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.soico-v2-inline__logo {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    border-radius: 2px;
+}
+
+.soico-v2-inline__name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--soico-v2-text);
+}
+
+.soico-v2-inline__feature {
+    font-size: 13px;
+    color: var(--soico-v2-text-sub);
+}
+
+.soico-cta-v2-inline-cta .soico-v2__button {
+    padding: 8px 20px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+/* ==========================================================================
+   Single Button
+   ========================================================================== */
+
+.soico-cta-v2-single-button {
+    text-align: center;
+    padding: 8px 0;
+}
+
+.soico-v2-button__wrapper {
+    display: inline-block;
+}
+
+.soico-cta-v2-single-button .soico-v2__button {
+    min-width: 200px;
+}
+
+/* ==========================================================================
+   Comparison Table (Card Layout)
+   ========================================================================== */
+
+.soico-v2-comparison__cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.soico-v2-comparison__card {
+    background: var(--soico-v2-bg);
+    border: 1px solid var(--soico-v2-border);
+    border-radius: var(--soico-v2-radius);
+    padding: 20px 24px;
+    box-shadow: var(--soico-v2-shadow);
+    transition: box-shadow var(--soico-v2-transition);
+}
+
+.soico-v2-comparison__card:hover {
+    box-shadow: var(--soico-v2-shadow-hover);
+}
+
+/* 1位カード強調 */
+.soico-v2__rank--gold.soico-v2-comparison__card {
+    border-left: 3px solid var(--soico-v2-primary);
+}
+
+.soico-v2-comparison__card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.soico-v2-comparison__card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.soico-v2-comparison__logo {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    border-radius: 2px;
+}
+
+.soico-v2-comparison__name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--soico-v2-text);
+}
+
+.soico-v2-comparison__desc {
+    font-size: 13px;
+    color: var(--soico-v2-text-sub);
+    margin: 0 0 10px 0;
+    line-height: 1.6;
+}
+
+.soico-v2-comparison__features {
+    font-size: 13px;
+    color: var(--soico-v2-text);
+    margin: 0 0 12px 0;
+    line-height: 1.6;
+}
+
+/* メタ情報（手数料、金利等） */
+.soico-v2-comparison__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.soico-v2-comparison__meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--soico-v2-bg-subtle);
+    padding: 4px 10px;
+    border-radius: 2px;
+    font-size: 12px;
+}
+
+.soico-v2-comparison__meta-label {
+    color: var(--soico-v2-text-sub);
+    font-weight: 500;
+}
+
+.soico-v2-comparison__meta-value {
+    color: var(--soico-v2-text);
+    font-weight: 600;
+}
+
+.soico-v2-comparison__action {
+    text-align: center;
+}
+
+.soico-v2-comparison__action .soico-v2__button {
+    width: 100%;
+    max-width: 320px;
+}
+
+/* ==========================================================================
+   Subtle Banner
+   ========================================================================== */
+
+.soico-cta-v2-subtle-banner {
+    padding: 4px 0;
+}
+
+.soico-v2-banner__content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.soico-v2-banner__message {
+    font-size: 13px;
+    color: var(--soico-v2-text-sub);
+}
+
+.soico-v2-banner__message a {
+    color: var(--soico-v2-primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.soico-v2-banner__message a:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   Variant: minimal
+   ========================================================================== */
+
+.soico-cta-v2[data-variant="minimal"] {
+    box-shadow: none;
+}
+
+.soico-cta-v2[data-variant="minimal"].soico-cta-v2-conclusion-box {
+    border-left: none;
+    padding: 16px 0;
+    background: transparent;
+}
+
+.soico-cta-v2[data-variant="minimal"].soico-cta-v2-inline-cta {
+    background: transparent;
+    border-left: none;
+    padding: 8px 0;
+}
+
+/* ==========================================================================
+   Variant: card
+   ========================================================================== */
+
+.soico-cta-v2[data-variant="card"] {
+    border-left: none;
+    border: 1px solid var(--soico-v2-border);
+    box-shadow: var(--soico-v2-shadow);
+}
+
+.soico-cta-v2[data-variant="card"]:hover {
+    box-shadow: var(--soico-v2-shadow-hover);
+}
+
+/* ==========================================================================
+   Variant: highlight
+   ========================================================================== */
+
+.soico-cta-v2[data-variant="highlight"] {
+    background: var(--soico-v2-primary-bg);
+    border-left: 3px solid var(--soico-v2-primary);
+}
+
+.soico-cta-v2[data-variant="highlight"] .soico-v2-conclusion__title,
+.soico-cta-v2[data-variant="highlight"] .soico-v2-comparison__name {
+    color: var(--soico-v2-primary);
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .soico-cta-v2-conclusion-box {
+        padding: 20px 16px;
+    }
+
+    .soico-v2-conclusion__title {
+        font-size: 16px;
+    }
+
+    .soico-v2-conclusion__action .soico-v2__button {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .soico-v2-inline__content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .soico-cta-v2-inline-cta .soico-v2__button {
+        width: 100%;
+    }
+
+    .soico-v2-comparison__card {
+        padding: 16px;
+    }
+
+    .soico-v2-comparison__meta {
+        gap: 6px;
+    }
+
+    .soico-v2-comparison__action .soico-v2__button {
+        max-width: none;
+    }
+
+    .soico-cta-v2-single-button .soico-v2__button {
+        width: 100%;
+        min-width: auto;
+    }
+}
+
+/* ==========================================================================
+   SWELL Theme Compatibility
+   ========================================================================== */
+
+.soico-cta-v2 table,
+.soico-cta-v2 th,
+.soico-cta-v2 td {
+    border: none !important;
+    background: transparent !important;
+}
+
+.soico-cta-v2 ul {
+    list-style: none !important;
+}
+
+.soico-cta-v2 h3 {
+    border: none !important;
+    padding-left: 0 !important;
+}
+
+/* editor-contentクラスとの競合防止 */
+.editor-content .soico-cta-v2,
+.post_content .soico-cta-v2,
+.entry-content .soico-cta-v2 {
+    max-width: none;
+}
