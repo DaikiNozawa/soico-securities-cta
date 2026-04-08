@@ -61,6 +61,13 @@ final class Soico_Securities_CTA {
         require_once SOICO_CTA_PLUGIN_DIR . 'includes/class-thirsty-integration.php';
         require_once SOICO_CTA_PLUGIN_DIR . 'includes/class-admin-settings.php';
         require_once SOICO_CTA_PLUGIN_DIR . 'includes/class-block-register.php';
+
+        // 仮想通貨管理画面
+        require_once SOICO_CTA_PLUGIN_DIR . 'includes/class-admin-crypto.php';
+
+        // v2 テンプレートエンジン & レンダラー
+        require_once SOICO_CTA_PLUGIN_DIR . 'includes/class-template-engine.php';
+        require_once SOICO_CTA_PLUGIN_DIR . 'includes/class-block-register-v2.php';
     }
     
     /**
@@ -96,7 +103,11 @@ final class Soico_Securities_CTA {
         Soico_CTA_Securities_Data::get_instance();
         Soico_CTA_Thirsty_Integration::get_instance();
         Soico_CTA_Admin_Settings::get_instance();
-        Soico_CTA_Block_Register::get_instance();
+        Soico_CTA_Admin_Crypto::get_instance();
+
+        // v2レンダラーを先に初期化し、block-registerに渡す
+        $v2_renderer = new Soico_CTA_Block_Register_V2();
+        Soico_CTA_Block_Register::get_instance()->set_v2_renderer( $v2_renderer );
     }
     
     /**

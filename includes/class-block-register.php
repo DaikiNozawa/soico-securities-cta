@@ -63,6 +63,21 @@ class Soico_CTA_Block_Register {
     }
     
     /**
+     * v2レンダラー
+     * @var Soico_CTA_Block_Register_V2|null
+     */
+    private $v2_renderer = null;
+
+    /**
+     * v2レンダラーを設定
+     *
+     * @param Soico_CTA_Block_Register_V2 $renderer
+     */
+    public function set_v2_renderer( $renderer ) {
+        $this->v2_renderer = $renderer;
+    }
+
+    /**
      * コンストラクタ
      */
     private function __construct() {
@@ -593,6 +608,23 @@ class Soico_CTA_Block_Register {
             true
         );
 
+        // v2 エディタスクリプト（既存editor.jsの後に読み込み）
+        wp_enqueue_script(
+            'soico-cta-editor-v2',
+            SOICO_CTA_PLUGIN_URL . 'assets/js/editor-v2.js',
+            array(
+                'soico-cta-editor',
+                'wp-blocks',
+                'wp-element',
+                'wp-components',
+                'wp-block-editor',
+                'wp-hooks',
+                'wp-compose',
+            ),
+            SOICO_CTA_VERSION . '.v2',
+            true
+        );
+
         // エディタスタイル
         wp_enqueue_style(
             'soico-cta-editor-style',
@@ -750,6 +782,9 @@ class Soico_CTA_Block_Register {
      * 結論ボックス描画
      */
     public function render_conclusion_box( $attributes ) {
+        if ( ( $attributes['version'] ?? '1' ) === '2' && $this->v2_renderer ) {
+            return $this->v2_renderer->render( 'conclusion-box', $attributes );
+        }
         // 最初に必ずログを出力（問題特定用）
         error_log( '[SOICO CTA Block] render_conclusion_box CALLED - attributes: ' . wp_json_encode( $attributes ) );
         $this->debug_log( 'render_conclusion_box called', $attributes );
@@ -831,6 +866,9 @@ class Soico_CTA_Block_Register {
      * インラインCTA描画
      */
     public function render_inline_cta( $attributes ) {
+        if ( ( $attributes['version'] ?? '1' ) === '2' && $this->v2_renderer ) {
+            return $this->v2_renderer->render( 'inline-cta', $attributes );
+        }
         $this->debug_log( 'render_inline_cta called', $attributes );
 
         $securities_data = Soico_CTA_Securities_Data::get_instance();
@@ -884,6 +922,9 @@ class Soico_CTA_Block_Register {
      * 単体ボタン描画
      */
     public function render_single_button( $attributes ) {
+        if ( ( $attributes['version'] ?? '1' ) === '2' && $this->v2_renderer ) {
+            return $this->v2_renderer->render( 'single-button', $attributes );
+        }
         $this->debug_log( 'render_single_button called', $attributes );
 
         $securities_data = Soico_CTA_Securities_Data::get_instance();
@@ -935,6 +976,9 @@ class Soico_CTA_Block_Register {
      * 比較表描画
      */
     public function render_comparison_table( $attributes ) {
+        if ( ( $attributes['version'] ?? '1' ) === '2' && $this->v2_renderer ) {
+            return $this->v2_renderer->render( 'comparison-table', $attributes );
+        }
         $this->debug_log( 'render_comparison_table called', $attributes );
 
         $securities_data = Soico_CTA_Securities_Data::get_instance();
@@ -1071,6 +1115,9 @@ class Soico_CTA_Block_Register {
      * 控えめバナー描画
      */
     public function render_subtle_banner( $attributes ) {
+        if ( ( $attributes['version'] ?? '1' ) === '2' && $this->v2_renderer ) {
+            return $this->v2_renderer->render( 'subtle-banner', $attributes );
+        }
         $this->debug_log( 'render_subtle_banner called', $attributes );
 
         $securities_data = Soico_CTA_Securities_Data::get_instance();
@@ -1135,6 +1182,9 @@ class Soico_CTA_Block_Register {
      * カードローン結論ボックス描画
      */
     public function render_cardloan_conclusion_box( $attributes ) {
+        if ( ( $attributes['version'] ?? '1' ) === '2' && $this->v2_renderer ) {
+            return $this->v2_renderer->render( 'cardloan-conclusion-box', $attributes );
+        }
         $this->debug_log( 'render_cardloan_conclusion_box called', $attributes );
 
         $data = Soico_CTA_Securities_Data::get_instance();
@@ -1228,6 +1278,9 @@ class Soico_CTA_Block_Register {
      * カードローンインラインCTA描画
      */
     public function render_cardloan_inline_cta( $attributes ) {
+        if ( ( $attributes['version'] ?? '1' ) === '2' && $this->v2_renderer ) {
+            return $this->v2_renderer->render( 'cardloan-inline-cta', $attributes );
+        }
         $this->debug_log( 'render_cardloan_inline_cta called', $attributes );
 
         $data = Soico_CTA_Securities_Data::get_instance();
@@ -1285,6 +1338,9 @@ class Soico_CTA_Block_Register {
      * カードローン単体ボタン描画
      */
     public function render_cardloan_single_button( $attributes ) {
+        if ( ( $attributes['version'] ?? '1' ) === '2' && $this->v2_renderer ) {
+            return $this->v2_renderer->render( 'cardloan-single-button', $attributes );
+        }
         $this->debug_log( 'render_cardloan_single_button called', $attributes );
 
         $data = Soico_CTA_Securities_Data::get_instance();
@@ -1346,6 +1402,9 @@ class Soico_CTA_Block_Register {
      * カードローン比較表描画
      */
     public function render_cardloan_comparison_table( $attributes ) {
+        if ( ( $attributes['version'] ?? '1' ) === '2' && $this->v2_renderer ) {
+            return $this->v2_renderer->render( 'cardloan-comparison-table', $attributes );
+        }
         $this->debug_log( 'render_cardloan_comparison_table called', $attributes );
 
         $data = Soico_CTA_Securities_Data::get_instance();
@@ -1475,6 +1534,9 @@ class Soico_CTA_Block_Register {
      * カードローン控えめバナー描画
      */
     public function render_cardloan_subtle_banner( $attributes ) {
+        if ( ( $attributes['version'] ?? '1' ) === '2' && $this->v2_renderer ) {
+            return $this->v2_renderer->render( 'cardloan-subtle-banner', $attributes );
+        }
         $this->debug_log( 'render_cardloan_subtle_banner called', $attributes );
 
         $data = Soico_CTA_Securities_Data::get_instance();
@@ -1528,6 +1590,9 @@ class Soico_CTA_Block_Register {
      * 仮想通貨結論ボックス描画
      */
     public function render_crypto_conclusion_box( $attributes ) {
+        if ( ( $attributes['version'] ?? '1' ) === '2' && $this->v2_renderer ) {
+            return $this->v2_renderer->render( 'crypto-conclusion-box', $attributes );
+        }
         $this->debug_log( 'render_crypto_conclusion_box called', $attributes );
 
         $data = Soico_CTA_Securities_Data::get_instance();
@@ -1595,6 +1660,9 @@ class Soico_CTA_Block_Register {
      * 仮想通貨インラインCTA描画
      */
     public function render_crypto_inline_cta( $attributes ) {
+        if ( ( $attributes['version'] ?? '1' ) === '2' && $this->v2_renderer ) {
+            return $this->v2_renderer->render( 'crypto-inline-cta', $attributes );
+        }
         $this->debug_log( 'render_crypto_inline_cta called', $attributes );
 
         $data = Soico_CTA_Securities_Data::get_instance();
@@ -1641,6 +1709,9 @@ class Soico_CTA_Block_Register {
      * 仮想通貨単体ボタン描画
      */
     public function render_crypto_single_button( $attributes ) {
+        if ( ( $attributes['version'] ?? '1' ) === '2' && $this->v2_renderer ) {
+            return $this->v2_renderer->render( 'crypto-single-button', $attributes );
+        }
         $this->debug_log( 'render_crypto_single_button called', $attributes );
 
         $data = Soico_CTA_Securities_Data::get_instance();
@@ -1685,6 +1756,9 @@ class Soico_CTA_Block_Register {
      * 仮想通貨比較表描画
      */
     public function render_crypto_comparison_table( $attributes ) {
+        if ( ( $attributes['version'] ?? '1' ) === '2' && $this->v2_renderer ) {
+            return $this->v2_renderer->render( 'crypto-comparison-table', $attributes );
+        }
         $this->debug_log( 'render_crypto_comparison_table called', $attributes );
 
         $data = Soico_CTA_Securities_Data::get_instance();
@@ -1819,6 +1893,9 @@ class Soico_CTA_Block_Register {
      * 仮想通貨控えめバナー描画
      */
     public function render_crypto_subtle_banner( $attributes ) {
+        if ( ( $attributes['version'] ?? '1' ) === '2' && $this->v2_renderer ) {
+            return $this->v2_renderer->render( 'crypto-subtle-banner', $attributes );
+        }
         $this->debug_log( 'render_crypto_subtle_banner called', $attributes );
 
         $data = Soico_CTA_Securities_Data::get_instance();
