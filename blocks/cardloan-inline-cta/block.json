@@ -7,7 +7,13 @@
     "category": "soico-cardloan-cta",
     "icon": "money-alt",
     "description": "記事中に挿入する控えめなカードローンインラインCTA。",
-    "keywords": ["cta", "インライン", "カードローン", "cardloan", "inline"],
+    "keywords": [
+        "cta",
+        "インライン",
+        "カードローン",
+        "cardloan",
+        "inline"
+    ],
     "textdomain": "soico-securities-cta",
     "attributes": {
         "company": {
@@ -29,6 +35,10 @@
         "customAffiliateUrl": {
             "type": "string",
             "default": ""
+        },
+        "customThirstyLinkId": {
+            "type": "number",
+            "default": 0
         }
     },
     "supports": {

@@ -7,7 +7,13 @@
     "category": "soico-cardloan-cta",
     "icon": "money-alt",
     "description": "テキストリンク形式の最も控えめなカードローンCTA。読者の邪魔をしません。",
-    "keywords": ["cta", "バナー", "カードローン", "cardloan", "banner"],
+    "keywords": [
+        "cta",
+        "バナー",
+        "カードローン",
+        "cardloan",
+        "banner"
+    ],
     "textdomain": "soico-securities-cta",
     "attributes": {
         "company": {
@@ -17,6 +23,14 @@
         "message": {
             "type": "string",
             "default": ""
+        },
+        "customAffiliateUrl": {
+            "type": "string",
+            "default": ""
+        },
+        "customThirstyLinkId": {
+            "type": "number",
+            "default": 0
         }
     },
     "supports": {

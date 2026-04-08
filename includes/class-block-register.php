@@ -78,6 +78,74 @@ class Soico_CTA_Block_Register {
     }
 
     /**
+     * ブロック属性のURL差し替えを解決する
+     *
+     * 優先順位:
+     *   1. customAffiliateUrl  （任意URL直接入力）
+     *   2. customThirstyLinkId （ThirstyAffiliatesリンクID）
+     *   3. null               （呼び出し元で従来のデータ層URLを使う）
+     *
+     * @param array $attributes ブロック属性
+     * @return string|null オーバーライドURL、またはnull（従来動作）
+     */
+    private function resolve_affiliate_url( $attributes ) {
+        // 1. 任意URL直接入力
+        if ( ! empty( $attributes['customAffiliateUrl'] ) ) {
+            $url = esc_url_raw( $attributes['customAffiliateUrl'] );
+            if ( $url ) {
+                return $url;
+            }
+        }
+
+        // 2. ThirstyAffiliatesリンクID
+        if ( ! empty( $attributes['customThirstyLinkId'] ) && intval( $attributes['customThirstyLinkId'] ) > 0 ) {
+            $thirsty = Soico_CTA_Thirsty_Integration::get_instance();
+            $url = $thirsty->get_affiliate_url( intval( $attributes['customThirstyLinkId'] ) );
+            if ( $url ) {
+                return $url;
+            }
+        }
+
+        // 3. オーバーライドなし
+        return null;
+    }
+
+    /**
+     * 比較表用: 会社ごとのURL差し替えを解決する
+     *
+     * 優先順位（会社単位で評価）:
+     *   1. customAffiliateUrls[slug]   （任意URL直接入力）
+     *   2. customThirstyLinkIds[slug]  （ThirstyAffiliatesリンクID）
+     *   3. null                        （呼び出し元で従来のデータ層URLを使う）
+     *
+     * @param array  $attributes ブロック属性
+     * @param string $slug       会社/取引所スラッグ
+     * @return string|null
+     */
+    private function resolve_affiliate_url_for( $attributes, $slug ) {
+        // 1. 任意URL直接入力
+        $custom_urls = ! empty( $attributes['customAffiliateUrls'] ) ? (array) $attributes['customAffiliateUrls'] : array();
+        if ( ! empty( $custom_urls[ $slug ] ) ) {
+            $url = esc_url_raw( $custom_urls[ $slug ] );
+            if ( $url ) {
+                return $url;
+            }
+        }
+
+        // 2. ThirstyAffiliatesリンクID
+        $custom_ids = ! empty( $attributes['customThirstyLinkIds'] ) ? (array) $attributes['customThirstyLinkIds'] : array();
+        if ( ! empty( $custom_ids[ $slug ] ) && intval( $custom_ids[ $slug ] ) > 0 ) {
+            $thirsty = Soico_CTA_Thirsty_Integration::get_instance();
+            $url = $thirsty->get_affiliate_url( intval( $custom_ids[ $slug ] ) );
+            if ( $url ) {
+                return $url;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * コンストラクタ
      */
     private function __construct() {
@@ -649,6 +717,7 @@ class Soico_CTA_Block_Register {
             'cryptoDesignSettings'  => $securities_data->get_crypto_design_settings(),
             // 共通
             'thirstyActive'         => $thirsty->is_thirsty_active(),
+            'thirstyLinkOptions'    => $thirsty->is_thirsty_active() ? $thirsty->get_select_options() : array(),
             'nonce'                 => wp_create_nonce( 'soico_cta_nonce' ),
             'i18n'                  => array(
                 // 証券
@@ -806,6 +875,12 @@ class Soico_CTA_Block_Register {
             return $this->debug_comment( 'Security not found: ' . $company_slug );
         }
 
+        // URLオーバーライド判定
+        $url_override = $this->resolve_affiliate_url( $attributes );
+        if ( $url_override ) {
+            $security['affiliate_url'] = $url_override;
+        }
+
         if ( empty( $security['affiliate_url'] ) ) {
             return $this->debug_comment( 'No affiliate_url for: ' . $company_slug . ' (thirsty_link=' . ($security['thirsty_link'] ?? 'empty') . ', direct_url=' . ($security['direct_url'] ?? 'empty') . ')' );
         }
@@ -885,6 +960,12 @@ class Soico_CTA_Block_Register {
             return $this->debug_comment( 'Security not found: ' . $company_slug );
         }
 
+        // URLオーバーライド判定
+        $url_override = $this->resolve_affiliate_url( $attributes );
+        if ( $url_override ) {
+            $security['affiliate_url'] = $url_override;
+        }
+
         if ( empty( $security['affiliate_url'] ) ) {
             return $this->debug_comment( 'No affiliate_url for inline_cta: ' . $company_slug );
         }
@@ -939,6 +1020,12 @@ class Soico_CTA_Block_Register {
 
         if ( ! $security ) {
             return $this->debug_comment( 'Security not found: ' . $company_slug );
+        }
+
+        // URLオーバーライド判定
+        $url_override = $this->resolve_affiliate_url( $attributes );
+        if ( $url_override ) {
+            $security['affiliate_url'] = $url_override;
         }
 
         if ( empty( $security['affiliate_url'] ) ) {
@@ -1007,7 +1094,16 @@ class Soico_CTA_Block_Register {
         if ( empty( $securities ) ) {
             return $this->debug_comment( 'No enabled securities found for comparison_table' );
         }
-        
+
+        // 会社ごとのURLオーバーライドを適用
+        foreach ( $securities as $sec_slug => &$sec_data ) {
+            $url_override = $this->resolve_affiliate_url_for( $attributes, $sec_slug );
+            if ( $url_override ) {
+                $sec_data['affiliate_url'] = $url_override;
+            }
+        }
+        unset( $sec_data );
+
         $rank = 1;
         ob_start();
         ?>
@@ -1134,6 +1230,12 @@ class Soico_CTA_Block_Register {
             return $this->debug_comment( 'Security not found: ' . $company_slug );
         }
 
+        // URLオーバーライド判定
+        $url_override = $this->resolve_affiliate_url( $attributes );
+        if ( $url_override ) {
+            $security['affiliate_url'] = $url_override;
+        }
+
         if ( empty( $security['affiliate_url'] ) ) {
             return $this->debug_comment( 'No affiliate_url for subtle_banner: ' . $company_slug );
         }
@@ -1195,10 +1297,10 @@ class Soico_CTA_Block_Register {
             return $this->debug_comment( 'Cardloan not found: ' . $company_slug );
         }
 
-        // カスタムアフィリエイトURLがあれば上書き
-        $custom_url = ! empty( $attributes['customAffiliateUrl'] ) ? $attributes['customAffiliateUrl'] : '';
-        if ( $custom_url ) {
-            $cardloan['affiliate_url'] = $custom_url;
+        // URLオーバーライド判定（直接URL → ThirstyAffiliates → デフォルト）
+        $url_override = $this->resolve_affiliate_url( $attributes );
+        if ( $url_override ) {
+            $cardloan['affiliate_url'] = $url_override;
         }
 
         if ( empty( $cardloan['affiliate_url'] ) ) {
@@ -1291,10 +1393,10 @@ class Soico_CTA_Block_Register {
             return $this->debug_comment( 'Cardloan not found: ' . $company_slug );
         }
 
-        // カスタムアフィリエイトURLがあれば上書き
-        $custom_url = ! empty( $attributes['customAffiliateUrl'] ) ? $attributes['customAffiliateUrl'] : '';
-        if ( $custom_url ) {
-            $cardloan['affiliate_url'] = $custom_url;
+        // URLオーバーライド判定（直接URL → ThirstyAffiliates → デフォルト）
+        $url_override = $this->resolve_affiliate_url( $attributes );
+        if ( $url_override ) {
+            $cardloan['affiliate_url'] = $url_override;
         }
 
         if ( empty( $cardloan['affiliate_url'] ) ) {
@@ -1351,10 +1453,10 @@ class Soico_CTA_Block_Register {
             return $this->debug_comment( 'Cardloan not found: ' . $company_slug );
         }
 
-        // カスタムアフィリエイトURLがあれば上書き
-        $custom_url = ! empty( $attributes['customAffiliateUrl'] ) ? $attributes['customAffiliateUrl'] : '';
-        if ( $custom_url ) {
-            $cardloan['affiliate_url'] = $custom_url;
+        // URLオーバーライド判定（直接URL → ThirstyAffiliates → デフォルト）
+        $url_override = $this->resolve_affiliate_url( $attributes );
+        if ( $url_override ) {
+            $cardloan['affiliate_url'] = $url_override;
         }
 
         if ( empty( $cardloan['affiliate_url'] ) ) {
@@ -1430,13 +1532,15 @@ class Soico_CTA_Block_Register {
             return $this->debug_comment( 'No enabled cardloans found for comparison_table' );
         }
 
-        // カスタムアフィリエイトURLがあれば上書き
-        $custom_urls = ! empty( $attributes['customAffiliateUrls'] ) ? (array) $attributes['customAffiliateUrls'] : array();
-        foreach ( $custom_urls as $slug => $url ) {
-            if ( ! empty( $url ) && isset( $cardloans[ $slug ] ) ) {
-                $cardloans[ $slug ]['affiliate_url'] = $url;
+        // 会社ごとのURLオーバーライドを適用
+        // 優先順位: customAffiliateUrls > customThirstyLinkIds > データ層デフォルト
+        foreach ( $cardloans as $cl_slug => &$cl_data ) {
+            $url_override = $this->resolve_affiliate_url_for( $attributes, $cl_slug );
+            if ( $url_override ) {
+                $cl_data['affiliate_url'] = $url_override;
             }
         }
+        unset( $cl_data );
 
         $rank = 1;
         ob_start();
@@ -1547,6 +1651,12 @@ class Soico_CTA_Block_Register {
             return $this->debug_comment( 'Cardloan not found: ' . $company_slug );
         }
 
+        // URLオーバーライド判定（直接URL → ThirstyAffiliates → デフォルト）
+        $url_override = $this->resolve_affiliate_url( $attributes );
+        if ( $url_override ) {
+            $cardloan['affiliate_url'] = $url_override;
+        }
+
         if ( empty( $cardloan['affiliate_url'] ) ) {
             return $this->debug_comment( 'No affiliate_url for cardloan banner: ' . $company_slug );
         }
@@ -1601,6 +1711,12 @@ class Soico_CTA_Block_Register {
 
         if ( ! $crypto ) {
             return $this->debug_comment( 'Crypto exchange not found: ' . $exchange_slug );
+        }
+
+        // URLオーバーライド判定（直接URL → ThirstyAffiliates → デフォルト）
+        $url_override = $this->resolve_affiliate_url( $attributes );
+        if ( $url_override ) {
+            $crypto['affiliate_url'] = $url_override;
         }
 
         if ( empty( $crypto['affiliate_url'] ) ) {
@@ -1673,6 +1789,12 @@ class Soico_CTA_Block_Register {
             return $this->debug_comment( 'Crypto exchange not found: ' . $exchange_slug );
         }
 
+        // URLオーバーライド判定（直接URL → ThirstyAffiliates → デフォルト）
+        $url_override = $this->resolve_affiliate_url( $attributes );
+        if ( $url_override ) {
+            $crypto['affiliate_url'] = $url_override;
+        }
+
         if ( empty( $crypto['affiliate_url'] ) ) {
             return $this->debug_comment( 'No affiliate_url for crypto inline: ' . $exchange_slug );
         }
@@ -1720,6 +1842,12 @@ class Soico_CTA_Block_Register {
 
         if ( ! $crypto ) {
             return $this->debug_comment( 'Crypto exchange not found: ' . $exchange_slug );
+        }
+
+        // URLオーバーライド判定（直接URL → ThirstyAffiliates → デフォルト）
+        $url_override = $this->resolve_affiliate_url( $attributes );
+        if ( $url_override ) {
+            $crypto['affiliate_url'] = $url_override;
         }
 
         if ( empty( $crypto['affiliate_url'] ) ) {
@@ -1782,6 +1910,15 @@ class Soico_CTA_Block_Register {
         if ( empty( $cryptos ) ) {
             return $this->debug_comment( 'No enabled crypto exchanges found for comparison_table' );
         }
+
+        // 取引所ごとのURLオーバーライドを適用
+        foreach ( $cryptos as $cr_slug => &$cr_data ) {
+            $url_override = $this->resolve_affiliate_url_for( $attributes, $cr_slug );
+            if ( $url_override ) {
+                $cr_data['affiliate_url'] = $url_override;
+            }
+        }
+        unset( $cr_data );
 
         $rank = 1;
         ob_start();
@@ -1904,6 +2041,12 @@ class Soico_CTA_Block_Register {
 
         if ( ! $crypto ) {
             return $this->debug_comment( 'Crypto exchange not found: ' . $exchange_slug );
+        }
+
+        // URLオーバーライド判定（直接URL → ThirstyAffiliates → デフォルト）
+        $url_override = $this->resolve_affiliate_url( $attributes );
+        if ( $url_override ) {
+            $crypto['affiliate_url'] = $url_override;
         }
 
         if ( empty( $crypto['affiliate_url'] ) ) {

@@ -7,7 +7,14 @@
     "category": "soico-crypto-cta",
     "icon": "bitcoin",
     "description": "仮想通貨取引所をおすすめする結論ボックス。特徴リストとCTAボタン付き。",
-    "keywords": ["cta", "結論", "仮想通貨", "crypto", "ビットコイン", "conclusion"],
+    "keywords": [
+        "cta",
+        "結論",
+        "仮想通貨",
+        "crypto",
+        "ビットコイン",
+        "conclusion"
+    ],
     "textdomain": "soico-securities-cta",
     "attributes": {
         "exchange": {
@@ -25,11 +32,22 @@
         "customFeatures": {
             "type": "string",
             "default": ""
+        },
+        "customAffiliateUrl": {
+            "type": "string",
+            "default": ""
+        },
+        "customThirstyLinkId": {
+            "type": "number",
+            "default": 0
         }
     },
     "supports": {
         "html": false,
-        "align": ["wide", "full"],
+        "align": [
+            "wide",
+            "full"
+        ],
         "className": true
     }
 }

@@ -7,7 +7,12 @@
     "category": "soico-securities-cta",
     "icon": "button",
     "description": "シンプルなCTAボタン。PR表記付き。",
-    "keywords": ["cta", "ボタン", "証券", "button"],
+    "keywords": [
+        "cta",
+        "ボタン",
+        "証券",
+        "button"
+    ],
     "textdomain": "soico-securities-cta",
     "attributes": {
         "company": {
@@ -21,11 +26,22 @@
         "showPR": {
             "type": "boolean",
             "default": true
+        },
+        "customAffiliateUrl": {
+            "type": "string",
+            "default": ""
+        },
+        "customThirstyLinkId": {
+            "type": "number",
+            "default": 0
         }
     },
     "supports": {
         "html": false,
-        "align": ["center", "wide"],
+        "align": [
+            "center",
+            "wide"
+        ],
         "className": true
     }
 }

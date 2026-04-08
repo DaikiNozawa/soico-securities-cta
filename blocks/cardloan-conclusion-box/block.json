@@ -7,7 +7,13 @@
     "category": "soico-cardloan-cta",
     "icon": "money-alt",
     "description": "カードローンをおすすめする結論ボックス。特徴リストとCTAボタン付き。",
-    "keywords": ["cta", "結論", "カードローン", "cardloan", "conclusion"],
+    "keywords": [
+        "cta",
+        "結論",
+        "カードローン",
+        "cardloan",
+        "conclusion"
+    ],
     "textdomain": "soico-securities-cta",
     "attributes": {
         "company": {
@@ -33,11 +39,18 @@
         "customAffiliateUrl": {
             "type": "string",
             "default": ""
+        },
+        "customThirstyLinkId": {
+            "type": "number",
+            "default": 0
         }
     },
     "supports": {
         "html": false,
-        "align": ["wide", "full"],
+        "align": [
+            "wide",
+            "full"
+        ],
         "className": true
     }
 }

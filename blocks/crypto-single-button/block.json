@@ -7,7 +7,13 @@
     "category": "soico-crypto-cta",
     "icon": "bitcoin",
     "description": "シンプルな仮想通貨取引所CTAボタン。任意の場所に配置できます。",
-    "keywords": ["cta", "ボタン", "仮想通貨", "crypto", "button"],
+    "keywords": [
+        "cta",
+        "ボタン",
+        "仮想通貨",
+        "crypto",
+        "button"
+    ],
     "textdomain": "soico-securities-cta",
     "attributes": {
         "exchange": {
@@ -21,11 +27,22 @@
         "showPR": {
             "type": "boolean",
             "default": true
+        },
+        "customAffiliateUrl": {
+            "type": "string",
+            "default": ""
+        },
+        "customThirstyLinkId": {
+            "type": "number",
+            "default": 0
         }
     },
     "supports": {
         "html": false,
-        "align": ["center", "wide"],
+        "align": [
+            "center",
+            "wide"
+        ],
         "className": true
     }
 }

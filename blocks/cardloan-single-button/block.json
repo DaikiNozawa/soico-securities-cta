@@ -7,7 +7,13 @@
     "category": "soico-cardloan-cta",
     "icon": "money-alt",
     "description": "シンプルなカードローンCTAボタン。任意の場所に配置できます。",
-    "keywords": ["cta", "ボタン", "カードローン", "cardloan", "button"],
+    "keywords": [
+        "cta",
+        "ボタン",
+        "カードローン",
+        "cardloan",
+        "button"
+    ],
     "textdomain": "soico-securities-cta",
     "attributes": {
         "company": {
@@ -29,11 +35,18 @@
         "customAffiliateUrl": {
             "type": "string",
             "default": ""
+        },
+        "customThirstyLinkId": {
+            "type": "number",
+            "default": 0
         }
     },
     "supports": {
         "html": false,
-        "align": ["center", "wide"],
+        "align": [
+            "center",
+            "wide"
+        ],
         "className": true
     }
 }

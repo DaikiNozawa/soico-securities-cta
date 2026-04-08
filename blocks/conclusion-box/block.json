@@ -7,7 +7,12 @@
     "category": "soico-securities-cta",
     "icon": "megaphone",
     "description": "証券会社をおすすめする結論ボックス。特徴リストとCTAボタン付き。",
-    "keywords": ["cta", "結論", "証券", "conclusion"],
+    "keywords": [
+        "cta",
+        "結論",
+        "証券",
+        "conclusion"
+    ],
     "textdomain": "soico-securities-cta",
     "attributes": {
         "company": {
@@ -25,11 +30,22 @@
         "customFeatures": {
             "type": "string",
             "default": ""
+        },
+        "customAffiliateUrl": {
+            "type": "string",
+            "default": ""
+        },
+        "customThirstyLinkId": {
+            "type": "number",
+            "default": 0
         }
     },
     "supports": {
         "html": false,
-        "align": ["wide", "full"],
+        "align": [
+            "wide",
+            "full"
+        ],
         "className": true
     }
 }

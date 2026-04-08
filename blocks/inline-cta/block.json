@@ -7,7 +7,12 @@
     "category": "soico-securities-cta",
     "icon": "migrate",
     "description": "記事中に挿入する控えめなインラインCTA。",
-    "keywords": ["cta", "インライン", "証券", "inline"],
+    "keywords": [
+        "cta",
+        "インライン",
+        "証券",
+        "inline"
+    ],
     "textdomain": "soico-securities-cta",
     "attributes": {
         "company": {
@@ -21,6 +26,14 @@
         "featureText": {
             "type": "string",
             "default": ""
+        },
+        "customAffiliateUrl": {
+            "type": "string",
+            "default": ""
+        },
+        "customThirstyLinkId": {
+            "type": "number",
+            "default": 0
         }
     },
     "supports": {

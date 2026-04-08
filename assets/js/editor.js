@@ -69,6 +69,8 @@
     var selectOptions = data.selectOptions || [];
     var cardloanSelectOptions = data.cardloanSelectOptions || [];
     var cryptoSelectOptions = data.cryptoSelectOptions || [];
+    var thirstyActive = !!data.thirstyActive;
+    var thirstyLinkOptions = data.thirstyLinkOptions || [];
     var i18n = data.i18n || {};
 
     log('ローカライズデータ:', {
@@ -186,6 +188,168 @@
     }
 
     // ==========================================================================
+    // URL差し替えパネル（単体ブロック用）
+    // ==========================================================================
+    /**
+     * 単体ブロック用 URL差し替えパネルを生成
+     * 直接URL > ThirstyAffiliates選択 > データ層デフォルト の優先順位
+     *
+     * @param {object} attributes ブロック属性
+     * @param {function} setAttributes setAttributes 関数
+     * @returns {object} PanelBody 要素
+     */
+    function buildUrlOverridePanel(attributes, setAttributes) {
+        var children = [];
+
+        children.push(el('p', {
+            key: 'desc',
+            style: { fontSize: '12px', color: '#666', marginBottom: '12px' }
+        }, 'この記事だけ別のURLを使いたい場合に設定してください。空欄なら管理画面のデフォルトURLを使用します。優先順位: 直接URL → ThirstyAffiliates → デフォルト'));
+
+        // 1) ThirstyAffiliates選択
+        if (thirstyActive) {
+            children.push(el(SelectControl, {
+                key: 'thirsty',
+                label: 'ThirstyAffiliatesリンクから選択',
+                value: String(attributes.customThirstyLinkId || 0),
+                options: thirstyLinkOptions.map(function(opt) {
+                    return { value: String(opt.value || ''), label: opt.label };
+                }),
+                onChange: function(value) {
+                    setAttributes({ customThirstyLinkId: parseInt(value, 10) || 0 });
+                },
+                help: '選択したリンクに自動的に差し替わります。'
+            }));
+        } else {
+            children.push(el('p', {
+                key: 'thirsty-warn',
+                style: { fontSize: '12px', color: '#999', marginBottom: '12px' }
+            }, 'ThirstyAffiliates 未インストール'));
+        }
+
+        // 2) 直接URL
+        children.push(el(TextControl, {
+            key: 'direct',
+            label: 'カスタムアフィリエイトURL（直接入力）',
+            value: attributes.customAffiliateUrl || '',
+            onChange: function(value) {
+                setAttributes({ customAffiliateUrl: value });
+            },
+            placeholder: 'https://',
+            help: 'こちらに入力した場合は ThirstyAffiliates の選択より優先されます。'
+        }));
+
+        // インジケータ
+        if (attributes.customAffiliateUrl) {
+            children.push(el('p', {
+                key: 'indicator-direct',
+                style: { fontSize: '11px', color: '#E65100', margin: '4px 0 0 0', fontWeight: 'bold' }
+            }, '⚠ 直接入力URLが優先されます'));
+        } else if (attributes.customThirstyLinkId) {
+            children.push(el('p', {
+                key: 'indicator-thirsty',
+                style: { fontSize: '11px', color: '#0073aa', margin: '4px 0 0 0', fontWeight: 'bold' }
+            }, '🔗 ThirstyAffiliates リンクを使用中'));
+        }
+
+        return el(PanelBody, {
+            title: 'アフィリエイトURL上書き',
+            initialOpen: false
+        }, children);
+    }
+
+    // ==========================================================================
+    // URL差し替えパネル（比較表用：会社ごと）
+    // ==========================================================================
+    /**
+     * 比較表ブロック用 URL差し替えパネル（会社ごと）を生成
+     *
+     * @param {object} attributes ブロック属性
+     * @param {function} setAttributes setAttributes 関数
+     * @param {array} options 会社/取引所選択肢の配列 ({value, label})
+     * @returns {object} PanelBody 要素
+     */
+    function buildUrlOverrideTablePanel(attributes, setAttributes, options) {
+        var children = [];
+
+        children.push(el('p', {
+            key: 'desc',
+            style: { fontSize: '12px', color: '#666', marginBottom: '12px' }
+        }, '比較表内の会社ごとに、この記事だけ別のURLを使いたい場合に設定してください。優先順位: 直接URL → ThirstyAffiliates → デフォルト'));
+
+        if (!thirstyActive) {
+            children.push(el('p', {
+                key: 'thirsty-warn',
+                style: { fontSize: '12px', color: '#999', marginBottom: '12px' }
+            }, 'ThirstyAffiliates 未インストール'));
+        }
+
+        options.forEach(function(opt) {
+            var slug = opt.value;
+            if (!slug) return;
+
+            var currentUrls = attributes.customAffiliateUrls || {};
+            var currentIds = attributes.customThirstyLinkIds || {};
+            var subChildren = [];
+
+            // ラベル
+            subChildren.push(el('p', {
+                key: 'label',
+                style: { fontSize: '13px', fontWeight: 'bold', margin: '0 0 6px 0', color: '#1e1e1e' }
+            }, opt.label));
+
+            // ThirstyAffiliates選択
+            if (thirstyActive) {
+                subChildren.push(el(SelectControl, {
+                    key: 'thirsty-' + slug,
+                    label: 'ThirstyAffiliates',
+                    value: String(currentIds[slug] || 0),
+                    options: thirstyLinkOptions.map(function(o) {
+                        return { value: String(o.value || ''), label: o.label };
+                    }),
+                    onChange: function(value) {
+                        var newIds = Object.assign({}, currentIds);
+                        var v = parseInt(value, 10) || 0;
+                        if (v) {
+                            newIds[slug] = v;
+                        } else {
+                            delete newIds[slug];
+                        }
+                        setAttributes({ customThirstyLinkIds: newIds });
+                    }
+                }));
+            }
+
+            // 直接URL
+            subChildren.push(el(TextControl, {
+                key: 'direct-' + slug,
+                label: '直接URL',
+                value: currentUrls[slug] || '',
+                onChange: function(value) {
+                    var newUrls = Object.assign({}, currentUrls);
+                    if (value) {
+                        newUrls[slug] = value;
+                    } else {
+                        delete newUrls[slug];
+                    }
+                    setAttributes({ customAffiliateUrls: newUrls });
+                },
+                placeholder: 'https://'
+            }));
+
+            children.push(el('div', {
+                key: 'block-' + slug,
+                style: { padding: '10px', marginBottom: '12px', background: '#f9f9f9', borderLeft: '3px solid #0073aa', borderRadius: '2px' }
+            }, subChildren));
+        });
+
+        return el(PanelBody, {
+            title: 'アフィリエイトURL上書き',
+            initialOpen: false
+        }, children);
+    }
+
+    // ==========================================================================
     // Edit関数定義（静的プレビュー方式）
     // ==========================================================================
 
@@ -246,7 +410,8 @@
                         help: '1行につき1つの特徴。空欄の場合は証券会社管理で設定した特徴を表示',
                         rows: 4
                     })
-                )
+                ),
+                buildUrlOverridePanel(attributes, setAttributes)
             ),
             // 静的プレビュー
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview' },
@@ -312,7 +477,8 @@
                         },
                         help: '空欄の場合は証券会社管理で設定した特徴を表示'
                     })
-                )
+                ),
+                buildUrlOverridePanel(attributes, setAttributes)
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview' },
                 el('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: attributes.style === 'subtle' ? '#f5f5f5' : '#e3f2fd', borderRadius: '6px', border: '1px solid #ddd' } },
@@ -363,7 +529,8 @@
                             setAttributes({ showPR: value });
                         }
                     })
-                )
+                ),
+                buildUrlOverridePanel(attributes, setAttributes)
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview', style: { textAlign: 'center' } },
                 el('span', { style: { background: '#FF6B35', color: '#fff', padding: '14px 28px', borderRadius: '6px', display: 'inline-block', fontSize: '16px', fontWeight: 'bold' } },
@@ -420,7 +587,8 @@
                             setAttributes({ showCommission: value });
                         }
                     })
-                )
+                ),
+                buildUrlOverrideTablePanel(attributes, setAttributes, companyOptions)
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview' },
                 el('table', { style: { width: '100%', borderCollapse: 'collapse', border: '1px solid #ddd', fontSize: '14px' } },
@@ -471,7 +639,8 @@
                         },
                         help: '空欄の場合はデフォルトメッセージを使用'
                     })
-                )
+                ),
+                buildUrlOverridePanel(attributes, setAttributes)
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview' },
                 el('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#fafafa', border: '1px solid #eee', borderRadius: '4px', fontSize: '14px' } },
@@ -552,26 +721,14 @@
                         help: '空欄の場合は管理画面の商材設定で登録した注釈を表示'
                     })
                 ),
-                el(PanelBody, {
-                    title: 'アフィリエイトURL上書き',
-                    initialOpen: false
-                },
-                    el(TextControl, {
-                        label: 'カスタムアフィリエイトURL',
-                        value: attributes.customAffiliateUrl,
-                        onChange: function(value) {
-                            setAttributes({ customAffiliateUrl: value });
-                        },
-                        help: '空欄の場合は管理画面で設定したURLを使用。この記事だけ別のURLを使いたい場合に入力してください。'
-                    })
-                )
+                buildUrlOverridePanel(attributes, setAttributes)
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview soico-cardloan-preview' },
                 el('div', { className: 'soico-cta-preview-box', style: { border: '2px solid #4CAF50', borderRadius: '8px', padding: '20px', background: '#f1f8e9' } },
                     el('div', { style: { marginBottom: '10px' } },
                         el('span', { style: { background: '#4CAF50', color: '#fff', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' } }, '結論')
                     ),
-                    attributes.customAffiliateUrl && el('p', { style: { fontSize: '11px', color: '#E65100', margin: '0 0 8px 0', fontWeight: 'bold' } }, '⚠ カスタムURL設定中'),
+                    (attributes.customAffiliateUrl || attributes.customThirstyLinkId) && el('p', { style: { fontSize: '11px', color: '#E65100', margin: '0 0 8px 0', fontWeight: 'bold' } }, '⚠ カスタムURL設定中'),
                     el('h3', { style: { margin: '10px 0', fontSize: '18px' } },
                         attributes.customTitle || 'カードローンなら' + companyName + 'がおすすめ'
                     ),
@@ -641,22 +798,10 @@
                         help: '空欄の場合は「詳細はこちら」を表示'
                     })
                 ),
-                el(PanelBody, {
-                    title: 'アフィリエイトURL上書き',
-                    initialOpen: false
-                },
-                    el(TextControl, {
-                        label: 'カスタムアフィリエイトURL',
-                        value: attributes.customAffiliateUrl,
-                        onChange: function(value) {
-                            setAttributes({ customAffiliateUrl: value });
-                        },
-                        help: '空欄の場合は管理画面で設定したURLを使用。この記事だけ別のURLを使いたい場合に入力してください。'
-                    })
-                )
+                buildUrlOverridePanel(attributes, setAttributes)
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview soico-cardloan-preview' },
-                attributes.customAffiliateUrl && el('p', { style: { fontSize: '11px', color: '#E65100', margin: '0 0 5px 0', fontWeight: 'bold' } }, '⚠ カスタムURL設定中'),
+                (attributes.customAffiliateUrl || attributes.customThirstyLinkId) && el('p', { style: { fontSize: '11px', color: '#E65100', margin: '0 0 5px 0', fontWeight: 'bold' } }, '⚠ カスタムURL設定中'),
                 el('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: attributes.style === 'subtle' ? '#f5f5f5' : '#e8f5e9', borderRadius: '6px', border: '1px solid #c8e6c9' } },
                     el('div', null,
                         el('strong', null, companyName),
@@ -714,22 +859,10 @@
                         help: '空欄の場合は管理画面の商材設定で登録した注釈を表示'
                     })
                 ),
-                el(PanelBody, {
-                    title: 'アフィリエイトURL上書き',
-                    initialOpen: false
-                },
-                    el(TextControl, {
-                        label: 'カスタムアフィリエイトURL',
-                        value: attributes.customAffiliateUrl,
-                        onChange: function(value) {
-                            setAttributes({ customAffiliateUrl: value });
-                        },
-                        help: '空欄の場合は管理画面で設定したURLを使用。この記事だけ別のURLを使いたい場合に入力してください。'
-                    })
-                )
+                buildUrlOverridePanel(attributes, setAttributes)
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview soico-cardloan-preview', style: { textAlign: 'center' } },
-                attributes.customAffiliateUrl && el('p', { style: { fontSize: '11px', color: '#E65100', margin: '0 0 5px 0', fontWeight: 'bold' } }, '⚠ カスタムURL設定中'),
+                (attributes.customAffiliateUrl || attributes.customThirstyLinkId) && el('p', { style: { fontSize: '11px', color: '#E65100', margin: '0 0 5px 0', fontWeight: 'bold' } }, '⚠ カスタムURL設定中'),
                 el('span', { style: { background: '#4CAF50', color: '#fff', padding: '14px 28px', borderRadius: '6px', display: 'inline-block', fontSize: '16px', fontWeight: 'bold' } },
                     buttonText
                 ),
@@ -800,32 +933,7 @@
                         }
                     })
                 ),
-                el(PanelBody, {
-                    title: 'アフィリエイトURL上書き',
-                    initialOpen: false
-                },
-                    el('p', { style: { fontSize: '12px', color: '#666', marginBottom: '12px' } },
-                        'この記事だけ別のURLを使いたい場合に入力してください。空欄の場合は管理画面で設定したURLを使用します。'
-                    ),
-                    cardloanOptions.map(function(opt) {
-                        var currentUrls = attributes.customAffiliateUrls || {};
-                        return el(TextControl, {
-                            key: opt.value,
-                            label: opt.label,
-                            value: currentUrls[opt.value] || '',
-                            onChange: function(value) {
-                                var newUrls = Object.assign({}, currentUrls);
-                                if (value) {
-                                    newUrls[opt.value] = value;
-                                } else {
-                                    delete newUrls[opt.value];
-                                }
-                                setAttributes({ customAffiliateUrls: newUrls });
-                            },
-                            placeholder: 'https://'
-                        });
-                    })
-                )
+                buildUrlOverrideTablePanel(attributes, setAttributes, cardloanOptions)
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview soico-cardloan-preview' },
                 el('table', { style: { width: '100%', borderCollapse: 'collapse', border: '1px solid #c8e6c9', fontSize: '14px' } },
@@ -877,7 +985,8 @@
                         },
                         help: '空欄の場合はデフォルトメッセージを使用'
                     })
-                )
+                ),
+                buildUrlOverridePanel(attributes, setAttributes)
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview soico-cardloan-preview' },
                 el('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#f1f8e9', border: '1px solid #c8e6c9', borderRadius: '4px', fontSize: '14px' } },
@@ -949,7 +1058,8 @@
                         help: '1行につき1つの特徴。空欄の場合は仮想通貨管理で設定した特徴を表示',
                         rows: 4
                     })
-                )
+                ),
+                buildUrlOverridePanel(attributes, setAttributes)
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview soico-crypto-preview' },
                 el('div', { className: 'soico-cta-preview-box', style: { border: '2px solid #F7931A', borderRadius: '8px', padding: '20px', background: '#FFF8E1' } },
@@ -1014,7 +1124,8 @@
                         },
                         help: '空欄の場合は仮想通貨管理で設定した特徴を表示'
                     })
-                )
+                ),
+                buildUrlOverridePanel(attributes, setAttributes)
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview soico-crypto-preview' },
                 el('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: attributes.style === 'subtle' ? '#f5f5f5' : '#FFF8E1', borderRadius: '6px', border: '1px solid #FFE082' } },
@@ -1065,7 +1176,8 @@
                             setAttributes({ showPR: value });
                         }
                     })
-                )
+                ),
+                buildUrlOverridePanel(attributes, setAttributes)
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview soico-crypto-preview', style: { textAlign: 'center' } },
                 el('span', { style: { background: '#F7931A', color: '#fff', padding: '14px 28px', borderRadius: '6px', display: 'inline-block', fontSize: '16px', fontWeight: 'bold' } },
@@ -1128,7 +1240,8 @@
                             setAttributes({ showCoins: value });
                         }
                     })
-                )
+                ),
+                buildUrlOverrideTablePanel(attributes, setAttributes, cryptoOptions)
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview soico-crypto-preview' },
                 el('table', { style: { width: '100%', borderCollapse: 'collapse', border: '1px solid #D0D9E6', fontSize: '14px', borderRadius: '8px', overflow: 'hidden' } },
@@ -1179,7 +1292,8 @@
                         },
                         help: '空欄の場合はデフォルトメッセージを使用'
                     })
-                )
+                ),
+                buildUrlOverridePanel(attributes, setAttributes)
             ),
             el('div', { className: 'soico-cta-editor-preview soico-cta-static-preview soico-crypto-preview' },
                 el('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: '#FFF8E1', border: '1px solid #FFE082', borderRadius: '4px', fontSize: '14px' } },
@@ -1295,7 +1409,9 @@
                 company: { type: 'string', default: 'sbi' },
                 showFeatures: { type: 'boolean', default: true },
                 customTitle: { type: 'string', default: '' },
-                customFeatures: { type: 'string', default: '' }
+                customFeatures: { type: 'string', default: '' },
+                customAffiliateUrl: { type: 'string', default: '' },
+                customThirstyLinkId: { type: 'number', default: 0 }
             },
             edit: EditConclusionBox
         },
@@ -1307,7 +1423,9 @@
             attributes: {
                 company: { type: 'string', default: 'sbi' },
                 style: { type: 'string', default: 'default' },
-                featureText: { type: 'string', default: '' }
+                featureText: { type: 'string', default: '' },
+                customAffiliateUrl: { type: 'string', default: '' },
+                customThirstyLinkId: { type: 'number', default: 0 }
             },
             edit: EditInlineCTA
         },
@@ -1319,7 +1437,9 @@
             attributes: {
                 company: { type: 'string', default: 'sbi' },
                 buttonText: { type: 'string', default: '' },
-                showPR: { type: 'boolean', default: true }
+                showPR: { type: 'boolean', default: true },
+                customAffiliateUrl: { type: 'string', default: '' },
+                customThirstyLinkId: { type: 'number', default: 0 }
             },
             edit: EditSingleButton
         },
@@ -1331,7 +1451,9 @@
             attributes: {
                 companies: { type: 'array', default: ['sbi', 'monex', 'rakuten'] },
                 limit: { type: 'number', default: 3 },
-                showCommission: { type: 'boolean', default: true }
+                showCommission: { type: 'boolean', default: true },
+                customAffiliateUrls: { type: 'object', default: {} },
+                customThirstyLinkIds: { type: 'object', default: {} }
             },
             edit: EditComparisonTable
         },
@@ -1342,7 +1464,9 @@
             description: 'テキストリンク形式の最も控えめなCTA。読者の邪魔をしません。',
             attributes: {
                 company: { type: 'string', default: 'sbi' },
-                message: { type: 'string', default: '' }
+                message: { type: 'string', default: '' },
+                customAffiliateUrl: { type: 'string', default: '' },
+                customThirstyLinkId: { type: 'number', default: 0 }
             },
             edit: EditSubtleBanner
         },
@@ -1359,7 +1483,8 @@
                 customTitle: { type: 'string', default: '' },
                 customFeatures: { type: 'string', default: '' },
                 buttonNote: { type: 'string', default: '' },
-                customAffiliateUrl: { type: 'string', default: '' }
+                customAffiliateUrl: { type: 'string', default: '' },
+                customThirstyLinkId: { type: 'number', default: 0 }
             },
             edit: EditCardloanConclusionBox
         },
@@ -1374,7 +1499,8 @@
                 style: { type: 'string', default: 'default' },
                 featureText: { type: 'string', default: '' },
                 buttonText: { type: 'string', default: '' },
-                customAffiliateUrl: { type: 'string', default: '' }
+                customAffiliateUrl: { type: 'string', default: '' },
+                customThirstyLinkId: { type: 'number', default: 0 }
             },
             edit: EditCardloanInlineCTA
         },
@@ -1389,7 +1515,8 @@
                 buttonText: { type: 'string', default: '' },
                 showPR: { type: 'boolean', default: true },
                 buttonNote: { type: 'string', default: '' },
-                customAffiliateUrl: { type: 'string', default: '' }
+                customAffiliateUrl: { type: 'string', default: '' },
+                customThirstyLinkId: { type: 'number', default: 0 }
             },
             edit: EditCardloanSingleButton
         },
@@ -1405,7 +1532,8 @@
                 showInterestRate: { type: 'boolean', default: true },
                 showLimitAmount: { type: 'boolean', default: true },
                 showReviewTime: { type: 'boolean', default: true },
-                customAffiliateUrls: { type: 'object', default: {} }
+                customAffiliateUrls: { type: 'object', default: {} },
+                customThirstyLinkIds: { type: 'object', default: {} }
             },
             edit: EditCardloanComparisonTable
         },
@@ -1417,7 +1545,9 @@
             description: 'テキストリンク形式の最も控えめなカードローンCTA。',
             attributes: {
                 company: { type: 'string', default: 'aiful' },
-                message: { type: 'string', default: '' }
+                message: { type: 'string', default: '' },
+                customAffiliateUrl: { type: 'string', default: '' },
+                customThirstyLinkId: { type: 'number', default: 0 }
             },
             edit: EditCardloanSubtleBanner
         },
@@ -1432,7 +1562,9 @@
                 exchange: { type: 'string', default: 'gmo_coin' },
                 showFeatures: { type: 'boolean', default: true },
                 customTitle: { type: 'string', default: '' },
-                customFeatures: { type: 'string', default: '' }
+                customFeatures: { type: 'string', default: '' },
+                customAffiliateUrl: { type: 'string', default: '' },
+                customThirstyLinkId: { type: 'number', default: 0 }
             },
             edit: EditCryptoConclusionBox
         },
@@ -1445,7 +1577,9 @@
             attributes: {
                 exchange: { type: 'string', default: 'gmo_coin' },
                 style: { type: 'string', default: 'default' },
-                featureText: { type: 'string', default: '' }
+                featureText: { type: 'string', default: '' },
+                customAffiliateUrl: { type: 'string', default: '' },
+                customThirstyLinkId: { type: 'number', default: 0 }
             },
             edit: EditCryptoInlineCTA
         },
@@ -1458,7 +1592,9 @@
             attributes: {
                 exchange: { type: 'string', default: 'gmo_coin' },
                 buttonText: { type: 'string', default: '' },
-                showPR: { type: 'boolean', default: true }
+                showPR: { type: 'boolean', default: true },
+                customAffiliateUrl: { type: 'string', default: '' },
+                customThirstyLinkId: { type: 'number', default: 0 }
             },
             edit: EditCryptoSingleButton
         },
@@ -1472,7 +1608,9 @@
                 exchanges: { type: 'array', default: ['gmo_coin', 'coincheck', 'sbi_vc'] },
                 limit: { type: 'number', default: 3 },
                 showFees: { type: 'boolean', default: true },
-                showCoins: { type: 'boolean', default: true }
+                showCoins: { type: 'boolean', default: true },
+                customAffiliateUrls: { type: 'object', default: {} },
+                customThirstyLinkIds: { type: 'object', default: {} }
             },
             edit: EditCryptoComparisonTable
         },
@@ -1484,7 +1622,9 @@
             description: 'テキストリンク形式の最も控えめな仮想通貨CTA。',
             attributes: {
                 exchange: { type: 'string', default: 'gmo_coin' },
-                message: { type: 'string', default: '' }
+                message: { type: 'string', default: '' },
+                customAffiliateUrl: { type: 'string', default: '' },
+                customThirstyLinkId: { type: 'number', default: 0 }
             },
             edit: EditCryptoSubtleBanner
         }
