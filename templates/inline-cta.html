@@ -1,0 +1,19 @@
+{{{custom_html_before}}}
+{{{company_html}}}
+<div class="soico-v2-inline__content">
+    <div class="soico-v2-inline__info">
+        {{#if has_logo}}
+        <img src="{{logo_url}}" alt="{{company_name}}" class="soico-v2-inline__logo">
+        {{/if}}
+        <strong class="soico-v2-inline__name">{{company_name}}</strong>
+        {{#if feature_text}}
+        <span class="soico-v2-inline__feature">{{feature_text}}</span>
+        {{/if}}
+    </div>
+    {{{button}}}
+</div>
+{{{custom_html_inner}}}
+{{#if show_pr}}
+{{{pr_label}}}
+{{/if}}
+{{{custom_html_after}}}

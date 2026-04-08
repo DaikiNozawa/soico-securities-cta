@@ -1,0 +1,14 @@
+{{{custom_html_before}}}
+<div class="soico-v2-banner__content">
+    <span class="soico-v2-banner__message">
+        {{#if message}}
+        {{{message}}}
+        {{else}}
+        <a href="{{affiliate_url}}" target="_blank" rel="noopener noreferrer sponsored">{{company_name}}</a>{{feature_text}}
+        {{/if}}
+    </span>
+    {{#if show_pr}}
+    {{{pr_label}}}
+    {{/if}}
+</div>
+{{{custom_html_after}}}

@@ -1,0 +1,58 @@
+{{{custom_html_before}}}
+<div class="soico-v2-comparison__cards">
+    {{#each cards}}
+    <div class="soico-v2-comparison__card {{rank_class}}">
+        <div class="soico-v2-comparison__card-header">
+            <span class="soico-v2__rank">{{rank}}</span>
+            <div class="soico-v2-comparison__card-title">
+                {{#if has_logo}}
+                <img src="{{logo_url}}" alt="{{company_name}}" class="soico-v2-comparison__logo">
+                {{/if}}
+                <strong class="soico-v2-comparison__name">{{company_name}}</strong>
+                {{#if has_badge}}
+                <span class="soico-v2__badge">{{badge}}</span>
+                {{/if}}
+            </div>
+        </div>
+        {{#if description}}
+        <p class="soico-v2-comparison__desc">{{description}}</p>
+        {{/if}}
+        {{#if features_text}}
+        <p class="soico-v2-comparison__features">{{features_text}}</p>
+        {{/if}}
+        <div class="soico-v2-comparison__meta">
+            {{#if commission}}
+            <span class="soico-v2-comparison__meta-item">
+                <span class="soico-v2-comparison__meta-label">手数料</span>
+                <span class="soico-v2-comparison__meta-value">{{commission}}</span>
+            </span>
+            {{/if}}
+            {{#if interest_rate}}
+            <span class="soico-v2-comparison__meta-item">
+                <span class="soico-v2-comparison__meta-label">金利</span>
+                <span class="soico-v2-comparison__meta-value">{{interest_rate}}</span>
+            </span>
+            {{/if}}
+            {{#if limit_amount}}
+            <span class="soico-v2-comparison__meta-item">
+                <span class="soico-v2-comparison__meta-label">限度額</span>
+                <span class="soico-v2-comparison__meta-value">{{limit_amount}}</span>
+            </span>
+            {{/if}}
+            {{#if review_time}}
+            <span class="soico-v2-comparison__meta-item">
+                <span class="soico-v2-comparison__meta-label">審査</span>
+                <span class="soico-v2-comparison__meta-value">{{review_time}}</span>
+            </span>
+            {{/if}}
+        </div>
+        {{{company_html}}}
+        <div class="soico-v2-comparison__action">
+            {{{button}}}
+        </div>
+    </div>
+    {{/each}}
+</div>
+{{{custom_html_inner}}}
+<p class="soico-v2__footer">PR | 情報は{{current_date}}時点</p>
+{{{custom_html_after}}}

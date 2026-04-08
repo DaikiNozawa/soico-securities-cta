@@ -1,0 +1,27 @@
+{{{custom_html_before}}}
+{{{company_html}}}
+<div class="soico-v2-conclusion__header">
+    {{#if has_badge}}
+    <span class="soico-v2__badge">{{badge}}</span>
+    {{/if}}
+    <span class="soico-v2-conclusion__label">{{label}}</span>
+</div>
+<p class="soico-v2-conclusion__title">{{title}}</p>
+{{#if show_features}}
+<ul class="soico-v2-conclusion__features">
+    {{#each features}}
+    <li>{{{this}}}</li>
+    {{/each}}
+</ul>
+{{/if}}
+{{{custom_html_inner}}}
+<div class="soico-v2-conclusion__action">
+    {{{button}}}
+    {{#if note}}
+    <p class="soico-v2-conclusion__note">{{note}}</p>
+    {{/if}}
+</div>
+{{#if show_pr}}
+{{{pr_label}}}
+{{/if}}
+{{{custom_html_after}}}
